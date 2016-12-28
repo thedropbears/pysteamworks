@@ -1,0 +1,15 @@
+sudo: required
+dist: trusty
+language: python
+python:
+- '3.4'
+install:
+- pip install -r requirements.txt
+script:
+- python robot.py coverage test
+after_script:
+- coveralls
+notifications:
+  slack:
+    rooms:
+      secure: bLp4rLt/aEy4v7RCSciUD5LC8e1HHKIQO8Qx6iOd3sqTq8gY/EpCWGUGzEBo/I16Eu9jtdRIp3uhCQueSk3iEH+yrNNVuKGhPs1gebJyRft4B6T3Hga/DKWzhSBZtgJSzzuk7XX6iKJvuSoYIamKFVnaflJH21pSLKJV4pS2ZdmVGvhj2/kO8rkNkI473vvQX5cQ8FYFAI+PMjbErQB3rzDN19+xrTewAEEUM/vLrsXbT2/yqMhEThg6nHCpONU/TT4iUDStgAd8q4bi61BVe4r+aEw40FAtwQp8QGkxVYFyd1kTjq+WuCwu0gNMCMRx76wZTl89g2m8ya3l1ihfJ0nsTp+bs+EPc5WZuU2LLo0OyT/3ATTw+w29sQKz1YFZWgaeki6Y01+zNhO9ZKxPsL7BCUfLvKvg08SQnMlj0cHKM0aWjk2M7ofkZOv+2e1nmBh6YO05OZd5cEvyqwLcvwaujtN1opAKHzNx9fqtzjp39i3wKr10cCBnb0+AxOHtMNG/CWbdgqOUIPcZh5WWLrP0YzFDeIBN5wVDxzu/oIIsZj20jxoXaZLQOg1Zp+P++xyj4GEwDV+8EOH7HMfJfHo0YFQk7KgdysvJ5zPcKQM44e4zPntP3OuV/GdIdQTMnGs9nCxNEiIbVONnEESwcS1EHNkAyIrtQCy2TGgnaUw=
