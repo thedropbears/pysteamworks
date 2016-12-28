@@ -1,2 +1,1 @@
-# pysteamworks
-The Drop Bears' code for their 2017 Steamworks robot
+# PySteamworks: The Drop Bears' code for their 2017 robot.

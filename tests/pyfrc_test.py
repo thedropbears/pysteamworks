@@ -1,0 +1,1 @@
+from pyfrc.tests import *

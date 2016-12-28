@@ -1,0 +1,11 @@
+pytest>=2.8.0
+pyfrc>=2016.0.0
+wpilib>=2016.0.0
+robotpy-hal-sim>=2016.0.0
+pynetconsole>=1.1.0
+
+# Not really a requirement, but this is on the robot, so just install by default
+robotpy-wpilib-utilities>=2016.0.0
+
+coverage
+python-coveralls
