@@ -46,16 +46,13 @@ class Robot(magicbot.MagicRobot):
         self.gamepad = wpilib.Joystick(1)
         self.pressed_buttons_js = set()
         self.pressed_buttons_gp = set()
-        self.spin_rate = 0.3
 
     def putData(self):
         # update the data on the smart dashboard
         # put the inputs to the dashboard
-        self.sd.putDouble("i_x", self.chassis.inputs[0])
-        self.sd.putDouble("i_y", self.chassis.inputs[1])
-        self.sd.putDouble("i_z", self.chassis.inputs[2])
-        self.sd.putDouble("i_t", self.chassis.inputs[3])
-        self.sd.putDouble("heading", self.bno055.getHeading())
+        self.sd.putNumber("heading", self.bno055.getHeading())
+        self.sd.putNumber("left_stick", self.chassis.sticks[0])
+        self.sd.putNumber("right_stick", self.chassis.sticks[1])
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
@@ -65,7 +62,8 @@ class Robot(magicbot.MagicRobot):
         '''Called on each iteration of the control loop'''
         self.putData()
 
-        # if you want to get access to the buttons, you should be doing it like so:
+        # if you want to get access to the buttons,
+        # you should be doing it like so:
         try:
             if self.debounce(1):
                 # perform some action
@@ -81,17 +79,10 @@ class Robot(magicbot.MagicRobot):
         except:
             self.onException()
 
-        # this is where the joystick inputs get converted to numbers that are sent
-        # to the chassis component. we rescale them using the rescale_js function,
-        # in order to make their response exponential, and to set a dead zone -
-        # which just means if it is under a certain value a 0 will be sent
-        # TODO: Tune these constants for whatever robot they are on
-        self.chassis.inputs = [-rescale_js(self.joystick.getY(), deadzone=0.05, exponential=1.2),
-                               - rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2),
-                               - rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=15.0,
-                                            rate=self.spin_rate),
-                               (self.joystick.getThrottle() - 1.0) / -2.0
-                               ]
+        self.chassis.sticks = [-rescale_js(self.gamepad.getRawButton(1),
+            deadzone=0.05, exponential=4, rate=1),
+            -rescale_js(self.gamepad.getRawButton(5),
+            deadzone=0.05, exponential=4, rate=1)]
 
     # the 'debounce' function keeps tracks of which buttons have been pressed
     def debounce(self, button, gamepad=False):

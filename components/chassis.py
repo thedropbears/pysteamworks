@@ -4,11 +4,20 @@
 # is a list composed of [vx, vy, vz, throttle]) but is a good example
 # of what a component should look like.
 
+from ctre import CANTalon
+
 class Chassis:
+    
+    TALON_NUMBERS = [0, 1, 2, 3]
 
     def __init__(self):
         super().__init__()
-        self.inputs = [0.0 for x in range(4)]
+        self.sticks = [0, 0]
+        self.motors = [CANTalon(num) for num in self.TALON_NUMBERS]
+        self.motors[1].setControlMode(CANTalon.ControlMode.Follower)
+        self.motors[1].set(self.TALON_NUMBERS[0])
+        self.motors[3].setControlMode(CANTalon.ControlMode.Follower)
+        self.motors[3].set(self.TALON_NUMBERS[2])
 
     def setup(self):
         """Run just after createObjects.
@@ -25,8 +34,5 @@ class Chassis:
 
     def execute(self):
         """Run at the end of every control loop iteration"""
-
-        # in this loop, we want to turn the list of inputs into
-        # signals that we will pass to the motor controllers
-
-        pass
+        self.motors[0].set(self.sticks[0])
+        self.motors[2].set(self.sticks[1])
