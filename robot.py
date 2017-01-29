@@ -1,8 +1,12 @@
 import magicbot
 import wpilib
 
+from ctre import CANTalon
+
 from components.chassis import Chassis
 from components.bno055 import BNO055
+from components.gearalignmentdevice import GearAligmentDevice
+from components.geardepositiondevice import GearDepositionDevice
 
 from networktables import NetworkTable
 
@@ -14,6 +18,8 @@ import math
 class Robot(magicbot.MagicRobot):
 
     chassis = Chassis
+    gearalignmentdevice = GearAligmentDevice
+    geardepositiondevice = GearDepositionDevice
 
     def createObjects(self):
         '''Create motors and stuff here'''
@@ -46,16 +52,16 @@ class Robot(magicbot.MagicRobot):
         self.gamepad = wpilib.Joystick(1)
         self.pressed_buttons_js = set()
         self.pressed_buttons_gp = set()
-        self.spin_rate = 0.3
+        self.drive_motor_a = CANTalon(2)
+        self.drive_motor_b = CANTalon(5)
+        self.drive_motor_c = CANTalon(4)
+        self.drive_motor_d = CANTalon(3)
+        self.gear_alignment_motor = CANTalon(14)
 
     def putData(self):
         # update the data on the smart dashboard
         # put the inputs to the dashboard
-        self.sd.putDouble("i_x", self.chassis.inputs[0])
-        self.sd.putDouble("i_y", self.chassis.inputs[1])
-        self.sd.putDouble("i_z", self.chassis.inputs[2])
-        self.sd.putDouble("i_t", self.chassis.inputs[3])
-        self.sd.putDouble("heading", self.bno055.getHeading())
+        self.sd.putNumber("gyro", self.bno055.getHeading())
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
@@ -65,7 +71,8 @@ class Robot(magicbot.MagicRobot):
         '''Called on each iteration of the control loop'''
         self.putData()
 
-        # if you want to get access to the buttons, you should be doing it like so:
+        # if you want to get access to the buttons,
+        # you should be doing it like so:
         try:
             if self.debounce(1):
                 # perform some action
@@ -81,17 +88,11 @@ class Robot(magicbot.MagicRobot):
         except:
             self.onException()
 
-        # this is where the joystick inputs get converted to numbers that are sent
-        # to the chassis component. we rescale them using the rescale_js function,
-        # in order to make their response exponential, and to set a dead zone -
-        # which just means if it is under a certain value a 0 will be sent
-        # TODO: Tune these constants for whatever robot they are on
         self.chassis.inputs = [-rescale_js(self.joystick.getY(), deadzone=0.05, exponential=1.2),
-                               - rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2),
-                               - rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=15.0,
-                                            rate=self.spin_rate),
-                               (self.joystick.getThrottle() - 1.0) / -2.0
-                               ]
+                    - rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2),
+                    - rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=15.0, rate=0.3),
+                    (self.joystick.getThrottle() - 1.0) / -2.0
+                    ]
 
     # the 'debounce' function keeps tracks of which buttons have been pressed
     def debounce(self, button, gamepad=False):
