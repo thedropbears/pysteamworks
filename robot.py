@@ -7,6 +7,7 @@ from components.chassis import Chassis
 from components.bno055 import BNO055
 from components.gearalignmentdevice import GearAligmentDevice
 from components.geardepositiondevice import GearDepositionDevice
+from components.winch import Winch
 
 from networktables import NetworkTable
 
@@ -20,6 +21,7 @@ class Robot(magicbot.MagicRobot):
     chassis = Chassis
     gearalignmentdevice = GearAligmentDevice
     geardepositiondevice = GearDepositionDevice
+    winch = Winch
 
     def createObjects(self):
         '''Create motors and stuff here'''
@@ -57,6 +59,10 @@ class Robot(magicbot.MagicRobot):
         self.drive_motor_c = CANTalon(4)
         self.drive_motor_d = CANTalon(3)
         self.gear_alignment_motor = CANTalon(14)
+        self.winch_motor = CANTalon(11)
+
+        self.rope_lock_solenoid = wpilib.DoubleSolenoid(forwardChannel=0,
+                reverseChannel=1)
 
     def putData(self):
         # update the data on the smart dashboard
