@@ -1,8 +1,12 @@
 import magicbot
 import wpilib
 
+from ctre import CANTalon
+
 from components.chassis import Chassis
 from components.bno055 import BNO055
+from components.gearalignmentdevice import GearAligmentDevice
+from components.geardepositiondevice import GearDepositionDevice
 
 from networktables import NetworkTable
 
@@ -14,6 +18,8 @@ import math
 class Robot(magicbot.MagicRobot):
 
     chassis = Chassis
+    gearalignmentdevice = GearAligmentDevice
+    geardepositiondevice = GearDepositionDevice
 
     def createObjects(self):
         '''Create motors and stuff here'''
@@ -46,13 +52,16 @@ class Robot(magicbot.MagicRobot):
         self.gamepad = wpilib.Joystick(1)
         self.pressed_buttons_js = set()
         self.pressed_buttons_gp = set()
+        self.drive_motor_a = CANTalon(2)
+        self.drive_motor_b = CANTalon(5)
+        self.drive_motor_c = CANTalon(4)
+        self.drive_motor_d = CANTalon(3)
+        self.gear_alignment_motor = CANTalon(14)
 
     def putData(self):
         # update the data on the smart dashboard
         # put the inputs to the dashboard
-        self.sd.putNumber("heading", self.bno055.getHeading())
-        self.sd.putNumber("left_stick", self.chassis.sticks[0])
-        self.sd.putNumber("right_stick", self.chassis.sticks[1])
+        self.sd.putNumber("gyro", self.bno055.getHeading())
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
@@ -79,10 +88,11 @@ class Robot(magicbot.MagicRobot):
         except:
             self.onException()
 
-        self.chassis.sticks = [-rescale_js(self.gamepad.getRawButton(1),
-            deadzone=0.05, exponential=4, rate=1),
-            -rescale_js(self.gamepad.getRawButton(5),
-            deadzone=0.05, exponential=4, rate=1)]
+        self.chassis.inputs = [-rescale_js(self.joystick.getY(), deadzone=0.05, exponential=1.2),
+                    - rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2),
+                    - rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=15.0, rate=0.3),
+                    (self.joystick.getThrottle() - 1.0) / -2.0
+                    ]
 
     # the 'debounce' function keeps tracks of which buttons have been pressed
     def debounce(self, button, gamepad=False):
