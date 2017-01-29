@@ -10,7 +10,7 @@ class BNO055Sim(I2CSimBase):
     pitch = -3.14159 / 8.0
     roll = 0.01
 
-    def i2CTransaction(self, port, device_address, data_to_send, send_size, data_received, receive_size):
+    def transactionI2C(self, port, device_address, data_to_send, send_size, data_received, receive_size):
         '''
             To give data back use ``data_received``::
             
