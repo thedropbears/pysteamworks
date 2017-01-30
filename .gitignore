@@ -87,3 +87,6 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# deploy config for robotpy
+.deploy_cfg
