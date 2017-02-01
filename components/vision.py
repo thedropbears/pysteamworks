@@ -17,7 +17,7 @@ class Vision:
         self.cvsink = cs.CvSink("cvsink")
         self.cvsink.setSource(self.camera)
         
-        self.cvSource = cs.CvSource("cvsource", cs.VideoMode.PixelFormat.kMJPEG, Vision.width, Vision.height, 30)
+        self.cvSource = cs.CvSource("cvsource", cs.VideoMode.PixelFormat.kMJPEG, Vision.width, Vision.height, 20)
         self.cvmjpegServer = cs.MjpegServer("cvhttpserver", 8083)
         self.cvmjpegServer.setSource(self.cvSource)
 
