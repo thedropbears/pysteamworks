@@ -14,6 +14,8 @@ class Vision:
         self._process_run_event = multiprocessing.Event()
         self._process_run_event.set()
         self._process = VisionProcess(self._data_array, self._process_run_event)
+        self.k = 0.5
+        self.smoothed_x = 0.0
 
     def free(self):
         self._process_run_event.clear()
@@ -36,7 +38,7 @@ class Vision:
 
     def execute(self):
         """Run at the end of the control loop"""
-        pass
+        self.smoothed_x = (1 - self.k) * self.x + self.k * self.smoothed_x
 
     @property
     def x(self):
