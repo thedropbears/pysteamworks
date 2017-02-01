@@ -9,6 +9,7 @@ from components.chassis import Chassis
 from components.bno055 import BNO055
 from components.gearalignmentdevice import GearAligmentDevice
 from components.geardepositiondevice import GearDepositionDevice
+from components.vision import Vision
 from components.winch import Winch
 
 from networktables import NetworkTable
@@ -23,6 +24,7 @@ class Robot(magicbot.MagicRobot):
     chassis = Chassis
     gearalignmentdevice = GearAligmentDevice
     geardepositiondevice = GearDepositionDevice
+    vision = Vision
     winch = Winch
 
     def createObjects(self):
