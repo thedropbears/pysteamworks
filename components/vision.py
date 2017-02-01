@@ -1,28 +1,24 @@
+import multiprocessing.sharedctypes
+
 import numpy as np
 import cv2
-import argparse
 import cscore as cs
+
 
 class Vision:
     width = 320
     height = 240
 
     def __init__(self):
-        self.camera = cs.UsbCamera("usbcam", 0)
-        self.camera.setVideoMode(cs.VideoMode.PixelFormat.kMJPEG, Vision.width, Vision.height, 20)
-    
-        self.camMjpegServer = cs.MjpegServer("httpserver", 8082)
-        self.camMjpegServer.setSource(self.camera)
+        self._data_array = multiprocessing.sharedctypes.RawArray("d", [0.0])
+        self._process_run_event = multiprocessing.Event()
+        self._process_run_event.set()
+        self._process = VisionProcess(self._data_array, self._process_run_event)
 
-        self.cvsink = cs.CvSink("cvsink")
-        self.cvsink.setSource(self.camera)
-        
-        self.cvSource = cs.CvSource("cvsource", cs.VideoMode.PixelFormat.kMJPEG, Vision.width, Vision.height, 20)
-        self.cvmjpegServer = cs.MjpegServer("cvhttpserver", 8083)
-        self.cvmjpegServer.setSource(self.cvSource)
-
-        #Setting the exposure.
-        self.camera.setExposureManual(10)
+    def free(self):
+        self._process_run_event.clear()
+        self._process.join(0.1)
+        self._process.terminate()
 
     def setup(self):
         """Run just after createObjects.
@@ -39,14 +35,47 @@ class Vision:
         pass
 
     def execute(self):
-        frame = np.zeros(shape=(Vision.height, Vision.width, 3), dtype=np.uint8)
-        time, frame = self.cvsink.grabFrame(frame)
-        if time == 0:
+        """Run at the end of the control loop"""
+        pass
+
+    @property
+    def x(self):
+        return self._data_array[0]
+
+
+class VisionProcess(multiprocessing.Process):
+    def __init__(self, data_array, run_event):
+        super().__init__(args=(data_array, run_event))
+        self._data_array = data_array
+        self._run_event = run_event
+
+    def run(self):
+        self.camera = cs.UsbCamera("usbcam", 0)
+        self.camera.setVideoMode(cs.VideoMode.PixelFormat.kMJPEG, Vision.width, Vision.height, 20)
+    
+        self.camMjpegServer = cs.MjpegServer("httpserver", 8082)
+        self.camMjpegServer.setSource(self.camera)
+
+        self.cvsink = cs.CvSink("cvsink")
+        self.cvsink.setSource(self.camera)
+        
+        self.cvSource = cs.CvSource("cvsource", cs.VideoMode.PixelFormat.kMJPEG, Vision.width, Vision.height, 20)
+        self.cvmjpegServer = cs.MjpegServer("cvhttpserver", 8083)
+        self.cvmjpegServer.setSource(self.cvSource)
+
+        #Setting the exposure.
+        self.camera.setExposureManual(10)
+
+        while self._run_event.is_set():
             frame = np.zeros(shape=(Vision.height, Vision.width, 3), dtype=np.uint8)
-        else:
-            self.x, frame = self.find_target(frame)
-            cv2.line(frame, (int((self.x+1)*Vision.width/2), 60), (int((self.x+1)*Vision.width/2), 180), (255,255,0), thickness=2, lineType=8, shift=0)
-        self.cvSource.putFrame(frame)
+            time, frame = self.cvsink.grabFrame(frame)
+            if time == 0:
+                frame = np.zeros(shape=(Vision.height, Vision.width, 3), dtype=np.uint8)
+            else:
+                self.x, frame = self.find_target(frame)
+                cv2.line(frame, (int((self.x+1)*Vision.width/2), 60), (int((self.x+1)*Vision.width/2), 180), (255,255,0), thickness=2, lineType=8, shift=0)
+                self._data_array[0] = self.x
+            self.cvSource.putFrame(frame)
 
     def find_target(self, img):
 
