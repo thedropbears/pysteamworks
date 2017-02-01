@@ -14,6 +14,7 @@ class Vision:
         self._process_run_event = multiprocessing.Event()
         self._process_run_event.set()
         self._process = VisionProcess(self._data_array, self._process_run_event)
+        self._process.start()
         self.k = 0.5
         self.smoothed_x = 0.0
 
