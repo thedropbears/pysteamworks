@@ -14,7 +14,7 @@ class Vision:
         self._data_array = multiprocessing.sharedctypes.RawArray("d", [0.0])
         self._process_run_event = multiprocessing.Event()
         self._process_run_event.set()
-        self._process = VisionProcess(self._data_array, self._process_run_event)
+        self._process = multiprocessing.Process(target=vision_loop, args=(self._data_array, self._process_run_event))
         self._process.start()
         self.k = 0.5
         self.smoothed_x = 0.0
@@ -50,65 +50,59 @@ class Vision:
         return self._data_array[0]
 
 
-class VisionProcess(multiprocessing.Process):
-    def __init__(self, data_array, run_event):
-        super().__init__(args=(data_array, run_event))
-        self._data_array = data_array
-        self._run_event = run_event
+def vision_loop(data_array, run_event):
+    camera = cs.UsbCamera("usbcam", 0)
+    camera.setVideoMode(cs.VideoMode.PixelFormat.kMJPEG, Vision.width, Vision.height, 20)
 
-    def run(self):
-        camera = cs.UsbCamera("usbcam", 0)
-        camera.setVideoMode(cs.VideoMode.PixelFormat.kMJPEG, Vision.width, Vision.height, 20)
+    camMjpegServer = cs.MjpegServer("httpserver", 8082)
+    camMjpegServer.setSource(camera)
 
-        camMjpegServer = cs.MjpegServer("httpserver", 8082)
-        camMjpegServer.setSource(camera)
+    cvsink = cs.CvSink("cvsink")
+    cvsink.setSource(camera)
 
-        cvsink = cs.CvSink("cvsink")
-        cvsink.setSource(camera)
+    cvSource = cs.CvSource("cvsource", cs.VideoMode.PixelFormat.kMJPEG, Vision.width, Vision.height, 20)
+    cvmjpegServer = cs.MjpegServer("cvhttpserver", 8083)
+    cvmjpegServer.setSource(cvSource)
 
-        cvSource = cs.CvSource("cvsource", cs.VideoMode.PixelFormat.kMJPEG, Vision.width, Vision.height, 20)
-        cvmjpegServer = cs.MjpegServer("cvhttpserver", 8083)
-        cvmjpegServer.setSource(cvSource)
+    #Setting the exposure.
+    camera.setExposureManual(10)
 
-        #Setting the exposure.
-        camera.setExposureManual(10)
-
-        while self._run_event.is_set():
+    while run_event.is_set():
+        frame = np.zeros(shape=(Vision.height, Vision.width, 3), dtype=np.uint8)
+        time, frame = cvsink.grabFrame(frame)
+        if time == 0:
             frame = np.zeros(shape=(Vision.height, Vision.width, 3), dtype=np.uint8)
-            time, frame = cvsink.grabFrame(frame)
-            if time == 0:
-                frame = np.zeros(shape=(Vision.height, Vision.width, 3), dtype=np.uint8)
-            else:
-                x, frame = self.find_target(frame)
-                cv2.line(frame, (int((x+1)*Vision.width/2), 60), (int((x+1)*Vision.width/2), 180), (255,255,0), thickness=2, lineType=8, shift=0)
-                self._data_array[0] = x
-            cvSource.putFrame(frame)
+        else:
+            x, frame = find_target(frame)
+            cv2.line(frame, (int((x+1)*Vision.width/2), 60), (int((x+1)*Vision.width/2), 180), (255,255,0), thickness=2, lineType=8, shift=0)
+            data_array[0] = x
+        cvSource.putFrame(frame)
 
-    def find_target(self, img):
 
-        #Converting from RGB to HSV.
-        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    
-        #Setting the tolerances for the mask.
-        upper_green = np.array([150/2, 200, 200])
-        lower_green = np.array([110/2, 40, 70])
-    
-        #Making the mask.
-        mask = cv2.inRange(hsv, lower_green, upper_green)
-    
-        #Combining the mask with the frame
-        res = cv2.bitwise_and(img, img, mask=mask)
+def find_target(img):
+    #Converting from RGB to HSV.
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-        x = range(0, mask.shape[1])
-        y = range(0, mask.shape[0])
+    #Setting the tolerances for the mask.
+    upper_green = np.array([150/2, 200, 200])
+    lower_green = np.array([110/2, 40, 70])
 
-        (X,Y) = np.meshgrid(x,y)
+    #Making the mask.
+    mask = cv2.inRange(hsv, lower_green, upper_green)
 
-        try:
-            x_coord = int((X*mask).sum()/mask.sum().astype("float"))
-        except ValueError:
-            x_coord = 0
+    #Combining the mask with the frame
+    res = cv2.bitwise_and(img, img, mask=mask)
 
-        width = mask.shape[1]
-        pos = 2 * x_coord / float(width) - 1
-        return pos, res
+    x = range(0, mask.shape[1])
+    y = range(0, mask.shape[0])
+
+    (X,Y) = np.meshgrid(x,y)
+
+    try:
+        x_coord = int((X*mask).sum()/mask.sum().astype("float"))
+    except ValueError:
+        x_coord = 0
+
+    width = mask.shape[1]
+    pos = 2 * x_coord / float(width) - 1
+    return pos, res
