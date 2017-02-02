@@ -30,6 +30,7 @@ class Robot(magicbot.MagicRobot):
     geardepositiondevice = GearDepositionDevice
     manipulategear = ManipulateGear
     vision = Vision
+    manipulategear = ManipulateGear
     winch = Winch
     profilefollower = ProfileFollower
 
