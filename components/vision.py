@@ -3,6 +3,7 @@ import multiprocessing.sharedctypes
 import numpy as np
 import cv2
 import cscore as cs
+import wpilib
 
 
 class Vision:
@@ -17,6 +18,9 @@ class Vision:
         self._process.start()
         self.k = 0.5
         self.smoothed_x = 0.0
+
+        # Register with Resource so teardown works
+        wpilib.Resource._add_global_resource(self)
 
     def free(self):
         self._process_run_event.clear()
