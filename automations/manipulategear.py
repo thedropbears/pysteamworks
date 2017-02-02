@@ -1,9 +1,10 @@
 from magicbot import StateMachine, state
-from components import GearAligmentDevice, GearDepositionDevice
+from components.geardepositiondevice import GearDepositionDevice
+from components.gearalignmentdevice import GearAlignmentDevice
 from networktables import NetworkTable
 
 class ManipulateGear(StateMachine):
-    gearalignmentdevice = GearAligmentDevice
+    gearalignmentdevice = GearAlignmentDevice
     geardepositiondevice = GearDepositionDevice
     sd = NetworkTable
 

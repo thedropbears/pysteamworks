@@ -7,9 +7,10 @@ from ctre import CANTalon
 
 from components.chassis import Chassis
 from components.bno055 import BNO055
-from components.gearalignmentdevice import GearAligmentDevice
+from components.gearalignmentdevice import GearAlignmentDevice
 from components.geardepositiondevice import GearDepositionDevice
 from components.winch import Winch
+from automations.manipulategear import ManipulateGear
 
 from networktables import NetworkTable
 
@@ -21,8 +22,9 @@ import math
 class Robot(magicbot.MagicRobot):
 
     chassis = Chassis
-    gearalignmentdevice = GearAligmentDevice
+    gearalignmentdevice = GearAlignmentDevice
     geardepositiondevice = GearDepositionDevice
+    manipulategear = ManipulateGear
     winch = Winch
 
     def createObjects(self):
