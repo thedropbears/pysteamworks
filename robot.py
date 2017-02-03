@@ -12,6 +12,7 @@ from components.geardepositiondevice import GearDepositionDevice
 from components.vision import Vision
 from components.winch import Winch
 from automations.manipulategear import ManipulateGear
+from automations.profilefollower import ProfileFollower
 
 from networktables import NetworkTable
 
@@ -28,6 +29,7 @@ class Robot(magicbot.MagicRobot):
     manipulategear = ManipulateGear
     vision = Vision
     winch = Winch
+    profilefollower = ProfileFollower
 
     def createObjects(self):
         '''Create motors and stuff here'''
