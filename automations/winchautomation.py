@@ -2,25 +2,55 @@ import components.winch
 from magicbot import StateMachine, state
 from components import GearAligmentDevice, GearDepositionDevice
 from networktables import NetworkTable
+from ctre import CANTalon
+
 
 class AutonomousWinch(StateMachine):
+    self.engage()
 
     def driver_press(self):
-        
-        self.engage()
+        current = winch_motor.getOutputCurrent()
 
     @state(first=True)
-    def rope_caught(self):
-        current = winch_motor.getOutputCurrent()
-        for current > 5:
-            for current > 5:
-                rope_lock_solenoid
-                self.next_state("touchpad_pressed")
+    def retractPiston(self)
+        rope_lock_solenoid.set(wpilib.DoubleSolenoid.KReverse)
+
+    @timed_state(duration=1)
+    def onMotor(self):
+        self.next_state("ropeCaught")
+        winch_motor.set(1)
 
     @state
-    def touchpad_pressed
+    def retractPiston(self):
+        rope_lock_solenoid.set(wpilib.DoubleSolenoid.KForward)
+        self.next_state("rotateWinch")
 
+    @state
+    def rotateWinch(self)
+        current = winch_motor.getOutputCurrent()
+        if current > 5:
+            self.next_state("firePiston")
+        else:
+            rotateWinch
 
-    def put_dashboard(self):
+    @state
+    def firePiston(self)
+        if reset button pressed:
+            go to retractPiston
+        else:
+            self.next_state("touchpadPressed")
+
+    @state
+    def touchpadPressed(self)
+        if touchpadPressed:
+            self.next_state("stopMotor")
+        else:
+            rotateWinch
+
+    @state
+    def stopMotor(self)
+        finished
+
+    def putDashboard(self):
         """Update all the variables on the smart dashboard"""
         pass
