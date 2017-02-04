@@ -105,13 +105,11 @@ class Chassis:
 
     def set_velocity(self, linear, angular):
         # TODO: add angular and linear velocities properly here
-        left_out = linear - heading
-        right_out = linear + heading
+        left_out = linear - angular
+        right_out = linear + angular
 
-        self.chassis.motors[0].set(
-                left_out*Chassis.velocity_to_native_units)
-        self.chassis.motors[2].set(
-                right_out*Chassis.velocity_to_native_units)
+        self.motors[0].set(left_out*Chassis.velocity_to_native_units)
+        self.motors[2].set(right_out*Chassis.velocity_to_native_units)
 
     def execute(self):
         """Run at the end of every control loop iteration"""

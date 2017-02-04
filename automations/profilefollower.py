@@ -41,6 +41,11 @@ class ProfileFollower:
             self.executing = True
             self.chassis.input_enabled = False
 
+    def stop(self):
+        self.executing = False
+        self.queue = [[], []]
+        self.chassis.inputs_enabled = True
+
     def execute(self):
 
         if self.executing:
@@ -52,13 +57,15 @@ class ProfileFollower:
             pos = (left_pos + right_pos) / 2
             pos_error = linear_seg[0] - pos
 
-            linear_output = (self.kP * pos_error + kV * linear_seg[1]
-            + kA * linear_seg[2])
+            linear_output = (self.kP * pos_error + self.kV * linear_seg[1]
+                + self.kA * linear_seg[2])
 
             heading = self.bno055.getHeading()
             heading_error = heading_seg[0] - heading
 
-            heading_output = (self.kPh * heading_error
-                    + self.kVh * heading_seg[1])
+            heading_output = (
+                self.kPh * heading_error + self.kVh * heading_seg[1])
 
             self.chassis.set_velocity(linear_output, heading_output)
+        if not self.queue[0]:
+            self.executing = False
