@@ -3,8 +3,6 @@ pyfrc>=2017.0.0
 wpilib>=2017.0.0
 robotpy-hal-sim>=2017.0.0
 pynetconsole>=1.1.0
-
-# Not really a requirement, but this is on the robot, so just install by default
 robotpy-ctre>=2017.0.0
 robotpy-wpilib-utilities>=2017.0.0
 
