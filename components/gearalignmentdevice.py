@@ -2,7 +2,7 @@ from ctre import CANTalon
 
 from networktables import NetworkTable
 
-class GearAligmentDevice:
+class GearAlignmentDevice:
 
     # this is an injected variable only access after initialization of the
     # robot (so not in __init__)
