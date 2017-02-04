@@ -1,4 +1,5 @@
 from components.chassis import Chassis
+import math
 
 def generate_trapezoidal_trajectory(
         x_start, v_start, x_final, v_final, v_max, a_pos, a_neg):
@@ -6,6 +7,9 @@ def generate_trapezoidal_trajectory(
     :returns: a list of (pos, vel acc) tuples"""
     # area under the velocity-time trapezoid
     x = x_final - x_start
+    triangular_max = math.sqrt(
+            (2*x*a_pos*a_neg+a_neg*v_start**2+a_pos*v_final**2)/(a_neg-a_pos))
+    v_max = min(v_max, triangular_max)
     # time (since the start of the trajectory) that we hit v_max
     t_cruise = (v_max - v_start)/a_pos
     # distance we have travelled once we hit v_max
@@ -36,9 +40,8 @@ def generate_trapezoidal_trajectory(
 
     # interpolate along the cruise section of the path
     num_segments = int(t_decel*Chassis.motion_profile_speed - num_segments)
-    for i in range(num_segments+1):
-        segments.append((x_cruise+v_max*(t_decel-t_cruise)*i/num_segments,
-            v_max, 0))
+    segments += [(x_cruise + v_max * (t_decel-t_cruise) * i / num_segments,
+                  v_max, 0) for i in range(1, num_segments+1)]
 
     num_segments = int((t_f-t_decel)*Chassis.motion_profile_speed)
     for i in range(1, num_segments+1):
