@@ -14,6 +14,8 @@ from components.winch import Winch
 from automations.manipulategear import ManipulateGear
 from automations.profilefollower import ProfileFollower
 
+from utilities.profilegenerator import generate_trapezoidal_trajectory
+
 from networktables import NetworkTable
 
 import logging
@@ -72,6 +74,9 @@ class Robot(magicbot.MagicRobot):
         self.rope_lock_solenoid = wpilib.DoubleSolenoid(forwardChannel=0,
                 reverseChannel=1)
 
+        self.test_trajectory = generate_trapezoidal_trajectory(
+                0, 0, 3, 0, Chassis.max_vel, 1, -1)
+
     def putData(self):
         # update the data on the smart dashboard
         # put the inputs to the dashboard
@@ -88,17 +93,15 @@ class Robot(magicbot.MagicRobot):
         # if you want to get access to the buttons,
         # you should be doing it like so:
         try:
-            if self.debounce(1):
-                # perform some action
-                pass
+            if self.debounce(10):
+                self.profilefollower.modify_queue(linear=self.test_trajectory)
+                self.profilefollower.execute_queue()
         except:
             self.onException()
 
-        # or with the gamepad
         try:
-            if self.debounce(1, gamepad=True):
-                #perform some action
-                pass
+            if self.debounce(11):
+                self.profilefollower.stop()
         except:
             self.onException()
 
