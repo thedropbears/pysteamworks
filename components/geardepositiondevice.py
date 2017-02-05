@@ -23,6 +23,9 @@ class GearDepositionDevice:
         """Run every time the robot transitions to being disabled"""
         pass
 
+    def placeGear(self):
+        pass
+        
     def execute(self):
         """Run at the end of every control loop iteration"""
         pass

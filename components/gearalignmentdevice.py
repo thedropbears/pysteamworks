@@ -19,11 +19,16 @@ class GearAlignmentDevice:
 
     def on_enable(self):
         """Run every time the robot transitions to being enabled"""
-        pass
 
     def on_disable(self):
         """Run every time the robot transitions to being disabled"""
         pass
+
+    def align(self, value):
+        self.gear_alignment_motor.set(value)
+
+    def stopMotors(self):
+        self.gear_alignment_motor.stopMotor()
 
     def execute(self):
         """Run at the end of every control loop iteration"""
