@@ -106,16 +106,13 @@ def find_target(img):
     #Combining the mask with the frame
     res = cv2.bitwise_and(img, img, mask=mask)
 
-    x = range(0, mask.shape[1])
-    y = range(0, mask.shape[0])
-
-    (X,Y) = np.meshgrid(x,y)
+    height, width = mask.shape
+    X, Y = np.meshgrid(range(0, width), range(0, height))
 
     try:
-        x_coord = int((X*mask).sum()/mask.sum().astype("float"))
+        x_coord = int((X * mask).sum() / mask.sum())
     except ValueError:
         return None, res
 
-    width = mask.shape[1]
-    pos = 2 * x_coord / float(width) - 1
+    pos = 2 * x_coord / width - 1
     return pos, res
