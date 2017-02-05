@@ -11,6 +11,7 @@ from magicbot import tunable
 class Vision:
     width = 320
     height = 240
+    fps = 25
     k = tunable(0.5)
 
     def __init__(self):
@@ -59,8 +60,10 @@ class Vision:
 def vision_loop(data_array, run_event):
     import cscore as cs
 
+    videomode = cs.VideoMode.PixelFormat.kMJPEG, Vision.width, Vision.height, Vision.fps
+
     camera = cs.UsbCamera("usbcam", 0)
-    camera.setVideoMode(cs.VideoMode.PixelFormat.kMJPEG, Vision.width, Vision.height, 20)
+    camera.setVideoMode(*videomode)
 
     camMjpegServer = cs.MjpegServer("httpserver", 8082)
     camMjpegServer.setSource(camera)
@@ -68,7 +71,7 @@ def vision_loop(data_array, run_event):
     cvsink = cs.CvSink("cvsink")
     cvsink.setSource(camera)
 
-    cvSource = cs.CvSource("cvsource", cs.VideoMode.PixelFormat.kMJPEG, Vision.width, Vision.height, 20)
+    cvSource = cs.CvSource("cvsource", *videomode)
     cvmjpegServer = cs.MjpegServer("cvhttpserver", 8083)
     cvmjpegServer.setSource(cvSource)
 
