@@ -86,7 +86,8 @@ def vision_loop(data_array, run_event):
         else:
             x, frame = find_target(frame)
             if x is not None:
-                cv2.line(frame, (int((x+1)*Vision.width/2), 60), (int((x+1)*Vision.width/2), 180), (255,255,0), thickness=2, lineType=8, shift=0)
+                loc = int((x+1) * Vision.width // 2)
+                cv2.line(frame, (loc, 60), (loc, 180), (255, 255, 0), thickness=2, lineType=8, shift=0)
                 data_array[0] = x
         cvSource.putFrame(frame)
 
