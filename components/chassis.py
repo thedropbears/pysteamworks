@@ -101,10 +101,10 @@ class Chassis:
 
     def get_wheel_distances(self):
         return [self.motors[0].getPosition()/self.counts_per_meter,
-                self.motors[2].getPosition()/self.counts_per_meter]
+                -self.motors[2].getPosition()/self.counts_per_meter]
 
     def set_velocity(self, linear, angular):
-        # TODO: add angular and linear velocities properly here
+        angular *= Chassis.wheelbase_width/2
         left_out = linear - angular
         right_out = linear + angular
 

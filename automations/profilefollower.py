@@ -1,5 +1,8 @@
 from components.chassis import Chassis
 from components.bno055 import BNO055
+from networktables import NetworkTable
+
+import math
 
 class ProfileFollower:
 
@@ -8,18 +11,19 @@ class ProfileFollower:
     # position P controller
     kP = 4
     # velocity and acceleration feedforward
-    kV = 1
+    kV = 1.2
     kA = 0.0
 
     # heading motion feedforward/back gains
     # heading feedback
-    kPh = 0.0
+    kPh = 4.5
     # angular velocity feedforward
-    kVh = 0.0
+    kVh = 1.2
 
     chassis = Chassis
 
     bno055 = BNO055
+    sd = NetworkTable
 
     def __init__(self):
         self.queue = [[],[]]
@@ -40,11 +44,12 @@ class ProfileFollower:
         if len(self.queue[0]):
             self.executing = True
             self.chassis.input_enabled = False
+            self.chassis.set_enc_pos()
 
     def stop(self):
         self.executing = False
         self.queue = [[], []]
-        self.chassis.inputs_enabled = True
+        self.chassis.input_enabled = True
 
     def execute(self):
 
@@ -60,11 +65,16 @@ class ProfileFollower:
             linear_output = (self.kP * pos_error + self.kV * linear_seg[1]
                 + self.kA * linear_seg[2])
 
-            heading = self.bno055.getHeading()
+            self.sd.putNumber("distance_error_mp", pos_error)
+
+            heading = self.bno055.getRawHeading() - self.bno055.offset
             heading_error = heading_seg[0] - heading
+            heading_error = math.atan2(math.sin(heading_error), math.cos(heading_error))
 
             heading_output = (
                 self.kPh * heading_error + self.kVh * heading_seg[1])
+
+            self.sd.putNumber("heading_error_mp", heading_error)
 
             self.chassis.set_velocity(linear_output, heading_output)
         if not self.queue[0]:
