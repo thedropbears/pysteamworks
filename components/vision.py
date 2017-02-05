@@ -85,8 +85,9 @@ def vision_loop(data_array, run_event):
             frame = np.zeros(shape=(Vision.height, Vision.width, 3), dtype=np.uint8)
         else:
             x, frame = find_target(frame)
-            cv2.line(frame, (int((x+1)*Vision.width/2), 60), (int((x+1)*Vision.width/2), 180), (255,255,0), thickness=2, lineType=8, shift=0)
-            data_array[0] = x
+            if x is not None:
+                cv2.line(frame, (int((x+1)*Vision.width/2), 60), (int((x+1)*Vision.width/2), 180), (255,255,0), thickness=2, lineType=8, shift=0)
+                data_array[0] = x
         cvSource.putFrame(frame)
 
 
@@ -112,7 +113,7 @@ def find_target(img):
     try:
         x_coord = int((X*mask).sum()/mask.sum().astype("float"))
     except ValueError:
-        x_coord = 0
+        return None, res
 
     width = mask.shape[1]
     pos = 2 * x_coord / float(width) - 1
