@@ -5,10 +5,13 @@ import cv2
 import hal
 import wpilib
 
+from magicbot import tunable
+
 
 class Vision:
     width = 320
     height = 240
+    k = tunable(0.5)
 
     def __init__(self):
         self._data_array = multiprocessing.sharedctypes.RawArray("d", [0.0])
@@ -19,7 +22,6 @@ class Vision:
             self._process = multiprocessing.Process(target=vision_loop, args=(self._data_array, self._process_run_event))
             self._process.start()
 
-        self.k = 0.5
         self.smoothed_x = 0.0
 
         # Register with Resource so teardown works
