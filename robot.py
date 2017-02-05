@@ -82,10 +82,15 @@ class Robot(magicbot.MagicRobot):
         # update the data on the smart dashboard
         # put the inputs to the dashboard
         self.sd.putNumber("gyro", self.bno055.getHeading())
+        self.sd.putNumber("vision_x", self.vision.x)
+        self.sd.putNumber("smoothed_vision_x", self.vision.smoothed_x)
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
         pass
+    
+    def disabledPeriodic(self):
+        self.putData()
 
     def teleopPeriodic(self):
         '''Called on each iteration of the control loop'''
