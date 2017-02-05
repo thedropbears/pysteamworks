@@ -10,6 +10,18 @@ class Winch:
     def __init__(self):
         super().__init__()
 
+    def rotate_winch(self):
+        """Spin motor forever"""
+        self.winch_motor.set(1)
+
+    def rope_lock_solenoid_reverse(self):
+        """Reverse piston"""
+        self.rope_lock_solenoid.set(DoubleSolenoid.Value.kReverse)
+
+    def rope_lock_solenoid_forward(self):
+        """Move piston forward"""
+        self.rope_lock_solenoid.set(DoubleSolenoid.Value.kForward)
+
     def setup(self):
         """Run just after createObjects.
         Useful if you want to run something after just once after the

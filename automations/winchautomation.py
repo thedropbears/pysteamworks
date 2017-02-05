@@ -12,43 +12,44 @@ class AutonomousWinch(StateMachine):
         current = winch_motor.getOutputCurrent()
 
     @state(first=True)
-    def retractPiston(self)
+    def retractPiston(self):
         rope_lock_solenoid.set(wpilib.DoubleSolenoid.KReverse)
 
     @timed_state(duration=1)
     def onMotor(self):
+        winch_motor_spin()
         self.next_state("ropeCaught")
-        winch_motor.set(1)
 
     @state
     def retractPiston(self):
-        rope_lock_solenoid.set(wpilib.DoubleSolenoid.KForward)
+        rope_lock_solenoid_reverse()
         self.next_state("rotateWinch")
 
     @state
-    def rotateWinch(self)
+    def rotateWinch(selfl):
         current = winch_motor.getOutputCurrent()
         if current > 5:
+            rope_lock_solenoid_forward()
             self.next_state("firePiston")
         else:
             rotateWinch
 
     @state
-    def firePiston(self)
+    def firePiston(self):
         if reset button pressed:
-            go to retractPiston
+            self.next_state("retractPiston")
         else:
             self.next_state("touchpadPressed")
 
     @state
-    def touchpadPressed(self)
+    def touchpadPressed(self):
         if touchpadPressed:
             self.next_state("stopMotor")
         else:
-            rotateWinch
+            rotateWinch()
 
     @state
-    def stopMotor(self)
+    def stopMotor(self):
         finished
 
     def putDashboard(self):
