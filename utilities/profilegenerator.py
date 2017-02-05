@@ -1,6 +1,12 @@
 from components.chassis import Chassis
 import math
 
+def generate_interpolation_trajectory(x_start, x_final, v_max):
+    x = x_final - x_start
+    num_segments = int(x/v_max*Chassis.motion_profile_speed)
+    segments = [(i/num_segments, v_max, 0) for i in range(0, num_segments+1)]
+    return segments
+
 def generate_trapezoidal_trajectory(
         x_start, v_start, x_final, v_final, v_max, a_pos, a_neg):
     """Generate a 1d trapezoidal profile.
