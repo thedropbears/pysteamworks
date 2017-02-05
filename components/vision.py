@@ -87,7 +87,7 @@ def vision_loop(data_array):
                 data_array[1] = time
             cvSource.putFrame(img)
 
-def find_target(img, lower=np.array([135/2, 0, 0]), upper=np.array([180/2, 255, 255])):
+def find_target(img, lower=np.array([130/2, 0, 0]), upper=np.array([180/2, 255, 255])):
     #Converting from RGB to HSV.
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
