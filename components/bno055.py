@@ -112,7 +112,7 @@ class BNO055(GyroBase):
     def getHeadingRate(self):
         return -self.getEuler(BNO055.BNO055_GYRO_DATA_Z_LSB_ADDR)
 
-    def resetHeading(self, heading=math.pi):
+    def resetHeading(self, heading=0):
         self.offset = self.getRawHeading() - heading
 
     def execute(self):
