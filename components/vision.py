@@ -2,7 +2,6 @@ import multiprocessing.sharedctypes
 
 import numpy as np
 import cv2
-import cscore as cs
 import hal
 import wpilib
 
@@ -56,6 +55,8 @@ class Vision:
 
 
 def vision_loop(data_array, run_event):
+    import cscore as cs
+
     camera = cs.UsbCamera("usbcam", 0)
     camera.setVideoMode(cs.VideoMode.PixelFormat.kMJPEG, Vision.width, Vision.height, 20)
 
