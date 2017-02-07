@@ -95,16 +95,12 @@ def vision_loop(data_array, run_event):
             cvSource.putFrame(img)
 
 
-def find_target(img):
+def find_target(img, lower=np.array([110/2, 40, 70]), upper=np.array([150/2, 200, 200])):
     #Converting from RGB to HSV.
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    #Setting the tolerances for the mask.
-    upper_green = np.array([150/2, 200, 200])
-    lower_green = np.array([110/2, 40, 70])
-
     #Making the mask.
-    mask = cv2.inRange(hsv, lower_green, upper_green)
+    mask = cv2.inRange(hsv, lower, upper)
 
     #Combining the mask with the frame
     res = cv2.bitwise_and(img, img, mask=mask)
