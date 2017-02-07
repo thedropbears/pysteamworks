@@ -78,18 +78,21 @@ def vision_loop(data_array, run_event):
     #Setting the exposure.
     camera.setExposureManual(10)
 
+    # Images are big. Preallocate an array to fill the image with.
+    frame = np.zeros(shape=(Vision.height, Vision.width, 3), dtype=np.uint8)
+
     while run_event.is_set():
-        frame = np.zeros(shape=(Vision.height, Vision.width, 3), dtype=np.uint8)
         time, frame = cvsink.grabFrame(frame)
         if time == 0:
-            frame = np.zeros(shape=(Vision.height, Vision.width, 3), dtype=np.uint8)
+            # We got an error; report it through the output stream.
+            cvSource.notifyError(cvsink.getError())
         else:
-            x, frame = find_target(frame)
+            x, img = find_target(frame)
             if x is not None:
                 loc = int((x+1) * Vision.width // 2)
                 cv2.line(frame, (loc, 60), (loc, 180), (255, 255, 0), thickness=2, lineType=8, shift=0)
                 data_array[0] = x
-        cvSource.putFrame(frame)
+            cvSource.putFrame(img)
 
 
 def find_target(img):
