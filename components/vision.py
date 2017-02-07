@@ -9,9 +9,6 @@ from magicbot import tunable
 
 
 class Vision:
-    width = 320
-    height = 240
-    fps = 25
     k = tunable(0.5)
 
     def __init__(self):
@@ -60,7 +57,10 @@ class Vision:
 def vision_loop(data_array, run_event):
     import cscore as cs
 
-    videomode = cs.VideoMode.PixelFormat.kMJPEG, Vision.width, Vision.height, Vision.fps
+    width = 320
+    height = 240
+    fps = 25
+    videomode = cs.VideoMode.PixelFormat.kMJPEG, width, height, fps
 
     camera = cs.UsbCamera("usbcam", 0)
     camera.setVideoMode(*videomode)
@@ -79,7 +79,7 @@ def vision_loop(data_array, run_event):
     camera.setExposureManual(10)
 
     # Images are big. Preallocate an array to fill the image with.
-    frame = np.zeros(shape=(Vision.height, Vision.width, 3), dtype=np.uint8)
+    frame = np.zeros(shape=(height, width, 3), dtype=np.uint8)
 
     while run_event.is_set():
         time, frame = cvsink.grabFrame(frame)
@@ -89,7 +89,7 @@ def vision_loop(data_array, run_event):
         else:
             x, img = find_target(frame)
             if x is not None:
-                loc = int((x+1) * Vision.width // 2)
+                loc = int((x+1) * width // 2)
                 cv2.line(frame, (loc, 60), (loc, 180), (255, 255, 0), thickness=2, lineType=8, shift=0)
                 data_array[0] = x
             cvSource.putFrame(img)
