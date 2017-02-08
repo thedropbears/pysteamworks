@@ -6,6 +6,7 @@ class GearDepositionDevice:
     # create solenoids or double solenoids here as we need them, then
     # initialize them in createObjects in robot.py
     sd = NetworkTable
+  #  gear_placement_solenoid = DoubleSolenoid
 
     def __init__(self):
         pass
@@ -25,6 +26,11 @@ class GearDepositionDevice:
 
     def placeGear(self):
         pass
+       # self.rope_lock_solenoid.set(DoubleSolenoid.Value.kForward)
+    
+    def reversePiston(self):
+        pass
+     #   self.rope_lock_solenoid.set(DoubleSolenoid.Value.kReverse)
         
     def execute(self):
         """Run at the end of every control loop iteration"""

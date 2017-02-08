@@ -2,12 +2,15 @@ from ctre import CANTalon
 
 from networktables import NetworkTable
 
+from components.vision import Vision
+
 class GearAlignmentDevice:
 
     # this is an injected variable only access after initialization of the
     # robot (so not in __init__)
     gear_alignment_motor = CANTalon
     sd = NetworkTable
+    vision = Vision
 
     def __init__(self):
         pass
@@ -33,3 +36,13 @@ class GearAlignmentDevice:
     def execute(self):
         """Run at the end of every control loop iteration"""
         pass
+
+    def execute(self):
+        """Run at the end of every control loop iteration"""
+        if -0.1 <= self.vision.x <= 0.1:
+            self.stopMotors()
+        else:
+            if self.vision.x > 0.1:
+                self.align(1)
+            if self.vision.x < 0.1:
+                self.align(-1)

@@ -3,6 +3,7 @@ from components.geardepositiondevice import GearDepositionDevice
 from components.gearalignmentdevice import GearAlignmentDevice
 from networktables import NetworkTable
 from components.vision import Vision
+import time
 
 class ManipulateGear(StateMachine):
     gearalignmentdevice = GearAlignmentDevice
@@ -18,19 +19,26 @@ class ManipulateGear(StateMachine):
         # do something to align with the peg
         # now move to the next state
         #move forward
-        if not vision.x > 0.2 or not vision.x < -0.2:
-            GearAlignmentDevice.align(vision)
+        if not self.vision.x > 0.05 or not self.vision.x < -0.05:
+            self.gearalignmentdevice.align(self.vision.x)
         else:
-            GearAlignmentDevice.stopMotors()
-            self.next_state("deposit_gear")
+            self.gearalignmentdevice.stopMotors()
+            self.next_state("endstate")
 
     @state
-    def deposit_gear(self):
+    def endstate(self):
         pass
-        '''
+
+'''    def inrange(self):
         if lidar < 1: #unknown
-            geardepositiondevice.placeGear()'''
+            self.next_state("usePistons")
+
+    @state    
+    def usePistons(self):
+        geardepositiondevice.placeGear()
+        time.sleep(3)
+        geardepositiondevice.reversePiston()
 
     def put_dashboard(self):
         """Update all the variables on the smart dashboard"""
-        pass
+        pass'''
