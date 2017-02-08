@@ -31,11 +31,7 @@ class GearAlignmentDevice:
         self.gear_alignment_motor.set(value)
 
     def stopMotors(self):
-        self.gear_alignment_motor.stopMotor()
-
-    def execute(self):
-        """Run at the end of every control loop iteration"""
-        pass
+        self.gear_alignment_motor.set(0)
 
     def execute(self):
         """Run at the end of every control loop iteration"""
