@@ -12,7 +12,7 @@ class Vision:
     k = tunable(0.5)
 
     def __init__(self):
-        self._data_array = multiprocessing.sharedctypes.RawArray("d", [0.0])
+        self._data_array = multiprocessing.sharedctypes.RawArray("d", [0.0, 0.0])
 
         if not hal.isSimulation():
             self._process_run_event = multiprocessing.Event()
@@ -53,6 +53,10 @@ class Vision:
     def x(self):
         return self._data_array[0]
 
+    @property
+    def time(self):
+        return self._data_array[1]
+
 
 def vision_loop(data_array, run_event):
     import cscore as cs
@@ -92,6 +96,7 @@ def vision_loop(data_array, run_event):
                 loc = int((x+1) * width // 2)
                 cv2.line(frame, (loc, 60), (loc, 180), (255, 255, 0), thickness=2, lineType=8, shift=0)
                 data_array[0] = x
+                data_array[1] = time
             cvSource.putFrame(img)
 
 
