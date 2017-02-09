@@ -94,7 +94,7 @@ def vision_loop(data_array, run_event):
             x, img = find_target(frame)
             if x is not None:
                 loc = int((x+1) * width // 2)
-                cv2.line(frame, (loc, 60), (loc, 180), (255, 255, 0), thickness=2, lineType=8, shift=0)
+                cv2.line(img, (loc, 60), (loc, 180), (255, 255, 0), thickness=2, lineType=8, shift=0)
                 data_array[0] = x
                 data_array[1] = time
             cvSource.putFrame(img)
