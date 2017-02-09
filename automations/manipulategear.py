@@ -18,27 +18,32 @@ class ManipulateGear(StateMachine):
     def peg_align(self):
         # do something to align with the peg
         # now move to the next state
-        #move forward
-        if not self.vision.x > 0.05 or not self.vision.x < -0.05:
-            self.gearalignmentdevice.align(self.vision.x)
+        #move forward      
+        if -0.1 <= self.vision.x <= 0.1:
+            self.gearalignmentdevicestopMotors()
+            aligned = True
+            self.next_state("usePistons")
+        elif -0.3 <= self.vision.x <= 0.3:
+            if self.vision.x > 0.1:
+                self.gearalignmentdevice.align(0.5)
+            if self.vision.x < 0.1:
+                self.gearalignmentdevice.align(-0.5)
+            aligned = False
         else:
-            self.gearalignmentdevice.stopMotors()
-            self.next_state("endstate")
+            if self.vision.x > 0.1:
+                self.gearalignmentdevice.align(1)
+            if self.vision.x < 0.1:
+                self.gearalignmentdevice.align(-1)
+            aligned = False
 
     @state
-    def endstate(self):
-        pass
-
-'''    def inrange(self):
-        if lidar < 1: #unknown
-            self.next_state("usePistons")
-
-    @state    
     def usePistons(self):
-        geardepositiondevice.placeGear()
-        time.sleep(3)
-        geardepositiondevice.reversePiston()
+        self.geardepositiondevice.push_gear()
+        self.geardepositiondevice.drop_gear()
+        # Wait 3 seconds (add in a timed_state), then
+        self.geardepositiondevice.retract_gear()
+        self.geardepositiondevice.lock_gear()
 
     def put_dashboard(self):
         """Update all the variables on the smart dashboard"""
-        pass'''
+        pass

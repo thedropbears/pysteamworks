@@ -35,10 +35,17 @@ class GearAlignmentDevice:
 
     def execute(self):
         """Run at the end of every control loop iteration"""
+        '''
         if -0.1 <= self.vision.x <= 0.1:
             self.stopMotors()
+        elif -0.3 <= self.vision.x <= 0.3:
+            if self.vision.x > 0.1:
+                self.align(0.5)
+            if self.vision.x < 0.1:
+                self.align(-0.5    
         else:
             if self.vision.x > 0.1:
                 self.align(1)
             if self.vision.x < 0.1:
                 self.align(-1)
+''' 

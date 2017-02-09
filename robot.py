@@ -71,9 +71,10 @@ class Robot(magicbot.MagicRobot):
         self.drive_motor_d = CANTalon(3)
         self.gear_alignment_motor = CANTalon(15)
         self.winch_motor = CANTalon(11)
-
         self.rope_lock_solenoid = wpilib.DoubleSolenoid(forwardChannel=0,
                 reverseChannel=1)
+        self.gear_push_solenoid = wpilib.Solenoid(2)
+        self.gear_drop_solenoid = wpilib.Solenoid(3)
 
         self.test_trajectory = generate_trapezoidal_trajectory(
                 0, 0, 3, 0, Chassis.max_vel, 1, -1)
