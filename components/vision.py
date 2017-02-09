@@ -3,7 +3,6 @@ import multiprocessing.sharedctypes
 import numpy as np
 import cv2
 import hal
-import wpilib
 
 from magicbot import tunable
 
@@ -15,21 +14,10 @@ class Vision:
         self._data_array = multiprocessing.sharedctypes.RawArray("d", [0.0, 0.0])
 
         if not hal.isSimulation():
-            self._process_run_event = multiprocessing.Event()
-            self._process_run_event.set()
-            self._process = multiprocessing.Process(target=vision_loop, args=(self._data_array, self._process_run_event))
+            self._process = multiprocessing.Process(target=vision_loop, args=(self._data_array,), daemon=True)
             self._process.start()
 
         self.smoothed_x = 0.0
-
-        # Register with Resource so teardown works
-        wpilib.Resource._add_global_resource(self)
-
-    def free(self):
-        if not hal.isSimulation():
-            self._process_run_event.clear()
-            self._process.join(0.1)
-            self._process.terminate()
 
     def setup(self):
         """Run just after createObjects.
@@ -58,7 +46,7 @@ class Vision:
         return self._data_array[1]
 
 
-def vision_loop(data_array, run_event):
+def vision_loop(data_array):
     import cscore as cs
 
     width = 320
@@ -85,7 +73,7 @@ def vision_loop(data_array, run_event):
     # Images are big. Preallocate an array to fill the image with.
     frame = np.zeros(shape=(height, width, 3), dtype=np.uint8)
 
-    while run_event.is_set():
+    while True:
         time, frame = cvsink.grabFrame(frame)
         if time == 0:
             # We got an error; report it through the output stream.
