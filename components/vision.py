@@ -68,7 +68,7 @@ def vision_loop(data_array):
     cvmjpegServer.setSource(cvSource)
 
     #Setting the exposure.
-    camera.setExposureManual(0)
+    camera.setExposureManual(10)
 
     # Images are big. Preallocate an array to fill the image with.
     frame = np.zeros(shape=(height, width, 3), dtype=np.uint8)
@@ -87,11 +87,8 @@ def vision_loop(data_array):
                 data_array[1] = time
             cvSource.putFrame(img)
 
-<<<<<<< HEAD
-def find_target(img, lower=np.array([110/2, 0, 0]), upper=np.array([155/2, 255, 255])):
-=======
 def find_target(img, lower=np.array([110/2, 50, 50]), upper=np.array([155/2, 255, 255])):
->>>>>>> Change HSV values.
+
     #Converting from RGB to HSV.
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
