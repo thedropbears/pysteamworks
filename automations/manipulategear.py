@@ -14,21 +14,23 @@ class ManipulateGear(StateMachine):
   #  lidar = int
 
     # example first state
-    @state(first=True)
+    @state(first=True, must_finish=True)
     def peg_align(self):
         # do something to align with the peg
         # now move to the next state
         #move forward      
         if -0.1 <= self.vision.x <= 0.1:
-            self.gearalignmentdevicestopMotors()
+            self.gearalignmentdevice.stopMotors()
             aligned = True
-            self.next_state("usePistons")
+            #self.next_state("usePistons")
         elif -0.3 <= self.vision.x <= 0.3:
             if self.vision.x > 0.1:
                 self.gearalignmentdevice.align(0.5)
             if self.vision.x < 0.1:
                 self.gearalignmentdevice.align(-0.5)
             aligned = False
+        elif False:
+            self.next_state("usePistons")
         else:
             if self.vision.x > 0.1:
                 self.gearalignmentdevice.align(1)
