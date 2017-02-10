@@ -79,8 +79,8 @@ def vision_loop(data_array):
             # We got an error; report it through the output stream.
             cvSource.notifyError(cvsink.getError())
         else:
-            x, img = find_target(frame)
-            if x is not None:
+            x, img = find_target(frame, width, height)
+            if green_pixels > 0.001:
                 loc = int((x+1) * width // 2)
                 cv2.line(img, (loc, 60), (loc, 180), (255, 255, 0), thickness=2, lineType=8, shift=0)
                 data_array[0] = x
@@ -99,11 +99,14 @@ def find_target(img, lower=np.array([110/2, 50, 50]), upper=np.array([155/2, 255
     res = cv2.bitwise_and(img, img, mask=mask)
 
     height, width = mask.shape
+
+    green_pixels = np.sum(mask)/(height*width)
+
     X, Y = np.meshgrid(range(0, width), range(0, height))
 
-    try:
+    if green_pixels > 0.001:
         x_coord = int((X * mask).sum() / mask.sum())
-    except ValueError:
+    else:
         return None, res
 
     pos = 2 * x_coord / width - 1
