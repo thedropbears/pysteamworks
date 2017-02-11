@@ -11,7 +11,7 @@ class ManipulateGear(StateMachine):
     sd = NetworkTable
     aligned = False
     vision = Vision
-    unchecked = True 
+    checked = False
   #  lidar = int
 
     # example first state
@@ -55,19 +55,14 @@ class ManipulateGear(StateMachine):
         pass
 
 '''
-    @state(must_finish=True)
-    def measureDistance(self):
-        if self.unchecked:
-            self.next_state("pegAlign")
-            self.unchecked = False
-        elif lidar < 5:
-            self.next_state("usePistons")
-'''
-'''
     @state
-    def closePistons(self):
-        # Wait 3 seconds (add in a timed_state), then
-        self.geardepositiondevice.retract_gear()
-        self.geardepositiondevice.lock_gear()
-        print("pulled")
+    def measureDistance(self):
+        if lidar < 5:
+            if not self.checked:
+                self.next_state("pegAlign")
+                self.checked = True
+            else:
+                self.next_state("usePistons")
+        else:
+            self.next_state("pegAlign")
 '''
