@@ -32,7 +32,7 @@ class AutonomousWinch(StateMachine):
 
     @state
     def touchpadPressed(self):
-        if on_rope_engaged():
+        if on_touchpad_engaged():
             self.next_state("stopMotor")
         else:
             rotateWinch(1)
