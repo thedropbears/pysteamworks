@@ -120,7 +120,7 @@ class Robot(magicbot.MagicRobot):
         try:
             if self.debounce(2, gamepad=True):
                 #perform some action
-                self.winch_automation.engage()
+                self.winch_automation.engage(force=True)
         except:
             self.onException()
 
