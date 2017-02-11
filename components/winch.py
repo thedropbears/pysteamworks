@@ -9,10 +9,14 @@ class Winch:
 
     def __init__(self):
         super().__init__()
-
-    def rotate_winch(self):
-        """Spin motor forever"""
-        self.winch_motor.set(1)
+    
+    def on_rope_engaged(self):
+        """Return wether the current is over 5 as a boolean"""
+        return self.winch_motor.getOutputCurrent() > 0.5
+    
+    def rotate_winch(self, value):
+        """Rotate winch motor with half speed"""
+        self.winch_motor.set(value)
 
     def rope_lock_solenoid_reverse(self):
         """Reverse piston"""

@@ -1,41 +1,34 @@
-import components.winch
-from magicbot import StateMachine, state
-from components import GearAligmentDevice, GearDepositionDevice
+from components.winch import Winch
+from magicbot import StateMachine, state, timed_state
 from networktables import NetworkTable
 from ctre import CANTalon
 
 
 class AutonomousWinch(StateMachine):
-    self.engage()
-
-    def driver_press(self):
-        current = winch_motor.getOutputCurrent()
+    winch = Winch
 
     @state(first=True)
     def retractPiston(self):
-        rope_lock_solenoid.set(wpilib.DoubleSolenoid.KReverse)
+        self.winch.rope_lock_solenoid_reverse()
+        self.next_state("onMotor")
 
-    @timed_state(duration=1)
+    @timed_state(duration=1, must_finish=True, next_state="rotateWinch")
     def onMotor(self):
-        winch_motor_spin()
-        self.next_state("ropeCaught")
+        self.winch.rotate_winch(0.08)
 
-    @state
-    def retractPiston(self):
-        rope_lock_solenoid_reverse()
-        self.next_state("rotateWinch")
-
-    @state
-    def rotateWinch(selfl):
-        current = winch_motor.getOutputCurrent()
-        if current > 5:
-            rope_lock_solenoid_forward()
+    @state(must_finish=True)
+    def rotateWinch(self):
+        if self.winch.on_rope_engaged():
+            self.winch.rope_lock_solenoid_forward()
+            self.winch.rotate_winch(1)
             self.next_state("firePiston")
         else:
-            rotateWinch
+            self.winch.rotate_winch(0.08)
+            print(self.winch.winch_motor.getOutputCurrent())
 
     @state
     def firePiston(self):
+        pass
 #        if reset button pressed:
 #            self.next_state("retractPiston")
 #        else:
@@ -43,6 +36,7 @@ class AutonomousWinch(StateMachine):
 
     @state
     def touchpadPressed(self):
+        pass
 #        if touchpadPressed:
 #            self.next_state("stopMotor")
 #        else:
@@ -50,6 +44,7 @@ class AutonomousWinch(StateMachine):
 
     @state
     def stopMotor(self):
+        pass
  #       finished
 
     def putDashboard(self):
