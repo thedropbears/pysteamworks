@@ -1,7 +1,6 @@
 from components.winch import Winch
 from magicbot import StateMachine, state, timed_state
 from networktables import NetworkTable
-from ctre import CANTalon
 
 
 class AutonomousWinch(StateMachine):
@@ -28,24 +27,20 @@ class AutonomousWinch(StateMachine):
 
     @state
     def firePiston(self):
-        pass
-#        if reset button pressed:
-#            self.next_state("retractPiston")
-#        else:
-#            self.next_state("touchpadPressed")
+        self.winch.rope_lock_solenoid_forward()
+        self.next_state("touchpadPressed")
 
     @state
     def touchpadPressed(self):
-        pass
-#        if touchpadPressed:
-#            self.next_state("stopMotor")
-#        else:
-#            rotateWinch()
+        if on_rope_engaged():
+            self.next_state("stopMotor")
+        else:
+            rotateWinch(1)
 
     @state
     def stopMotor(self):
         pass
- #       finished
+#       finished
 
     def putDashboard(self):
         """Update all the variables on the smart dashboard"""
