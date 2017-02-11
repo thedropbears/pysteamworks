@@ -17,7 +17,7 @@ class Winch:
 
     def on_touchpad_engaged(self):
         """Return wether the current is over 2 as a boolean"""
-        return self.win_motor.getOutputCurrent() > 1
+        return self.winch_motor.getOutputCurrent() > 1
 
     def rotate_winch(self, value):
         """Rotate winch motor with half speed"""
