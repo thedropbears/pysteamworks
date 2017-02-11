@@ -36,21 +36,21 @@ class AutonomousWinch(StateMachine):
 
     @state
     def firePiston(self):
-        if reset button pressed:
-            self.next_state("retractPiston")
-        else:
-            self.next_state("touchpadPressed")
+#        if reset button pressed:
+#            self.next_state("retractPiston")
+#        else:
+#            self.next_state("touchpadPressed")
 
     @state
     def touchpadPressed(self):
-        if touchpadPressed:
-            self.next_state("stopMotor")
-        else:
-            rotateWinch()
+#        if touchpadPressed:
+#            self.next_state("stopMotor")
+#        else:
+#            rotateWinch()
 
     @state
     def stopMotor(self):
-        finished
+ #       finished
 
     def putDashboard(self):
         """Update all the variables on the smart dashboard"""
