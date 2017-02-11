@@ -24,7 +24,6 @@ class ManipulateGear(StateMachine):
         if -0.1 <= self.vision.x <= 0.1:
             self.gearalignmentdevice.stopMotors()
             aligned = True
-            print("aligned")
             self.next_state("openPistons")
         elif -0.3 <= self.vision.x <= 0.3:
             if self.vision.x > 0.1:
@@ -43,13 +42,11 @@ class ManipulateGear(StateMachine):
     def openPistons(self):
         self.geardepositiondevice.push_gear()
         self.geardepositiondevice.drop_gear()
-        print("pushed")
 
     @state(must_finish=True)
     def closePistons(self):
         self.geardepositiondevice.retract_gear()
         self.geardepositiondevice.lock_gear()
-        print("pulled")
         self.done()
         
     def put_dashboard(self):
