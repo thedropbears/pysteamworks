@@ -3,7 +3,6 @@ from components.geardepositiondevice import GearDepositionDevice
 from components.gearalignmentdevice import GearAlignmentDevice
 from networktables import NetworkTable
 from components.vision import Vision
-import time
 
 class ManipulateGear(StateMachine):
     gearalignmentdevice = GearAlignmentDevice
@@ -20,7 +19,6 @@ class ManipulateGear(StateMachine):
         # do something to align with the peg
         # now move to the next state
         #move forward
-        self.put_dashboard()
         if -0.1 <= self.vision.x <= 0.1:
             self.gearalignmentdevice.stopMotors()
             aligned = True
@@ -48,11 +46,9 @@ class ManipulateGear(StateMachine):
         self.geardepositiondevice.retract_gear()
         self.geardepositiondevice.lock_gear()
         self.done()
-        
+
     def put_dashboard(self):
         """Update all the variables on the smart dashboard"""
-     #   self.sd.putNumber("state", "recievingGear")
-        pass
 
 '''
     @state
