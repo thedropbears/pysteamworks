@@ -68,7 +68,7 @@ def vision_loop(data_array):
     cvmjpegServer.setSource(cvSource)
 
     #Setting the exposure.
-    camera.setExposureManual(10)
+    camera.setExposureManual(0)
 
     # Images are big. Preallocate an array to fill the image with.
     frame = np.zeros(shape=(height, width, 3), dtype=np.uint8)
