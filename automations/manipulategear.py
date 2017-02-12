@@ -19,11 +19,10 @@ class ManipulateGear(StateMachine):
         # do something to align with the peg
         # now move to the next state
         #move forward
-        print (self.range_finder.getDistance())
         if -0.1 <= self.vision.x <= 0.1:
             self.gearalignmentdevice.stopMotors()
             aligned = True
-            self.next_state("measureDistance")
+            self.next_state_now("measureDistance")
         elif -0.3 <= self.vision.x <= 0.3:
             if self.vision.x > 0.1:
                 self.gearalignmentdevice.align(0.5)
@@ -37,13 +36,16 @@ class ManipulateGear(StateMachine):
                 self.gearalignmentdevice.align(-1)
             aligned = False
 
-    @state
+    @state(must_finish=True)
     def measureDistance(self):
         if self.range_finder.getDistance() < 0.25:
+            print(self.range_finder.getDistance())
             if not self.checked:
-                self.next_state("pegAlign")
                 self.checked = True
+                print("checking")
+                self.next_state("pegAlign")
             else:
+                print("pushed")
                 self.next_state("openPistons")
         else:
             self.next_state("pegAlign")
