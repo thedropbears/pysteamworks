@@ -5,6 +5,7 @@ import wpilib
 
 from ctre import CANTalon
 
+from components.range_finder import RangeFinder
 from components.chassis import Chassis
 from components.bno055 import BNO055
 from components.gearalignmentdevice import GearAlignmentDevice
@@ -33,6 +34,7 @@ class Robot(magicbot.MagicRobot):
     manipulategear = ManipulateGear
     winch = Winch
     profilefollower = ProfileFollower
+    range_finder = RangeFinder
 
     def createObjects(self):
         '''Create motors and stuff here'''
@@ -89,7 +91,7 @@ class Robot(magicbot.MagicRobot):
     def teleopInit(self):
         '''Called when teleop starts; optional'''
         pass
-    
+
     def disabledPeriodic(self):
         self.putData()
 
