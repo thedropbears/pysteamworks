@@ -39,13 +39,10 @@ class ManipulateGear(StateMachine):
     @state(must_finish=True)
     def measureDistance(self):
         if self.range_finder.getDistance() < 0.25:
-            print(self.range_finder.getDistance())
             if not self.checked:
                 self.checked = True
-                print("checking")
                 self.next_state("pegAlign")
             else:
-                print("pushed")
                 self.next_state("openPistons")
         else:
             self.next_state("pegAlign")
