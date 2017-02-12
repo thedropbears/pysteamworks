@@ -22,8 +22,8 @@ class GearAlignmentDevice:
 
     def on_enable(self):
         """Run every time the robot transitions to being enabled"""
-        self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.Position)
-        self.gear_alignment_motor.setFeedbackDevice(CANTalon.FeedbackDevice.QuadEncoder)
+        #self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.Position)
+        #self.gear_alignment_motor.setFeedbackDevice(CANTalon.FeedbackDevice.QuadEncoder)
     def on_disable(self):
         """Run every time the robot transitions to being disabled"""
         pass
