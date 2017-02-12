@@ -4,6 +4,7 @@ from components.gearalignmentdevice import GearAlignmentDevice
 from networktables import NetworkTable
 from components.vision import Vision
 from components.range_finder import RangeFinder
+import time
 
 class ManipulateGear(StateMachine):
     gearalignmentdevice = GearAlignmentDevice
@@ -50,12 +51,14 @@ class ManipulateGear(StateMachine):
     @timed_state(duration=3.0, next_state="closePistons", must_finish=True)
     def openPistons(self):
         self.geardepositiondevice.push_gear()
+        time.sleep(0.1)
         self.geardepositiondevice.drop_gear()
 
     @state(must_finish=True)
     def closePistons(self):
-        self.geardepositiondevice.retract_gear()
         self.geardepositiondevice.lock_gear()
+        time.sleep(0.1)
+        self.geardepositiondevice.retract_gear()
         self.done()
 
     def put_dashboard(self):
