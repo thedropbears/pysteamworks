@@ -18,29 +18,29 @@ class AutonomousWinch(StateMachine):
     @state(must_finish=True)
     def rotateWinch(self):
         if self.winch.on_rope_engaged():
-            self.winch.rope_lock_solenoid_forward()
-            self.winch.rotate_winch(1)
             self.next_state("firePiston")
         else:
             self.winch.rotate_winch(0.08)
-            print(self.winch.winch_motor.getOutputCurrent())
 
-    @state
+    @state(must_finish=True)
     def firePiston(self):
         self.winch.rope_lock_solenoid_forward()
-        self.next_state("touchpadPressed")
+        self.winch.rotate_winch(1)
+        self.next_state("onMotorFull")
 
-    @state
+    @timed_state(duration=1, must_finish=True, next_state="touchpadPressed")
+    def onMotorFull(self):
+        pass
+
+    @state(must_finish=True)
     def touchpadPressed(self):
         if self.winch.on_touchpad_engaged():
             self.next_state("stopMotor")
-        else:
-            self.winch.rotateWinch(1)
 
-    @state
+    @state(must_finish=True)
     def stopMotor(self):
-        pass
-#       finished
+        self.winch.rotate_winch(0)
+        self.done()
 
     def putDashboard(self):
         """Update all the variables on the smart dashboard"""
