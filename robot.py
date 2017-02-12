@@ -14,6 +14,7 @@ from components.vision import Vision
 from components.winch import Winch
 from automations.manipulategear import ManipulateGear
 from automations.profilefollower import ProfileFollower
+from automations.winchautomation import AutonomousWinch
 
 from utilities.profilegenerator import generate_trapezoidal_trajectory
 
@@ -29,6 +30,7 @@ class Robot(magicbot.MagicRobot):
     chassis = Chassis
     gearalignmentdevice = GearAlignmentDevice
     geardepositiondevice = GearDepositionDevice
+    winch_automation = AutonomousWinch
     manipulategear = ManipulateGear
     vision = Vision
     manipulategear = ManipulateGear
@@ -112,6 +114,13 @@ class Robot(magicbot.MagicRobot):
             if self.debounce(1, gamepad=True):
                 #perform some action
                 self.manipulategear.engage()
+        except:
+            self.onException()
+        
+        try:
+            if self.debounce(2, gamepad=True):
+                #perform some action
+                self.winch_automation.engage()
         except:
             self.onException()
 
