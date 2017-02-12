@@ -82,7 +82,6 @@ def vision_loop(data_array):
             cvSource.notifyError(cvsink.getError())
         else:
             x, img, masked_ratio = find_target(frame)
-            print(masked_ratio)
             if masked_ratio > MIN_MASKED_RATIO:
                 loc = int((x+1) * width // 2)
                 cv2.line(img, (loc, 60), (loc, 180), (255, 255, 0), thickness=2, lineType=8, shift=0)
