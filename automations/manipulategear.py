@@ -20,6 +20,7 @@ class ManipulateGear(StateMachine):
         # do something to align with the peg
         # now move to the next state
         #move forward
+        self.sd.putString("state", "unloadingGear")
         self.put_dashboard()
         if -0.1 <= self.vision.x <= 0.1:
             self.gearalignmentdevice.stopMotors()
@@ -63,6 +64,7 @@ class ManipulateGear(StateMachine):
         self.geardepositiondevice.lock_gear()
         time.sleep(0.1)
         self.geardepositiondevice.retract_gear()
+        self.sd.putString("state", "stationary")
         self.done()
 
     def put_dashboard(self):

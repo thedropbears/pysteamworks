@@ -90,11 +90,11 @@ class Robot(magicbot.MagicRobot):
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
-        pass
+        self.sd.putString("state", "stationary")
 
     def disabledPeriodic(self):
         self.putData()
-
+        self.sd.putString("state", "stationary")
     def teleopPeriodic(self):
         '''Called on each iteration of the control loop'''
         self.putData()
@@ -122,7 +122,6 @@ class Robot(magicbot.MagicRobot):
         try:
             if self.debounce(2, gamepad=True):
                 #perform some action
-                self.sd.putString("state", "climbing")
                 self.winch_automation.engage(force=True)
         except:
             self.onException()

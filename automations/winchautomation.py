@@ -7,6 +7,7 @@ class AutonomousWinch(StateMachine):
 
     @state(first=True)
     def retractPiston(self):
+        self.sd.putString("state", "climbing")
         self.winch.rope_lock_solenoid_reverse()
         self.next_state("onMotor")
 
@@ -39,4 +40,5 @@ class AutonomousWinch(StateMachine):
     @state(must_finish=True)
     def stopMotor(self):
         self.winch.rotate_winch(0)
+        self.sd.putString("state", "stationary")
         self.done()
