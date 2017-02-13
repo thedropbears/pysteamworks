@@ -1,16 +1,13 @@
 from components.winch import Winch
 from magicbot import StateMachine, state, timed_state
-from networktables import NetworkTable
 
 
 class AutonomousWinch(StateMachine):
     winch = Winch
-    sd = NetworkTable
 
     @state(first=True)
     def retractPiston(self):
         self.winch.rope_lock_solenoid_reverse()
-        self.sd.putString("state", "climbing")
         self.next_state("onMotor")
 
     @timed_state(duration=1, must_finish=True, next_state="rotateWinch")
@@ -42,5 +39,4 @@ class AutonomousWinch(StateMachine):
     @state(must_finish=True)
     def stopMotor(self):
         self.winch.rotate_winch(0)
-        self.sd.putString("state", "stationary")
         self.done()
