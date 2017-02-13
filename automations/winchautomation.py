@@ -13,24 +13,22 @@ class AutonomousWinch(StateMachine):
         self.winch.rope_lock_solenoid_reverse()
         self.next_state("onMotor")
 
-    @timed_state(duration=1, must_finish=True, next_state="rotateWinch")
+    @timed_state(duration=2, must_finish=True, next_state="rotateWinch")
     def onMotor(self):
-        self.winch.rotate_winch(0.08)
+        self.winch.rotate_winch(0.3)    #set rope catching speed
 
     @state(must_finish=True)
     def rotateWinch(self):
         if self.winch.on_rope_engaged():
             self.next_state("firePiston")
-        else:
-            self.winch.rotate_winch(0.08)
 
     @state(must_finish=True)
     def firePiston(self):
         self.winch.rope_lock_solenoid_forward()
-        self.winch.rotate_winch(1)
+        self.winch.rotate_winch(0.8)    #set climbing speed
         self.next_state("onMotorFull")
 
-    @timed_state(duration=1, must_finish=True, next_state="touchpadPressed")
+    @timed_state(duration=2, must_finish=True, next_state="touchpadPressed")
     def onMotorFull(self):
         pass
 

@@ -73,8 +73,9 @@ class Robot(magicbot.MagicRobot):
         self.drive_motor_b = CANTalon(5)
         self.drive_motor_c = CANTalon(4)
         self.drive_motor_d = CANTalon(3)
-        self.gear_alignment_motor = CANTalon(15)
-        self.winch_motor = CANTalon(14)
+        self.gear_alignment_motor = CANTalon(14)
+        self.winch_motor = CANTalon(11)
+        self.winch_motor.setInverted(True)
         self.rope_lock_solenoid = wpilib.DoubleSolenoid(forwardChannel=0,
                 reverseChannel=1)
         self.gear_push_solenoid = wpilib.Solenoid(2)
@@ -95,9 +96,12 @@ class Robot(magicbot.MagicRobot):
     def disabledPeriodic(self):
         self.putData()
         self.sd.putString("state", "stationary")
+
     def teleopPeriodic(self):
         '''Called on each iteration of the control loop'''
         self.putData()
+        #self.winch_motor.set(1)
+        self.sd.putNumber("climbCurrent", self.winch_motor.getOutputCurrent())
 
         # if you want to get access to the buttons,
         # you should be doing it like so:
@@ -134,7 +138,7 @@ class Robot(magicbot.MagicRobot):
 
                 if self.winch_automation.is_executing:
                     self.winch_automation.done()
-                    self.winch.rotate_winch(0)
+                self.winch.rotate_winch(0)
 
                 if self.manipulategear.is_executing:
                     self.manipulategear.done()
@@ -142,6 +146,15 @@ class Robot(magicbot.MagicRobot):
                     
                 self.sd.putString("state", "stationary")
 
+        except:
+            self.onException()
+        
+        try:
+            if self.debounce(3, gamepad=True):
+                #perform some action
+
+                self.profilefollower.execute_queue()
+                self.winch_motor.set(-0.4)
         except:
             self.onException()
 
