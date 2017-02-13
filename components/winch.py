@@ -1,5 +1,4 @@
 from ctre import CANTalon
-from networktables import NetworkTable
 from wpilib import DoubleSolenoid
 
 

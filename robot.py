@@ -113,13 +113,15 @@ class Robot(magicbot.MagicRobot):
         try:
             if self.debounce(1, gamepad=True):
                 #perform some action
-                self.manipulategear.engage()
+                self.sd.putString("state", "unloadingGear")
+                self.profilefollower.execute_queue()
         except:
             self.onException()
         
         try:
             if self.debounce(2, gamepad=True):
                 #perform some action
+                self.sd.putString("state", "climbing")
                 self.winch_automation.engage(force=True)
         except:
             self.onException()

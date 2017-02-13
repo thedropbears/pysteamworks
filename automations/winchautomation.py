@@ -1,6 +1,5 @@
 from components.winch import Winch
 from magicbot import StateMachine, state, timed_state
-from networktables import NetworkTable
 
 
 class AutonomousWinch(StateMachine):
@@ -41,7 +40,3 @@ class AutonomousWinch(StateMachine):
     def stopMotor(self):
         self.winch.rotate_winch(0)
         self.done()
-
-    def putDashboard(self):
-        """Update all the variables on the smart dashboard"""
-        pass
