@@ -4,6 +4,7 @@ from magicbot import StateMachine, state, timed_state
 
 class AutonomousWinch(StateMachine):
     winch = Winch
+    sd = NetworkTable
 
     @state(first=True)
     def retractPiston(self):
