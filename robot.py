@@ -74,7 +74,7 @@ class Robot(magicbot.MagicRobot):
         self.drive_motor_c = CANTalon(4)
         self.drive_motor_d = CANTalon(3)
         self.gear_alignment_motor = CANTalon(15)
-        self.winch_motor = CANTalon(15)
+        self.winch_motor = CANTalon(14)
         self.rope_lock_solenoid = wpilib.DoubleSolenoid(forwardChannel=0,
                 reverseChannel=1)
         self.gear_push_solenoid = wpilib.Solenoid(2)
@@ -123,6 +123,23 @@ class Robot(magicbot.MagicRobot):
             if self.debounce(2, gamepad=True):
                 #perform some action
                 self.winch_automation.engage(force=True)
+        except:
+            self.onException()
+        
+        try:
+            if self.debounce(4, gamepad=True):
+                #perform some action
+
+                self.profilefollower.execute_queue()
+
+                if self.winch_automation.is_executing:
+                    self.winch_automation.done()
+                    self.winch.rotate_winch(0)
+
+                if self.manipulategear.is_executing:
+                    self.manipulategear.done()
+                    self.gearalignmentdevice.stopMotors()
+
         except:
             self.onException()
 

@@ -1,6 +1,7 @@
 from components.winch import Winch
 from magicbot import StateMachine, state, timed_state
-
+from networktables import NetworkTable
+ 
 
 class AutonomousWinch(StateMachine):
     winch = Winch
