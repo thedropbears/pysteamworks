@@ -42,7 +42,7 @@ class ManipulateGear(StateMachine):
     @state(must_finish=True)
     def measureDistance(self):
         self.put_dashboard()
-        if self.range_finder.getDistance() < 0.25:
+        if self.range_finder.getDistance() < 0.5:
             if not self.checked:
                 self.checked = True
                 self.next_state("pegAlign")
