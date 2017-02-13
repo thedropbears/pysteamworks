@@ -139,6 +139,8 @@ class Robot(magicbot.MagicRobot):
                 if self.manipulategear.is_executing:
                     self.manipulategear.done()
                     self.gearalignmentdevice.stopMotors()
+                    
+                self.sd.putString("state", "stationary")
 
         except:
             self.onException()
