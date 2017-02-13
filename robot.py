@@ -87,8 +87,6 @@ class Robot(magicbot.MagicRobot):
         # update the data on the smart dashboard
         # put the inputs to the dashboard
         self.sd.putNumber("gyro", self.bno055.getHeading())
-        self.sd.putNumber("vision_x", self.vision.x)
-        self.sd.putNumber("smoothed_vision_x", self.vision.smoothed_x)
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
@@ -113,13 +111,18 @@ class Robot(magicbot.MagicRobot):
         try:
             if self.debounce(1, gamepad=True):
                 #perform some action
+
                 self.profilefollower.execute_queue()
+
+                self.manipulategear.engage(force=True)
+
         except:
             self.onException()
         
         try:
             if self.debounce(2, gamepad=True):
                 #perform some action
+                self.sd.putString("state", "climbing")
                 self.winch_automation.engage(force=True)
         except:
             self.onException()

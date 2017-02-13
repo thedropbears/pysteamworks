@@ -20,6 +20,7 @@ class ManipulateGear(StateMachine):
         # do something to align with the peg
         # now move to the next state
         #move forward
+        self.put_dashboard()
         if -0.1 <= self.vision.x <= 0.1:
             self.gearalignmentdevice.stopMotors()
             aligned = True
@@ -39,6 +40,7 @@ class ManipulateGear(StateMachine):
 
     @state(must_finish=True)
     def measureDistance(self):
+        self.put_dashboard()
         if self.range_finder.getDistance() < 0.25:
             if not self.checked:
                 self.checked = True
@@ -50,12 +52,14 @@ class ManipulateGear(StateMachine):
 
     @timed_state(duration=3.0, next_state="closePistons", must_finish=True)
     def openPistons(self):
+        self.put_dashboard()
         self.geardepositiondevice.push_gear()
         time.sleep(0.1)
         self.geardepositiondevice.drop_gear()
 
     @state(must_finish=True)
     def closePistons(self):
+        self.put_dashboard()
         self.geardepositiondevice.lock_gear()
         time.sleep(0.1)
         self.geardepositiondevice.retract_gear()
@@ -63,4 +67,6 @@ class ManipulateGear(StateMachine):
 
     def put_dashboard(self):
         """Update all the variables on the smart dashboard"""
-
+        self.sd.putNumber("vision_x", self.vision.x)
+        self.sd.putNumber("smoothed_vision_x", self.vision.smoothed_x)
+        self.sd.putNumber("vision_y", self.range_finder.getDistance())
