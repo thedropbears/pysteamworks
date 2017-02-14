@@ -14,7 +14,7 @@ from components.vision import Vision
 from components.winch import Winch
 from automations.manipulategear import ManipulateGear
 from automations.profilefollower import ProfileFollower
-from automations.winchautomation import AutonomousWinch
+from automations.winchautomation import WinchAutomation
 
 from utilities.profilegenerator import generate_trapezoidal_trajectory
 
@@ -30,7 +30,7 @@ class Robot(magicbot.MagicRobot):
     chassis = Chassis
     gearalignmentdevice = GearAlignmentDevice
     geardepositiondevice = GearDepositionDevice
-    winch_automation = AutonomousWinch
+    winch_automation = WinchAutomation
     manipulategear = ManipulateGear
     vision = Vision
     manipulategear = ManipulateGear

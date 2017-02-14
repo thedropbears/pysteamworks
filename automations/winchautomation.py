@@ -3,7 +3,7 @@ from magicbot import StateMachine, state, timed_state
 from networktables import NetworkTable
  
 
-class AutonomousWinch(StateMachine):
+class WinchAutomation(StateMachine):
     winch = Winch
     sd = NetworkTable
 
@@ -14,18 +14,18 @@ class AutonomousWinch(StateMachine):
         self.next_state("on_motor")
 
     @timed_state(duration=2, must_finish=True, next_state="rotate_winch")
-    def on_motor(self):
+    def onMotor(self):
         self.winch.rotate_winch(0.3)
 
     @state(must_finish=True)
-    def rotateWinch(self):
+    def rotate_winch(self):
         if self.winch.on_rope_engaged():
             self.next_state("fire_piston")
 
     @state(must_finish=True)
     def fire_piston(self):
         self.winch.rope_lock_solenoid_forward()
-        self.winch.rotate_winch(0.8)    #set climbing speed
+        self.winch.rotate_winch(0.8)
         self.next_state("on_motor_full")
 
     @timed_state(duration=2, must_finish=True, next_state="touchpad_pressed")
