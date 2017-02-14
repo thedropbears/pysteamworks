@@ -4,7 +4,6 @@ from components.gearalignmentdevice import GearAlignmentDevice
 from networktables import NetworkTable
 from components.vision import Vision
 from components.range_finder import RangeFinder
-import time
 
 class ManipulateGear(StateMachine):
     gearalignmentdevice = GearAlignmentDevice
