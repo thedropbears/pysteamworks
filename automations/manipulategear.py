@@ -13,19 +13,19 @@ class ManipulateGear(StateMachine):
     sd = NetworkTable
     aligned = False
     vision = Vision
-    checked = False
-    # example first state
+
     @state(first=True, must_finish=True)
-    def pegAlign(self):
+    def align_peg(self):
         # do something to align with the peg
         # now move to the next state
         #move forward
         self.sd.putString("state", "unloadingGear")
         self.put_dashboard()
         if -0.1 <= self.vision.x <= 0.1:
-            self.gearalignmentdevice.stopMotors()
+            self.gearalignmentdevice.stop_motors()
             aligned = True
-            self.next_state_now("measureDistance")
+            if self.range_finder.getDistance() < 0.5:
+                self.next_state_now("push_gear")
         elif -0.3 <= self.vision.x <= 0.3:
             if self.vision.x > 0.1:
                 self.gearalignmentdevice.align(0.5)
@@ -39,31 +39,26 @@ class ManipulateGear(StateMachine):
                 self.gearalignmentdevice.align(-1)
             aligned = False
 
-    @state(must_finish=True)
-    def measureDistance(self):
-        self.put_dashboard()
-        if self.range_finder.getDistance() < 0.5:
-            if not self.checked:
-                self.checked = True
-                self.next_state("pegAlign")
-            else:
-                self.next_state("openPistons")
-        else:
-            self.next_state("pegAlign")
-
-    @timed_state(duration=3.0, next_state="closePistons", must_finish=True)
-    def openPistons(self):
+    @timed_state(duration=0.5, next_state="drop_gear", must_finish=True)
+    def push_gear(self):
         self.put_dashboard()
         self.geardepositiondevice.push_gear()
-        time.sleep(0.1)
+
+    @timed_state(duration=2.0, next_state="retract_gear", must_finish=True)
+    def drop_gear(self):
+        self.put_dashboard()
         self.geardepositiondevice.drop_gear()
 
-    @state(must_finish=True)
-    def closePistons(self):
+    @timed_state(duration=0.5, next_state="lock_gear", must_finish=True)
+    def retract_gear(self):
+        self.put_dashboard()
+        self.geardepositiondevice.drop_gear()
+
+    @state
+    def lock_gear(self):
         self.put_dashboard()
         self.geardepositiondevice.lock_gear()
-        time.sleep(0.1)
-        self.geardepositiondevice.retract_gear()
+
         self.sd.putString("state", "stationary")
         self.done()
 

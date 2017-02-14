@@ -31,7 +31,7 @@ class GearAlignmentDevice:
     def align(self, value):
         self.gear_alignment_motor.set(value)
 
-    def stopMotors(self):
+    def stop_motors(self):
         self.gear_alignment_motor.set(0)
 
     def execute(self):

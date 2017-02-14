@@ -142,8 +142,8 @@ class Robot(magicbot.MagicRobot):
 
                 if self.manipulategear.is_executing:
                     self.manipulategear.done()
-                    self.gearalignmentdevice.stopMotors()
-                    
+                    self.gearalignmentdevice.stop_motors()
+
                 self.sd.putString("state", "stationary")
 
         except:
@@ -154,6 +154,8 @@ class Robot(magicbot.MagicRobot):
                 #perform some action
 
                 self.profilefollower.execute_queue()
+
+                self.winch_automation.done()
                 self.winch_motor.set(-0.4)
         except:
             self.onException()
