@@ -6,6 +6,8 @@ import hal
 
 from magicbot import tunable
 
+MIN_MASKED_RATIO = 0.1
+
 
 class Vision:
     k = tunable(0.5)
@@ -68,7 +70,7 @@ def vision_loop(data_array):
     cvmjpegServer.setSource(cvSource)
 
     #Setting the exposure.
-    camera.setExposureManual(10)
+    camera.setExposureManual(0)
 
     # Images are big. Preallocate an array to fill the image with.
     frame = np.zeros(shape=(height, width, 3), dtype=np.uint8)
@@ -79,16 +81,16 @@ def vision_loop(data_array):
             # We got an error; report it through the output stream.
             cvSource.notifyError(cvsink.getError())
         else:
-            x, img = find_target(frame)
-            if x is not None:
+            x, img, masked_ratio = find_target(frame)
+            if masked_ratio > MIN_MASKED_RATIO:
                 loc = int((x+1) * width // 2)
                 cv2.line(img, (loc, 60), (loc, 180), (255, 255, 0), thickness=2, lineType=8, shift=0)
                 data_array[0] = x
                 data_array[1] = time
             cvSource.putFrame(img)
 
+def find_target(img, lower=np.array([110/2, 50, 50]), upper=np.array([155/2, 255, 255])):
 
-def find_target(img, lower=np.array([110/2, 40, 70]), upper=np.array([150/2, 200, 200])):
     #Converting from RGB to HSV.
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
@@ -99,12 +101,14 @@ def find_target(img, lower=np.array([110/2, 40, 70]), upper=np.array([150/2, 200
     res = cv2.bitwise_and(img, img, mask=mask)
 
     height, width = mask.shape
-    X, Y = np.meshgrid(range(0, width), range(0, height))
+    masked_pixels = mask.sum()
+    masked_ratio = masked_pixels / (height*width)
 
-    try:
-        x_coord = int((X * mask).sum() / mask.sum())
-    except ValueError:
-        return None, res
+    if masked_ratio > MIN_MASKED_RATIO:
+        X, Y = np.meshgrid(range(0, width), range(0, height))
+        x_coord = int((X * mask).sum() / masked_pixels)
+    else:
+        return None, res, masked_ratio
 
     pos = 2 * x_coord / width - 1
-    return pos, res
+    return pos, res, masked_ratio

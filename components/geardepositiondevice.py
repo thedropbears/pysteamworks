@@ -6,6 +6,8 @@ class GearDepositionDevice:
     # create solenoids or double solenoids here as we need them, then
     # initialize them in createObjects in robot.py
     sd = NetworkTable
+    gear_push_solenoid = wpilib.Solenoid
+    gear_drop_solenoid = wpilib.Solenoid
 
     def __init__(self):
         pass
@@ -22,6 +24,18 @@ class GearDepositionDevice:
     def on_disable(self):
         """Run every time the robot transitions to being disabled"""
         pass
+
+    def push_gear(self):
+        self.gear_push_solenoid.set(True)
+
+    def retract_gear(self):
+        self.gear_push_solenoid.set(False)
+
+    def drop_gear(self):
+        self.gear_drop_solenoid.set(True)
+
+    def lock_gear(self):
+        self.gear_drop_solenoid.set(False)
 
     def execute(self):
         """Run at the end of every control loop iteration"""

@@ -5,6 +5,7 @@ import wpilib
 
 from ctre import CANTalon
 
+from components.range_finder import RangeFinder
 from components.chassis import Chassis
 from components.bno055 import BNO055
 from components.gearalignmentdevice import GearAlignmentDevice
@@ -13,6 +14,7 @@ from components.vision import Vision
 from components.winch import Winch
 from automations.manipulategear import ManipulateGear
 from automations.profilefollower import ProfileFollower
+from automations.winchautomation import WinchAutomation
 
 from utilities.profilegenerator import generate_trapezoidal_trajectory
 
@@ -28,10 +30,13 @@ class Robot(magicbot.MagicRobot):
     chassis = Chassis
     gearalignmentdevice = GearAlignmentDevice
     geardepositiondevice = GearDepositionDevice
+    winch_automation = WinchAutomation
     manipulategear = ManipulateGear
     vision = Vision
+    manipulategear = ManipulateGear
     winch = Winch
     profilefollower = ProfileFollower
+    range_finder = RangeFinder
 
     def createObjects(self):
         '''Create motors and stuff here'''
@@ -70,9 +75,11 @@ class Robot(magicbot.MagicRobot):
         self.drive_motor_d = CANTalon(3)
         self.gear_alignment_motor = CANTalon(14)
         self.winch_motor = CANTalon(11)
-
+        self.winch_motor.setInverted(True)
         self.rope_lock_solenoid = wpilib.DoubleSolenoid(forwardChannel=0,
                 reverseChannel=1)
+        self.gear_push_solenoid = wpilib.Solenoid(2)
+        self.gear_drop_solenoid = wpilib.Solenoid(3)
 
         self.test_trajectory = generate_trapezoidal_trajectory(
                 0, 0, 3, 0, Chassis.max_vel, 1, -1)
@@ -84,11 +91,17 @@ class Robot(magicbot.MagicRobot):
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
-        pass
+        self.sd.putString("state", "stationary")
+
+    def disabledPeriodic(self):
+        self.putData()
+        self.sd.putString("state", "stationary")
 
     def teleopPeriodic(self):
         '''Called on each iteration of the control loop'''
         self.putData()
+        #self.winch_motor.set(1)
+        self.sd.putNumber("climbCurrent", self.winch_motor.getOutputCurrent())
 
         # if you want to get access to the buttons,
         # you should be doing it like so:
@@ -100,8 +113,50 @@ class Robot(magicbot.MagicRobot):
             self.onException()
 
         try:
-            if self.debounce(11):
-                self.profilefollower.stop()
+            if self.debounce(1, gamepad=True):
+                #perform some action
+
+                self.profilefollower.execute_queue()
+
+                self.manipulategear.engage(force=True)
+
+        except:
+            self.onException()
+        
+        try:
+            if self.debounce(2, gamepad=True):
+                #perform some action
+                self.winch_automation.engage(force=True)
+        except:
+            self.onException()
+        
+        try:
+            if self.debounce(4, gamepad=True):
+                #perform some action
+
+                self.profilefollower.execute_queue()
+
+                if self.winch_automation.is_executing:
+                    self.winch_automation.done()
+                self.winch.rotate_winch(0)
+
+                if self.manipulategear.is_executing:
+                    self.manipulategear.done()
+                    self.gearalignmentdevice.stop_motors()
+
+                self.sd.putString("state", "stationary")
+
+        except:
+            self.onException()
+        
+        try:
+            if self.debounce(3, gamepad=True):
+                #perform some action
+
+                self.profilefollower.execute_queue()
+
+                self.winch_automation.done()
+                self.winch_motor.set(-0.4)
         except:
             self.onException()
 

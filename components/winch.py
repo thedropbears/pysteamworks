@@ -1,6 +1,6 @@
 from ctre import CANTalon
-from networktables import NetworkTable
 from wpilib import DoubleSolenoid
+
 
 class Winch:
 
@@ -9,6 +9,26 @@ class Winch:
 
     def __init__(self):
         super().__init__()
+
+    def on_rope_engaged(self):
+        """Return wether the current is over 5 as a boolean"""
+        return self.winch_motor.getOutputCurrent() >= 5
+
+    def on_touchpad_engaged(self):
+        """Return wether the current is over 2 as a boolean"""
+        return self.winch_motor.getOutputCurrent() > 35
+
+    def rotate_winch(self, value):
+        """Rotate winch motor with half speed"""
+        self.winch_motor.set(value)
+
+    def rope_lock_solenoid_reverse(self):
+        """Reverse piston"""
+        self.rope_lock_solenoid.set(DoubleSolenoid.Value.kReverse)
+
+    def rope_lock_solenoid_forward(self):
+        """Move piston forward"""
+        self.rope_lock_solenoid.set(DoubleSolenoid.Value.kForward)
 
     def setup(self):
         """Run just after createObjects.
