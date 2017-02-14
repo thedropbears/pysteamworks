@@ -15,7 +15,7 @@ class AutonomousWinch(StateMachine):
 
     @timed_state(duration=2, must_finish=True, next_state="rotateWinch")
     def onMotor(self):
-        self.winch.rotate_winch(0.3)    #set rope catching speed
+        self.winch.rotate_winch(0.3)
 
     @state(must_finish=True)
     def rotateWinch(self):
