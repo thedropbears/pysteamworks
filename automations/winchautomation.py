@@ -14,7 +14,7 @@ class WinchAutomation(StateMachine):
         self.next_state("on_motor")
 
     @timed_state(duration=2, must_finish=True, next_state="rotate_winch")
-    def onMotor(self):
+    def on_motor(self):
         self.winch.rotate_winch(0.3)
 
     @state(must_finish=True)
