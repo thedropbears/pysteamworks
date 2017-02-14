@@ -33,7 +33,6 @@ class Robot(magicbot.MagicRobot):
     winch_automation = WinchAutomation
     manipulategear = ManipulateGear
     vision = Vision
-    manipulategear = ManipulateGear
     winch = Winch
     profilefollower = ProfileFollower
     range_finder = RangeFinder
