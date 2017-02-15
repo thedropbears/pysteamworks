@@ -22,12 +22,12 @@ class Winch:
         """Rotate winch motor with half speed"""
         self.winch_motor.set(value)
 
-    def rope_lock_solenoid_reverse(self):
-        """Reverse piston"""
+    def piston_open(self):
+        """Open piston"""
         self.rope_lock_solenoid.set(DoubleSolenoid.Value.kReverse)
 
-    def rope_lock_solenoid_forward(self):
-        """Move piston forward"""
+    def piston_close(self):
+        """Close piston"""
         self.rope_lock_solenoid.set(DoubleSolenoid.Value.kForward)
 
     def setup(self):
