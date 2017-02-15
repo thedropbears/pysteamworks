@@ -137,6 +137,7 @@ class Robot(magicbot.MagicRobot):
 
                 if self.winch_automation.is_executing:
                     self.winch_automation.done()
+                self.winch.rope_lock_solenoid_reverse()
                 self.winch.rotate_winch(0)
 
                 if self.manipulategear.is_executing:
