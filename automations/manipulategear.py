@@ -12,7 +12,7 @@ class ManipulateGear(StateMachine):
     sd = NetworkTable
     aligned = False
     vision = Vision
-
+    
     @state(first=True, must_finish=True)
     def align_peg(self):
         # do something to align with the peg
@@ -20,41 +20,24 @@ class ManipulateGear(StateMachine):
         #move forward
         self.sd.putString("state", "unloadingGear")
         self.put_dashboard()
-        if -0.1 <= self.vision.x <= 0.1:
-            self.gearalignmentdevice.stop_motors()
-            aligned = True
-            if self.range_finder.getDistance() < 0.5:
-                self.next_state_now("push_gear")
-        elif -0.3 <= self.vision.x <= 0.3:
-            if self.vision.x > 0.1:
-                self.gearalignmentdevice.align(0.5)
-            if self.vision.x < 0.1:
-                self.gearalignmentdevice.align(-0.5)
-            aligned = False
-        else:
-            if self.vision.x > 0.1:
-                self.gearalignmentdevice.align(1)
-            if self.vision.x < 0.1:
-                self.gearalignmentdevice.align(-1)
-            aligned = False
 
-    @timed_state(duration=0.5, next_state="drop_gear", must_finish=True)
-    def push_gear(self):
+    @timed_state(duration=0.5, next_state="forward_open", must_finish=True)
+    def forward_closed(self):
         self.put_dashboard()
         self.geardepositiondevice.push_gear()
 
-    @timed_state(duration=2.0, next_state="retract_gear", must_finish=True)
-    def drop_gear(self):
+    @timed_state(duration=2.0, next_state="backward_open", must_finish=True)
+    def forward_open(self):
         self.put_dashboard()
         self.geardepositiondevice.drop_gear()
 
-    @timed_state(duration=0.5, next_state="lock_gear", must_finish=True)
-    def retract_gear(self):
+    @timed_state(duration=0.5, next_state="backward_closed", must_finish=True)
+    def backward_open(self):
         self.put_dashboard()
-        self.geardepositiondevice.drop_gear()
+        self.geardepositiondevice.retract_gear()
 
     @state
-    def lock_gear(self):
+    def backward_closed(self):
         self.put_dashboard()
         self.geardepositiondevice.lock_gear()
 

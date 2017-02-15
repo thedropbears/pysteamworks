@@ -11,6 +11,9 @@ class GearAlignmentDevice:
     gear_alignment_motor = CANTalon
     sd = NetworkTable
     vision = Vision
+    l_pos = 0
+    r_pos = 10
+    zero_pos = (l_pos+r_pos) / 2
 
     def __init__(self):
         pass
@@ -22,17 +25,27 @@ class GearAlignmentDevice:
 
     def on_enable(self):
         """Run every time the robot transitions to being enabled"""
-        #self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.Position)
-        #self.gear_alignment_motor.setFeedbackDevice(CANTalon.FeedbackDevice.QuadEncoder)
+        self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.Position)
+        self.gear_alignment_motor.setFeedbackDevice(CANTalon.FeedbackDevice.AnalogPot)
+        self.gear_alignment_motor.setPID(1, 0, 0)
+
     def on_disable(self):
         """Run every time the robot transitions to being disabled"""
         pass
 
-    def align(self, value):
-        self.gear_alignment_motor.set(value)
+    def align(self):
+        self.set_postion(self.vision.x)
 
     def stop_motors(self):
         self.gear_alignment_motor.set(0)
 
+    def get_rail_pos(self):
+        return (self.gear_alignment_motor.getPosition()-self.zero_pos) \
+/ (self.r_pos-self.zero_pos)
+
+    def set_postion(self, setpoint):
+        self.gear_alignment_motor.set((setpoint+1)*(self.r_pos-self.l_pos))
+
     def execute(self):
         """Run at the end of every control loop iteration"""
+        #print(self.gear_alignment_motor.getPosition())
