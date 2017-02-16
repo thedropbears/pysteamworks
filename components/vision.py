@@ -3,6 +3,7 @@ import multiprocessing.sharedctypes
 import numpy as np
 import cv2
 import hal
+import math
 
 from magicbot import tunable
 
@@ -11,6 +12,8 @@ MIN_MASKED_RATIO = 0.1
 
 class Vision:
     k = tunable(0.5)
+
+    horizontal_fov = 61 * math.pi/180
 
     def __init__(self):
         self._data_array = multiprocessing.sharedctypes.RawArray("d", [0.0, 0.0])
@@ -38,6 +41,10 @@ class Vision:
     def execute(self):
         """Run at the end of the control loop"""
         self.smoothed_x = (1 - self.k) * self.x + self.k * self.smoothed_x
+
+    def derive_vision_ange(self):
+        "Calculate the camera's angle relative to the vision targets"
+        return -(self.horizontal_fov/2 * (self.smoothed_x))
 
     @property
     def x(self):
