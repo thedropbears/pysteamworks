@@ -29,6 +29,9 @@ def generate_trapezoidal_trajectory(
     # area under the velocity-time trapezoid
     x = x_final - x_start
 
+    if x == 0:
+        return [(x_start, v_start, 0.0)]
+
     # find the max reachable velocity if we spend all our time accelerating
     # and decelerating. Used as max velocity in cases where we don't hit the
     # robot's top speed
