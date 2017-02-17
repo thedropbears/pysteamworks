@@ -29,6 +29,8 @@ class GearAlignmentDevice:
         self.gear_alignment_motor.setFeedbackDevice(CANTalon.FeedbackDevice.AnalogPot)
         self.gear_alignment_motor.setPID(1, 0, 0)
 
+        self.gear_alignment_motor.enableLimitSwitch(True, True)
+
     def on_disable(self):
         """Run every time the robot transitions to being disabled"""
         pass
@@ -37,7 +39,13 @@ class GearAlignmentDevice:
         self.set_postion(self.vision.x)
 
     def stop_motors(self):
-        self.gear_alignment_motor.set(0)
+        self.gear_alignment_motor.set(get_rail_pos())
+
+    def left_limit_switch(self):
+        return self.gear_alignment_motor.isRevLimitSwitchClosed()
+
+    def right_limit_switch(self):
+        return self.gear_alignment_motor.isFwdLimitSwitchClosed()
 
     def get_rail_pos(self):
         return (self.gear_alignment_motor.getPosition()-self.zero_pos) \
@@ -45,6 +53,9 @@ class GearAlignmentDevice:
 
     def set_postion(self, setpoint):
         self.gear_alignment_motor.set((setpoint+1)*(self.r_pos-self.l_pos))
+    
+    def reset_postion(self):
+        self.gear_alignment_motor.set(self.zero_pos)
 
     def execute(self):
         """Run at the end of every control loop iteration"""

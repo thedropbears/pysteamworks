@@ -12,14 +12,26 @@ class ManipulateGear(StateMachine):
     sd = NetworkTable
     aligned = False
     vision = Vision
-    
+
+
+
     @state(first=True, must_finish=True)
     def align_peg(self):
         # do something to align with the peg
         # now move to the next state
         #move forward
-        self.sd.putString("state", "unloadingGear")
         self.put_dashboard()
+        if self.gearalignmentdevice.left_limit_switch() or self.gearalignmentdevice.right_limit_switch():
+            self.gearalignmentdevice.stop_motors()
+
+        if -0.1 <= self.vision.x <= 0.1:
+            self.gearalignmentdevice.stop_motors()
+            aligned = True
+            if self.range_finder.getDistance() < 0.5:
+                self.next_state_now("forward_closed")
+        else:
+            self.gearalignmentdevice.align()
+            aligned = False
 
     @timed_state(duration=0.5, next_state="forward_open", must_finish=True)
     def forward_closed(self):
@@ -42,10 +54,12 @@ class ManipulateGear(StateMachine):
         self.geardepositiondevice.lock_gear()
 
         self.sd.putString("state", "stationary")
+        self.gearalignmentdevice.reset_postion()
         self.done()
 
     def put_dashboard(self):
         """Update all the variables on the smart dashboard"""
+        self.sd.putString("state", "unloadingGear")
         self.sd.putNumber("vision_x", self.vision.x)
         self.sd.putNumber("smoothed_vision_x", self.vision.smoothed_x)
         self.sd.putNumber("vision_y", self.range_finder.getDistance())
