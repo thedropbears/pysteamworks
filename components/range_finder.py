@@ -1,5 +1,6 @@
 import wpilib
 from wpilib.interfaces import PIDSource
+from networktables import NetworkTable
 import hal
 
 
@@ -9,6 +10,7 @@ class RangeFinder:
         self.range_finder_counter = wpilib.Counter(dio_number)
         self.range_finder_counter.setSemiPeriodMode(highSemiPeriod=True)
         self._smoothed_d = 0.0
+        self.sd = NetworkTable.getTable('SmartDashboard')
 
     def _getDistance(self):
         if not hal.isSimulation():
@@ -28,3 +30,4 @@ class RangeFinder:
         if d > 40:  # Max range is around 40m
             d = 40
         self._smoothed_d = alpha * d + (1.0 - alpha) * self._smoothed_d
+        self.sd.putNumber("range", self.getDistance())
