@@ -1,5 +1,6 @@
 import wpilib
 from wpilib.interfaces import PIDSource
+import hal
 
 
 class RangeFinder:
@@ -10,8 +11,11 @@ class RangeFinder:
         self._smoothed_d = 0.0
 
     def _getDistance(self):
-        # 10 usec is 1cm, return as metres
-        return self.range_finder_counter.getPeriod() * 1000000 / 1000
+        if not hal.isSimulation():
+            # 10 usec is 1cm, return as metres
+            return self.range_finder_counter.getPeriod() * 1000000 / 1000
+        else:
+            return 0.0
 
     def getDistance(self):
         # TODO: adjust based on calculated heading
