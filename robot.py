@@ -142,7 +142,7 @@ class Robot(magicbot.MagicRobot):
 
                 if self.manipulategear.is_executing:
                     self.manipulategear.done()
-                    self.gearalignmentdevice.stop_motors()
+                self.gearalignmentdevice.stop_motors()
 
                 self.sd.putString("state", "stationary")
 
