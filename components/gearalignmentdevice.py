@@ -30,7 +30,7 @@ class GearAlignmentDevice:
         self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.Position)
         self.gear_alignment_motor.setFeedbackDevice(CANTalon.FeedbackDevice.AnalogPot)
 
-        self.gear_alignment_motor.setPID(5, 0, 0)
+        self.gear_alignment_motor.setPID(20, 0, 0)
 
         self.gear_alignment_motor.enableLimitSwitch(True, True)
 

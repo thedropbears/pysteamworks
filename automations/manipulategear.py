@@ -13,9 +13,14 @@ class ManipulateGear(StateMachine):
     aligned = False
     vision = Vision
 
+    @state(first=True)
+    def init(self):
+        self.geardepositiondevice.retract_gear()
+        self.geardepositiondevice.lock_gear()
+        self.gearalignmentdevice.reset_position()
 
 
-    @state(first=True, must_finish=True)
+    @state(must_finish=True)
     def align_peg(self):
         # do something to align with the peg
         # now move to the next state
