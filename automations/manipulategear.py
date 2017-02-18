@@ -18,6 +18,7 @@ class ManipulateGear(StateMachine):
         self.geardepositiondevice.retract_gear()
         self.geardepositiondevice.lock_gear()
         self.gearalignmentdevice.reset_position()
+        self.next_state("align_peg")
 
 
     @state(must_finish=True)
@@ -26,6 +27,7 @@ class ManipulateGear(StateMachine):
         # now move to the next state
         #move forward
         self.put_dashboard()
+        print("align peg, vision %s" % (self.vision.x))
 
         if -0.1 <= self.vision.x <= 0.1:
             self.gearalignmentdevice.stop_motors()
@@ -33,10 +35,11 @@ class ManipulateGear(StateMachine):
             if self.range_finder.getDistance() < 0.5:
                 self.next_state_now("forward_closed")
         else:
+            print("align_vision")
             self.gearalignmentdevice.align()
             aligned = False
 
-    @timed_state(duration=0.5, next_state="forward_open", must_finish=True)
+    @timed_state(duration=1, next_state="forward_open", must_finish=True)
     def forward_closed(self):
         self.put_dashboard()
         self.geardepositiondevice.push_gear()
@@ -50,6 +53,7 @@ class ManipulateGear(StateMachine):
     def backward_open(self):
         self.put_dashboard()
         self.geardepositiondevice.retract_gear()
+        self.geardepositiondevice.lock_gear()
 
     @state
     def backward_closed(self):

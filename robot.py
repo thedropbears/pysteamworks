@@ -72,7 +72,7 @@ class Robot(magicbot.MagicRobot):
         self.drive_motor_b = CANTalon(5)
         self.drive_motor_c = CANTalon(4)
         self.drive_motor_d = CANTalon(3)
-        self.gear_alignment_motor = CANTalon(15)
+        self.gear_alignment_motor = CANTalon(14)
         self.winch_motor = CANTalon(11)
         self.winch_motor.setInverted(True)
         self.rope_lock_solenoid = wpilib.DoubleSolenoid(forwardChannel=0,
@@ -113,8 +113,6 @@ class Robot(magicbot.MagicRobot):
         try:
             if self.debounce(1, gamepad=True):
                 #start gears state machine
-
-                self.profilefollower.execute_queue()
                 self.manipulategear.engage(force=True)
 
         except:
@@ -135,7 +133,7 @@ class Robot(magicbot.MagicRobot):
 
                 if self.winch_automation.is_executing:
                     self.winch_automation.done()
-                self.winch.rope_lock_solenoid_reverse()
+                self.winch.piston_open()
                 self.winch.rotate_winch(0)
 
                 if self.manipulategear.is_executing:
