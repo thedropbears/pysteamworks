@@ -51,6 +51,11 @@ def loop():
 
 
 def find_target(img, lower=np.array([110/2, 200, 75]), upper=np.array([155/2, 255, 255])):
+    """Given an image and thresholds, find the centre of mass of the target.
+
+    All arguments must be np.arrays, and lower and upper must be a 3-array.
+    """
+
     #Converting from RGB to HSV.
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
