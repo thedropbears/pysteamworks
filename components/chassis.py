@@ -42,7 +42,7 @@ class Chassis:
             "kI": 0,
             "kD": 0,
             "kF": 1023//max_vel_native,
-            "ramp-rate" : 36 # change in volts, in v/sec
+            "ramp-rate" : 20 # change in volts, in v/sec
     }
 
     motion_profile_speed = 50 # Hz
@@ -121,8 +121,8 @@ class Chassis:
             for i in motor_inputs:
                 if abs(i) > max_i:
                     max_i = abs(i)
-            for i in motor_inputs:
-                i /= max_i
-                i *= self.inputs[3]
+            for i in range(len(motor_inputs)):
+                motor_inputs[i] /= max_i
+                motor_inputs[i] *= self.inputs[3]
             self.motors[0].set(motor_inputs[0]*Chassis.max_vel_native)
             self.motors[2].set(motor_inputs[1]*Chassis.max_vel_native)
