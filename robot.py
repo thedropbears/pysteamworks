@@ -72,7 +72,7 @@ class Robot(magicbot.MagicRobot):
         self.drive_motor_b = CANTalon(5)
         self.drive_motor_c = CANTalon(4)
         self.drive_motor_d = CANTalon(3)
-        self.gear_alignment_motor = CANTalon(14)
+        self.gear_alignment_motor = CANTalon(15)
         self.winch_motor = CANTalon(11)
         self.winch_motor.setInverted(True)
         self.rope_lock_solenoid = wpilib.DoubleSolenoid(forwardChannel=0,
@@ -99,9 +99,7 @@ class Robot(magicbot.MagicRobot):
     def teleopPeriodic(self):
         '''Called on each iteration of the control loop'''
         self.putData()
-        #self.winch_motor.set(1)
         self.sd.putNumber("climbCurrent", self.winch_motor.getOutputCurrent())
-
         # if you want to get access to the buttons,
         # you should be doing it like so:
         try:
@@ -113,10 +111,9 @@ class Robot(magicbot.MagicRobot):
 
         try:
             if self.debounce(1, gamepad=True):
-                #perform some action
+                #start gears state machine
 
                 self.profilefollower.execute_queue()
-
                 self.manipulategear.engage(force=True)
 
         except:
@@ -124,14 +121,14 @@ class Robot(magicbot.MagicRobot):
         
         try:
             if self.debounce(2, gamepad=True):
-                #perform some action
+                #start winch
                 self.winch_automation.engage(force=True)
         except:
             self.onException()
         
         try:
             if self.debounce(4, gamepad=True):
-                #perform some action
+                #reset state machines
 
                 self.profilefollower.execute_queue()
 
@@ -142,7 +139,7 @@ class Robot(magicbot.MagicRobot):
 
                 if self.manipulategear.is_executing:
                     self.manipulategear.done()
-                self.gearalignmentdevice.stop_motors()
+                self.gearalignmentdevice.reset_position()
 
                 self.sd.putString("state", "stationary")
 
@@ -150,8 +147,8 @@ class Robot(magicbot.MagicRobot):
             self.onException()
         
         try:
-            if self.debounce(3, gamepad=True):
-                #perform some action
+            if self.debounce(10, gamepad=True):
+                #reverse winch
 
                 self.profilefollower.execute_queue()
 

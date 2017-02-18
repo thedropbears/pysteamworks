@@ -21,8 +21,6 @@ class ManipulateGear(StateMachine):
         # now move to the next state
         #move forward
         self.put_dashboard()
-        if self.gearalignmentdevice.left_limit_switch() or self.gearalignmentdevice.right_limit_switch():
-            self.gearalignmentdevice.stop_motors()
 
         if -0.1 <= self.vision.x <= 0.1:
             self.gearalignmentdevice.stop_motors()
