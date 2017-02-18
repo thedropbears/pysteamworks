@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 import hal
 import math
+from networktables import NetworkTable
 
 from magicbot import tunable
 
@@ -23,6 +24,7 @@ class Vision:
             self._process.start()
 
         self.smoothed_x = 0.0
+        self.sd = NetworkTable.getTable('SmartDashboard')
 
     def setup(self):
         """Run just after createObjects.
@@ -41,8 +43,9 @@ class Vision:
     def execute(self):
         """Run at the end of the control loop"""
         self.smoothed_x = (1 - self.k) * self.x + self.k * self.smoothed_x
+        self.sd.putNumber("vision_x", self.x)
 
-    def derive_vision_ange(self):
+    def derive_vision_angle(self):
         "Calculate the camera's angle relative to the vision targets"
         return -(self.horizontal_fov/2 * (self.smoothed_x))
 
