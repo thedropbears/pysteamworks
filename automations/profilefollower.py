@@ -31,11 +31,11 @@ class ProfileFollower:
         self.queue = [[],[]]
         self.executing = False
 
-    def modify_queue(self, linear=None, heading=None, overwrite=False):
+    def modify_queue(self, heading, linear=None, overwrite=False):
         """Modify the motion profiling queue, or overwrite it.
         """
-        if not heading:
-            heading = [[0.0, 0.0, 0.0]] * len(linear)
+        if type(heading) == int or type(heading) == float:
+            heading = [(heading, 0.0, 0.0)] * len(linear)
         if not linear:
            linear = [[0.0, 0.0, 0.0]] * len(heading)
         if overwrite:
