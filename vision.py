@@ -5,8 +5,11 @@ import cv2
 MIN_MASKED_RATIO = 0.1
 
 
-def vision_loop(data_array):
+def loop():
     import cscore as cs
+    from networktables import NetworkTables
+
+    nt = NetworkTables.getTable("/components/vision")
 
     width = 320
     height = 240
@@ -42,8 +45,8 @@ def vision_loop(data_array):
             if masked_ratio > MIN_MASKED_RATIO:
                 loc = int((x+1) * width // 2)
                 cv2.line(img, (loc, 60), (loc, 180), (255, 255, 0), thickness=2, lineType=8, shift=0)
-                data_array[0] = x
-                data_array[1] = time
+                nt.putNumber("x", x)
+                nt.putNumber("time", time)
             cvSource.putFrame(img)
 
 

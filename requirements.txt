@@ -4,7 +4,7 @@ wpilib>=2017.0.0
 robotpy-hal-sim>=2017.0.0
 pynetconsole>=1.1.0
 robotpy-ctre>=2017.0.0
-robotpy-wpilib-utilities>=2017.0.0
+robotpy-wpilib-utilities>=2017.0.4
 
 coverage
 python-coveralls

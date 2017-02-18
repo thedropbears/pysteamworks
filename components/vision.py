@@ -1,23 +1,17 @@
-import multiprocessing.sharedctypes
-
-import hal
-
 from magicbot import tunable
-
-from vision import vision_loop
+from wpilib import CameraServer
 
 
 class Vision:
-    k = tunable(0.5)
+    k = tunable(0.5, doc='Weighting of the previous smoothed_x.')
+
+    x = tunable(0.0, doc='The centre of the vision target, in the interval [-1.0, 1.0].')
+    time = tunable(0, doc='Timestamp of when x was last updated by the vision loop.')
+
+    smoothed_x = tunable(0.0, doc='Weighted average of x.')
 
     def __init__(self):
-        self._data_array = multiprocessing.sharedctypes.RawArray("d", [0.0, 0.0])
-
-        if not hal.isSimulation():
-            self._process = multiprocessing.Process(target=vision_loop, args=(self._data_array,), daemon=True)
-            self._process.start()
-
-        self.smoothed_x = 0.0
+        CameraServer.launch('vision.py:loop')
 
     def setup(self):
         """Run just after createObjects.
@@ -36,11 +30,3 @@ class Vision:
     def execute(self):
         """Run at the end of the control loop"""
         self.smoothed_x = (1 - self.k) * self.x + self.k * self.smoothed_x
-
-    @property
-    def x(self):
-        return self._data_array[0]
-
-    @property
-    def time(self):
-        return self._data_array[1]
