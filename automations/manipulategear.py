@@ -61,7 +61,7 @@ class ManipulateGear(StateMachine):
         self.geardepositiondevice.lock_gear()
 
         self.sd.putString("state", "stationary")
-        self.gearalignmentdevice.reset_postion()
+        self.gearalignmentdevice.reset_position()
         self.done()
 
     def put_dashboard(self):
