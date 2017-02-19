@@ -1,4 +1,5 @@
 from ctre import CANTalon
+import math
 
 from networktables import NetworkTable
 
@@ -39,7 +40,9 @@ class GearAlignmentDevice:
         pass
 
     def align(self):
-        self.set_position(self.vision.x)
+        # if (abs(self.gear_alignment_motor.getClosedLoopError()) <
+        #         0.03*(self.r_pos-self.l_pos)/2):
+        self.set_position(self.get_rail_pos()+self.vision.x)
 
     def stop_motors(self):
         self.gear_alignment_motor.stopMotor()
@@ -55,7 +58,9 @@ class GearAlignmentDevice:
         / (self.r_pos-self.zero_pos)
 
     def set_position(self, setpoint):
-        self.gear_alignment_motor.set((setpoint+1)*(self.r_pos-self.l_pos))
+        sp = (setpoint+1)*(self.r_pos-self.l_pos)
+        sp = min(self.r_pos, max(self.l_pos, sp))
+        self.gear_alignment_motor.set(sp)
 
     def reset_position(self):
         self.gear_alignment_motor.set(self.zero_pos)

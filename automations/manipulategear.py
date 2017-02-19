@@ -13,6 +13,9 @@ class ManipulateGear(StateMachine):
     aligned = False
     vision = Vision
 
+    place_gear_range = 0.43
+    align_tolerance = 0.05
+
     @state(first=True)
     def init(self):
         self.geardepositiondevice.retract_gear()
@@ -29,10 +32,10 @@ class ManipulateGear(StateMachine):
         self.put_dashboard()
         print("align peg, vision %s" % (self.vision.x))
 
-        if -0.1 <= self.vision.x <= 0.1:
+        if -self.align_tolerance <= self.vision.x <= self.align_tolerance:
             self.gearalignmentdevice.stop_motors()
             aligned = True
-            if self.range_finder.getDistance() < 0.5:
+            if self.range_finder.getDistance() < self.place_gear_range:
                 self.next_state_now("forward_closed")
         else:
             print("align_vision")
