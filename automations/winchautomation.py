@@ -11,10 +11,8 @@ class WinchAutomation(StateMachine):
     def initialise_winch(self):
         self.put_dashboard()
 
-        self.winch.change_control_mode(False)
         self.winch.piston_open()
         self.winch.rotate_winch(0.3)
-
         self.next_state("climb")
 
     @state(must_finish=True)
@@ -22,18 +20,17 @@ class WinchAutomation(StateMachine):
         self.put_dashboard()
         if self.winch.on_rope_engaged() and state_tm > 2:
             self.winch.piston_close()
-            self.winch.change_control_mode(True)
-            self.winch.rotate_winch(35)
+            self.winch.rotate_winch(1)
 
-            self.next_state("press_touchpad")
+            # self.next_state("press_touchpad")
 
-    @state(must_finish=True)
-    def press_touchpad(self, state_tm):
-        self.put_dashboard()
-        if self.winch.on_touchpad_engaged() and state_tm > 2:
-            self.winch.rotate_winch(0)
-            self.sd.putString("state", "stationary")
-            self.done()
+    # @state(must_finish=True)
+    # def press_touchpad(self, state_tm):
+    #     self.put_dashboard()
+    #     if self.winch.on_touchpad_engaged() and state_tm > 2:
+    #         self.winch.rotate_winch(0)
+    #         self.sd.putString("state", "stationary")
+    #         self.done()
 
     def put_dashboard(self):
         """Update all the variables on the smart dashboard"""
