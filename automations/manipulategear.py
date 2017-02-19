@@ -70,6 +70,3 @@ class ManipulateGear(StateMachine):
     def put_dashboard(self):
         """Update all the variables on the smart dashboard"""
         self.sd.putString("state", "unloadingGear")
-        self.sd.putNumber("vision_x", self.vision.x)
-        self.sd.putNumber("smoothed_vision_x", self.vision.smoothed_x)
-        self.sd.putNumber("vision_y", self.range_finder.getDistance())
