@@ -105,6 +105,8 @@ class Robot(magicbot.MagicRobot):
         '''Called when teleop starts; optional'''
         self.sd.putString("state", "stationary")
         self.gearalignmentdevice.reset_position()
+        self.geardepositiondevice.retract_gear()
+        self.geardepositiondevice.lock_gear()
 
     def disabledPeriodic(self):
         self.putData()
