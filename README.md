@@ -12,3 +12,7 @@ Contributing
 4. Push to the branch (`git push -u origin my-new-feature`)
 5. Create new Pull Request on github
 
+# Running the vision loop on a PC
+```bash
+python3 -m cscore vision.py:loop
+```
