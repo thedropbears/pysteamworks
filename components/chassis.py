@@ -38,9 +38,9 @@ class Chassis:
     wheelbase_width = 0.629666 # m
 
     pid_profile = {
-            "kP": 3,
-            "kI": 0,
-            "kD": 0,
+            "kP": 1,
+            "kI": 0.01,
+            "kD": 10,
             "kF": 1023//max_vel_native,
             "ramp-rate" : 20 # change in volts, in v/sec
     }
@@ -65,8 +65,25 @@ class Chassis:
                 self.drive_motor_d
                 ]
 
+        self.motors[0].setPID(
+                self.pid_profile["kP"],
+                self.pid_profile["kI"],
+                self.pid_profile["kD"],
+                f = self.pid_profile["kF"],
+                )
+
+        self.motors[2].setPID(
+                self.pid_profile["kP"],
+                self.pid_profile["kI"],
+                self.pid_profile["kD"],
+                f = self.pid_profile["kF"],
+                )
+
         self.motors[0].setProfile(0)
         self.motors[2].setProfile(0)
+
+        self.motors[0].setVoltageRampRate(self.pid_profile["ramp-rate"])
+        self.motors[2].setVoltageRampRate(self.pid_profile["ramp-rate"])
 
         self.motors[0].setFeedbackDevice(CANTalon.FeedbackDevice.QuadEncoder)
         self.motors[2].setFeedbackDevice(CANTalon.FeedbackDevice.QuadEncoder)
