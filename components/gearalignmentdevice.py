@@ -58,12 +58,12 @@ class GearAlignmentDevice:
         / (self.r_pos-self.zero_pos)
 
     def set_position(self, setpoint):
-        sp = (setpoint+1)*(self.r_pos-self.l_pos)
+        sp = ((setpoint+1)/2)*(self.r_pos-self.l_pos)+self.l_pos
         sp = min(self.r_pos, max(self.l_pos, sp))
         self.gear_alignment_motor.set(sp)
 
     def reset_position(self):
-        self.gear_alignment_motor.set(self.zero_pos)
+        self.set_position(0)
 
     def execute(self):
         """Run at the end of every control loop iteration"""
