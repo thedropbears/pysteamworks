@@ -170,17 +170,21 @@ class Robot(magicbot.MagicRobot):
                 not self.gamepad.getRawAxis(3) > 0.9):
             self.throttle = 1
             self.direction = 1
+            self.sd.putString("camera", "front")
         elif self.gamepad.getRawButton(5):
             # reverse
             self.throttle = 1
             self.direction = -1
+            self.sd.putString("camera", "back")
         elif self.gamepad.getRawButton(6):
             # slow down
             self.throttle = 0.3
             self.direction = 1
+            self.sd.putString("camera", "front")
         elif self.gamepad.getRawAxis(3) > 0.9:
             self.throttle = 0.3
             self.direction = -1
+            self.sd.putString("camera", "back")
 
         self.chassis.inputs = [(
             self.direction
