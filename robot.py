@@ -92,6 +92,7 @@ class Robot(magicbot.MagicRobot):
         # put the inputs to the dashboard
         self.sd.putNumber("gyro", self.bno055.getHeading())
         self.sd.putNumber("climbCurrent", self.winch_motor.getOutputCurrent())
+        self.sd.putNumber("rail_pos", self.gearalignmentdevice.get_rail_pos())
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
