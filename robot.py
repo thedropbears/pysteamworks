@@ -93,6 +93,13 @@ class Robot(magicbot.MagicRobot):
         self.sd.putNumber("gyro", self.bno055.getHeading())
         self.sd.putNumber("climbCurrent", self.winch_motor.getOutputCurrent())
         self.sd.putNumber("rail_pos", self.gearalignmentdevice.get_rail_pos())
+        self.sd.putNumber("error_differential",
+                self.drive_motor_a.getClosedLoopError()-
+                self.drive_motor_c.getClosedLoopError())
+        self.sd.putNumber("left_speed_error", self.drive_motor_a.getClosedLoopError())
+        self.sd.putNumber("right_speed_error", self.drive_motor_c.getClosedLoopError())
+        self.sd.putNumber("x_throttle", self.chassis.inputs[0])
+        self.sd.putNumber("z_throttle", self.chassis.inputs[2])
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
