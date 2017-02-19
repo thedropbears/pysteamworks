@@ -136,6 +136,27 @@ class Robot(magicbot.MagicRobot):
             self.onException()
 
         try:
+            if self.debounce(11):
+                if self.winch_automation.is_executing:
+                    self.winch_automation.done()
+                self.winch.rotate_winch(0)
+        except:
+            self.onException()
+
+        try:
+            if self.debounce(6):
+                self.winch.piston_open
+        except:
+            self.onException()
+
+        try:
+            if self.debounce(2):
+                self.geardepositiondevice.retract_gear()
+                self.geardepositiondevice.lock_gear()
+        except:
+            self.onException()
+
+        try:
             if self.debounce(10):
                 # backdrive the winch
                 self.winch_automation.done()

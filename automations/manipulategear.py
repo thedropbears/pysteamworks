@@ -13,7 +13,7 @@ class ManipulateGear(StateMachine):
     aligned = False
     vision = Vision
 
-    place_gear_range = 0.43
+    place_gear_range = 0.6
     align_tolerance = 0.05
 
     @state(first=True)
@@ -51,21 +51,6 @@ class ManipulateGear(StateMachine):
     def forward_open(self):
         self.put_dashboard()
         self.geardepositiondevice.drop_gear()
-
-    @timed_state(duration=0.5, next_state="backward_closed", must_finish=True)
-    def backward_open(self):
-        self.put_dashboard()
-        self.geardepositiondevice.retract_gear()
-        self.geardepositiondevice.lock_gear()
-
-    @state
-    def backward_closed(self):
-        self.put_dashboard()
-        self.geardepositiondevice.lock_gear()
-
-        self.sd.putString("state", "stationary")
-        self.gearalignmentdevice.reset_position()
-        self.done()
 
     def put_dashboard(self):
         """Update all the variables on the smart dashboard"""
