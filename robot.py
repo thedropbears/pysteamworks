@@ -107,14 +107,14 @@ class Robot(magicbot.MagicRobot):
         self.putData()
 
         try:
-            if self.debounce(8, gamepad=True):
+            if self.debounce(8, gamepad=True) or self.debounce(1):
                 self.manipulategear.engage(force=True)
 
         except:
             self.onException()
 
         try:
-            if self.debounce(7, gamepad=True):
+            if self.debounce(7, gamepad=True) or self.debounce(3):
                 self.winch_automation.engage(force=True)
         except:
             self.onException()
