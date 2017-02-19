@@ -138,6 +138,7 @@ class Robot(magicbot.MagicRobot):
             if self.debounce(10):
                 # backdrive the winch
                 self.winch_automation.done()
+                self.winch.change_control_mode(False)
                 self.winch_motor.set(-0.4)
         except:
             self.onException()
