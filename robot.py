@@ -92,6 +92,7 @@ class Robot(magicbot.MagicRobot):
         # put the inputs to the dashboard
         self.sd.putNumber("gyro", self.bno055.getHeading())
         self.sd.putNumber("climbCurrent", self.winch_motor.getOutputCurrent())
+        self.sd.putNumber("rail_pos", self.gearalignmentdevice.get_rail_pos())
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
@@ -138,7 +139,8 @@ class Robot(magicbot.MagicRobot):
             if self.debounce(10):
                 # backdrive the winch
                 self.winch_automation.done()
-                self.winch_motor.set(-0.4)
+                self.winch.change_control_mode(False)
+                self.winch_motor.set(-0.3)
         except:
             self.onException()
 
