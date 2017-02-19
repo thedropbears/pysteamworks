@@ -25,11 +25,15 @@ class PegAutonomous(AutonomousStateMachine):
     range_finder = RangeFinder
 
     center_to_front_bumper = 0.49
-    lidar_to_front_bumper = 0.67
+    lidar_to_front_bumper = 0.36
 
     center_tower_distance = 3
-    side_drive_forward_length = 1
+    side_drive_forward_length = 1.5
     side_rotate_angle = math.pi/3.0
+    # rotate_accel_speed = 0.25 # rad*s^-2
+    # rotate_velocity = 1
+    rotate_accel_speed = 2 # rad*s^-2
+    rotate_velocity = 2
 
     def __init__(self, target=Targets.Center):
         super().__init__()
@@ -37,29 +41,30 @@ class PegAutonomous(AutonomousStateMachine):
 
         if target == Targets.Center:
             self.displace_0 = generate_trapezoidal_trajectory(
-                    0, 0, self.center_tower_distance, 0, Chassis.max_vel/2,
+                    0, 0, self.center_tower_distance, 0, Chassis.max_vel/3,
                     Chassis.max_acc, -Chassis.max_acc)
             self.rotate_0 = []
         elif target == Targets.Left:
             self.displace_0 = generate_trapezoidal_trajectory(
                     0, 0, self.side_drive_forward_length, 0,
-                    Chassis.max_vel/2,
+                    Chassis.max_vel/3,
                     Chassis.max_acc, -Chassis.max_acc)
             self.rotate_0 = generate_trapezoidal_trajectory(
-                    0, 0, -self.side_rotate_angle, 0, 2,
-                    2, -2)
+                    0, 0, -self.side_rotate_angle, 0, self.rotate_velocity,
+                    self.rotate_accel_speed, -self.rotate_accel_speed)
         else:
             self.displace_0 = generate_trapezoidal_trajectory(
                     0, 0, self.side_drive_forward_length, 0,
-                    Chassis.max_vel/2,
+                    Chassis.max_vel/3,
                     Chassis.max_acc, -Chassis.max_acc)
             self.rotate_0 = generate_trapezoidal_trajectory(
-                    0, 0, self.side_rotate_angle, 0, 2,
-                    2, -2)
+                    0, 0, self.side_rotate_angle, 0, self.rotate_velocity,
+                    self.rotate_accel_speed, -self.rotate_accel_speed)
 
     def on_enable(self):
         super().on_enable()
         self.bno055.resetHeading()
+        self.profilefollower.stop()
 
     @state(first=True)
     def drive_to_airship(self, initial_call):
@@ -87,10 +92,12 @@ class PegAutonomous(AutonomousStateMachine):
                         self.bno055.getHeading(),
                         0, self.bno055.getHeading()
                         + self.vision.derive_vision_angle(), 0,
-                        2, 2, -2)
+                        self.rotate_velocity, self.rotate_accel_speed, -self.rotate_accel_speed)
                 print(self.vision.x)
                 print(self.vision.derive_vision_angle())
                 print(measure_trajectory)
+                print("vision_x %s, vision_angle %s, heading %s, heading_start %s, heading_end %s" % (
+                    self.vision.x, self.vision.derive_vision_angle, self.bno055.getHeading(), measure_trajectory[0][0], measure_trajectory[-1][0]))
                 self.profilefollower.modify_queue(heading=measure_trajectory, overwrite=True)
                 self.profilefollower.execute_queue()
                 # self.done()
@@ -102,64 +109,41 @@ class PegAutonomous(AutonomousStateMachine):
             print("end_mpos")
             # now measure our position relative to the targets
 
-            # the angle that we should be at
-            self.t_d = 0
-            if self.target == Targets.Center:
-                self.t_d = 0
+            self.perpendicular_heading = 0
+            if self.target == Targets.Right:
+                self.perpendicular_heading = self.side_rotate_angle
             elif self.target == Targets.Left:
-                self.t_d = -self.side_rotate_angle
-            elif self.target == Targets.Right:
-                self.t_d = self.side_rotate_angle
-            # the error from the heading we should be at to be facing
-            # towards the wall
-            t_e = self.bno055.getHeading() - self.t_d
-            r_m = (self.range_finder.getDistance() - self.lidar_to_front_bumper
-                    + self.center_to_front_bumper)
-            # how far back we are from the wall
-            r_x = r_m * math.cos(t_e)
-            # how far to the side of the peg we are
-            r_y = r_m * math.sin(t_e)
+                self.perpendicular_heading = -self.side_rotate_angle
 
-            d_delta_1 = math.sqrt(
-                (r_x/2)**2 + r_m**2 - 2*(r_x/2)*r_m*math.cos(t_e))
-            print(r_x*math.sin(t_e)/2*d_delta_1)
-            t_delta_1 = math.asin(r_x*math.sin(t_e)/(2*d_delta_1))
-            # t_delta_2 = -math.asin(r_m*math.sin(t_e)/d_delta_1)+math.pi
-            # t_delta_2 = -math.asin(r_m*math.sin(t_e)/d_delta_1)
-            d_delta_2 = r_x/2
-            # print("t_e: %s, r_m %s, r_x %s, r_y %s, t_delta_1 %s, d_delta_1 %s, t_delta_2 %s, d_delta_2 %s" %
-            #         (t_e, r_m, r_x, r_y, t_delta_1, d_delta_1, t_delta_2, t_delta_2))
-            self.seg_1_heading = self.bno055.getHeading()+t_delta_1
-            # self.seg_2_heading = self.bno055.getHeading()+t_delta_1+t_delta_2
-            self.rotate_1 = generate_trapezoidal_trajectory(
-                    self.seg_1_heading, 0,
-                    self.bno055.getHeading()+t_delta_1, 0, 2,
-                    2, -2)
-            self.displace_1 = generate_trapezoidal_trajectory(
-                    0, 0, d_delta_1, 0,
-                    Chassis.max_vel/2,
+            r = (self.range_finder.getDistance() + self.center_to_front_bumper
+                    - self.lidar_to_front_bumper)
+            current_heading = self.bno055.getHeading()
+
+            displacement_error = (
+                    (r * math.sin(current_heading-self.perpendicular_heading))/
+                    math.sin(math.pi-current_heading))
+            print("vision_x: %s, range: %s, heading %s, displacement_error %s, raw_range %s" %
+                    (self.vision.x, r, current_heading, displacement_error, self.range_finder.getDistance()))
+
+            self.rotate_to_straight = generate_trapezoidal_trajectory(
+                    current_heading, 0,
+                    0, 0, self.rotate_velocity,
+                    self.rotate_accel_speed, -self.rotate_accel_speed)
+            self.displacement_correction = generate_trapezoidal_trajectory(
+                    0, 0, displacement_error, 0,
+                    Chassis.max_vel/3,
                     Chassis.max_acc, -Chassis.max_acc)
-            # TODO: should we be resetting the encoders mid way and treat
-            # as two separate trajectories?
-            # self.rotate_2 = generate_trapezoidal_trajectory(
-            #         self.bno055.getHeading()+t_delta_1, 0,
-            #         self.bno055.getHeading()+t_delta_1+t_delta_2, 0, 2,
-            #         2, -2)
-            # self.displace_2 = generate_trapezoidal_trajectory(
-            #         d_delta_1, 0, d_delta_1+d_delta_2, 0,
-            #         Chassis.max_vel/2,
-            #         Chassis.max_acc, -Chassis.max_acc)
-            self.profilefollower.modify_queue(heading=self.rotate_1)
+            self.profilefollower.modify_queue(heading=self.rotate_to_straight)
             self.profilefollower.execute_queue()
-            self.next_state("rotate_to_align_segment")
+            self.next_state("rotate_straight")
 
     @state
-    def rotate_to_align_segment(self, initial_call):
+    def rotate_straight(self, initial_call):
         # Drive from the range that vision and the lidar can detect the wall
         # to the wall itself
         if not self.profilefollower.queue[0]:
-            self.profilefollower.modify_queue(self.seg_1_heading,
-                    linear=self.displace_1)
+            self.profilefollower.modify_queue(0,
+                    linear=self.displacement_correction)
             self.profilefollower.execute_queue()
             self.next_state("drive_align_segment")
 
@@ -168,8 +152,8 @@ class PegAutonomous(AutonomousStateMachine):
         if not self.profilefollower.queue[0]:
             rotate_towards_wall = generate_trapezoidal_trajectory(
                     self.bno055.getHeading(), 0,
-                    self.t_d, 0, 2,
-                    2, -2)
+                    self.perpendicular_heading, 0, rotate_velocity,
+                    self.rotate_accel_speed, -self.rotate_accel_speed)
             self.profilefollower.modify_queue(heading=rotate_towards_wall, overwrite=True)
             self.profilefollower.execute_queue()
             self.next_state("rotate_towards_peg")
@@ -180,17 +164,19 @@ class PegAutonomous(AutonomousStateMachine):
             to_peg = generate_trapezoidal_trajectory(
                     0, 0, self.range_finder.getDistance()-self.lidar_to_front_bumper,
                     0,
-                    Chassis.max_vel/2,
+                    Chassis.max_vel/3,
                     Chassis.max_acc, -Chassis.max_acc)
-            self.profilefollower.modify_queue(self.t_d,
+            self.profilefollower.modify_queue(to_peg,
                     linear=to_peg, overwrite=True)
             self.profilefollower.execute_queue()
             self.next_state("drive_to_wall")
+            self.manipulategear.engage()
 
     @state
     def drive_to_wall(self, initial_call):
         if not self.profilefollower.queue[0]:
-            self.manipulategear.engage()
+            # self.manipulategear.engage()
+            pass
 
 class LeftPeg(PegAutonomous):
     MODE_NAME = "Left Peg"
@@ -214,7 +200,7 @@ class CenterPeg(PegAutonomous):
 
 class RightPeg(PegAutonomous):
     MODE_NAME = "Right Peg"
-    DEFAULT = True
+    # DEFAULT = True
 
     manipulategear = ManipulateGear
     profilefollower = ProfileFollower
