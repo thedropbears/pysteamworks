@@ -47,7 +47,7 @@ class ManipulateGear(StateMachine):
         self.put_dashboard()
         self.geardepositiondevice.push_gear()
 
-    @timed_state(duration=2.0, next_state="backward_open", must_finish=True)
+    @timed_state(duration=2.0, must_finish=True)
     def forward_open(self):
         self.put_dashboard()
         self.geardepositiondevice.drop_gear()
