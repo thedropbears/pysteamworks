@@ -33,7 +33,7 @@ class Chassis:
     max_vel_native = 800 # ticks / 100ms
     # convert to SI units - m/s
     max_vel = (10*max_vel_native*wheel_circumference)/counts_per_revolution
-    max_acc = 1 # m/s
+    max_acc = 2 # m/s
 
     wheelbase_width = 0.629666 # m
 
@@ -42,7 +42,7 @@ class Chassis:
             "kI": 0.01,
             "kD": 10,
             "kF": 1023//max_vel_native,
-            "ramp-rate" : 20 # change in volts, in v/sec
+            "ramp-rate" : 36 # change in volts, in v/sec
     }
 
     motion_profile_speed = 50 # Hz

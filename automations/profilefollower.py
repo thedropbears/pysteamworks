@@ -9,10 +9,10 @@ class ProfileFollower:
     # linear motion feedforward/back gains
     #
     # position P controller
-    kP = 4
+    kP = 1
     # velocity and acceleration feedforward
-    kV = 1.2
-    kA = 0.0
+    kV = 1
+    kA = 0
 
     # heading motion feedforward/back gains
     # heading feedback
@@ -92,6 +92,9 @@ class ProfileFollower:
 
             self.sd.putNumber("heading_error_mp", heading_error)
 
-            self.chassis.set_velocity(linear_output, heading_output)
+            if self.queue[0]:
+                self.chassis.set_velocity(linear_output, heading_output)
+            else:
+                self.chassis.set_velocity(linear_seg[1], heading_seg[1])
         if not self.queue[0]:
             self.executing = False

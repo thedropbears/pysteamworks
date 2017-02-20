@@ -40,9 +40,9 @@ def generate_trapezoidal_trajectory(
     # find the max reachable velocity if we spend all our time accelerating
     # and decelerating. Used as max velocity in cases where we don't hit the
     # robot's top speed
-    triangular_max = math.sqrt(
+    triangular_max = direction * math.sqrt(
             (2*x*a_pos*a_neg+a_neg*v_start**2-a_pos*v_final**2)/(a_neg-a_pos))
-    v_max = min(v_max, triangular_max)
+    v_max = direction * min(abs(v_max), abs(triangular_max))
 
     # time (since the start of the trajectory) that we hit v_max
     t_cruise = (v_max - v_start)/a_pos
@@ -70,14 +70,14 @@ def generate_trapezoidal_trajectory(
         # velocity in the current timestep
         v = (v_max-v_start)*i/num_segments+v_start
         segments.append((
-                ((v+v_start)/2)*t_cruise*i/num_segments,
+                x_start+((v+v_start)/2)*t_cruise*i/num_segments,
                 v, a_pos))
 
     # interpolate along the cruise section of the path
     # do it as a list comprehension so that it runs faster
     num_segments = int(t_decel*Chassis.motion_profile_speed - num_segments)
     segments += [(
-        (x_cruise + v_max * (t_decel-t_cruise) * i / num_segments),
+        (x_start+x_cruise + v_max * (t_decel-t_cruise) * i / num_segments),
                   v_max, 0) for i in range(1, num_segments+1)]
 
     # interpolate along the deceleration portion of the path
@@ -85,7 +85,7 @@ def generate_trapezoidal_trajectory(
     for i in range(1, num_segments+1):
         v = v_max - (v_max-v_final) * i/num_segments
         segments.append((
-            x_decel + (v+v_max)/2 * (t_f-t_decel) * i/num_segments,
+            x_start + x_decel + (v+v_max)/2 * (t_f-t_decel) * i/num_segments,
             v, a_neg))
 
     return segments

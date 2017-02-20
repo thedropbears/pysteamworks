@@ -4,11 +4,13 @@ from components.gearalignmentdevice import GearAlignmentDevice
 from networktables import NetworkTable
 from components.vision import Vision
 from components.range_finder import RangeFinder
+from automations.profilefollower import ProfileFollower
 
 class ManipulateGear(StateMachine):
     gearalignmentdevice = GearAlignmentDevice
     geardepositiondevice = GearDepositionDevice
     range_finder = RangeFinder
+    profilefollower = ProfileFollower
     sd = NetworkTable
     aligned = False
     vision = Vision
@@ -30,24 +32,25 @@ class ManipulateGear(StateMachine):
         # now move to the next state
         #move forward
         self.put_dashboard()
-        print("align peg, vision %s" % (self.vision.x))
+        # print("align peg, vision %s" % (self.vision.x))
 
-        if -self.align_tolerance <= self.vision.x <= self.align_tolerance:
+        if (-self.align_tolerance <= self.vision.x <= self.align_tolerance
+                and not self.profilefollower.queue[0]):
             self.gearalignmentdevice.stop_motors()
             aligned = True
             if self.range_finder.getDistance() < self.place_gear_range:
                 self.next_state_now("forward_closed")
         else:
-            print("align_vision")
+            # print("align_vision")
             self.gearalignmentdevice.align()
             aligned = False
 
-    @timed_state(duration=1, next_state="forward_open", must_finish=True)
+    @timed_state(duration=0.5, next_state="forward_open", must_finish=True)
     def forward_closed(self):
         self.put_dashboard()
         self.geardepositiondevice.push_gear()
 
-    @timed_state(duration=2.0, must_finish=True)
+    @timed_state(duration=0.25, must_finish=True)
     def forward_open(self):
         self.put_dashboard()
         self.geardepositiondevice.drop_gear()

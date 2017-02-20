@@ -91,6 +91,8 @@ class Robot(magicbot.MagicRobot):
         # update the data on the smart dashboard
         # put the inputs to the dashboard
         self.sd.putNumber("gyro", self.bno055.getHeading())
+        self.sd.putNumber("vision_x", self.vision.x)
+        self.sd.putNumber("range", self.range_finder.getDistance())
         self.sd.putNumber("climbCurrent", self.winch_motor.getOutputCurrent())
         self.sd.putNumber("rail_pos", self.gearalignmentdevice.get_rail_pos())
         self.sd.putNumber("error_differential",
@@ -107,6 +109,7 @@ class Robot(magicbot.MagicRobot):
         self.gearalignmentdevice.reset_position()
         self.geardepositiondevice.retract_gear()
         self.geardepositiondevice.lock_gear()
+        self.profilefollower.stop()
 
     def disabledPeriodic(self):
         self.putData()
@@ -187,7 +190,7 @@ class Robot(magicbot.MagicRobot):
             self.sd.putString("camera", "back")
         elif self.gamepad.getRawButton(6):
             # slow down
-            self.throttle = 0.3
+            self.throttle = 0.15
             self.direction = 1
             self.sd.putString("camera", "front")
         elif self.gamepad.getRawAxis(3) > 0.9:
