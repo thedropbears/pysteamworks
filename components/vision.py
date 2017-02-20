@@ -1,9 +1,13 @@
+import math
+
 from magicbot import tunable
 from wpilib import CameraServer
 
 
 class Vision:
     k = tunable(0.5, doc='Weighting of the previous smoothed_x.')
+
+    horizontal_fov = 61 * math.pi/180
 
     x = tunable(0.0, doc='The centre of the vision target, in the interval [-1.0, 1.0].')
     time = tunable(0, doc='Timestamp of when x was last updated by the vision loop.')
@@ -30,3 +34,7 @@ class Vision:
     def execute(self):
         """Run at the end of the control loop"""
         self.smoothed_x = (1 - self.k) * self.x + self.k * self.smoothed_x
+
+    def derive_vision_angle(self):
+        "Calculate the camera's angle relative to the vision targets"
+        return -(self.horizontal_fov/2 * (self.smoothed_x))

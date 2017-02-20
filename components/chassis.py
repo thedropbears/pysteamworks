@@ -33,14 +33,14 @@ class Chassis:
     max_vel_native = 800 # ticks / 100ms
     # convert to SI units - m/s
     max_vel = (10*max_vel_native*wheel_circumference)/counts_per_revolution
-    max_acc = 1 # m/s
+    max_acc = 2 # m/s
 
     wheelbase_width = 0.629666 # m
 
     pid_profile = {
-            "kP": 3,
-            "kI": 0,
-            "kD": 0,
+            "kP": 1,
+            "kI": 0.01,
+            "kD": 10,
             "kF": 1023//max_vel_native,
             "ramp-rate" : 36 # change in volts, in v/sec
     }
@@ -65,8 +65,25 @@ class Chassis:
                 self.drive_motor_d
                 ]
 
+        self.motors[0].setPID(
+                self.pid_profile["kP"],
+                self.pid_profile["kI"],
+                self.pid_profile["kD"],
+                f = self.pid_profile["kF"],
+                )
+
+        self.motors[2].setPID(
+                self.pid_profile["kP"],
+                self.pid_profile["kI"],
+                self.pid_profile["kD"],
+                f = self.pid_profile["kF"],
+                )
+
         self.motors[0].setProfile(0)
         self.motors[2].setProfile(0)
+
+        self.motors[0].setVoltageRampRate(self.pid_profile["ramp-rate"])
+        self.motors[2].setVoltageRampRate(self.pid_profile["ramp-rate"])
 
         self.motors[0].setFeedbackDevice(CANTalon.FeedbackDevice.QuadEncoder)
         self.motors[2].setFeedbackDevice(CANTalon.FeedbackDevice.QuadEncoder)
@@ -121,8 +138,8 @@ class Chassis:
             for i in motor_inputs:
                 if abs(i) > max_i:
                     max_i = abs(i)
-            for i in motor_inputs:
-                i /= max_i
-                i *= self.inputs[3]
+            for i in range(len(motor_inputs)):
+                motor_inputs[i] /= max_i
+                motor_inputs[i] *= self.inputs[3]
             self.motors[0].set(motor_inputs[0]*Chassis.max_vel_native)
             self.motors[2].set(motor_inputs[1]*Chassis.max_vel_native)

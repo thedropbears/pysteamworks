@@ -4,63 +4,57 @@ from components.gearalignmentdevice import GearAlignmentDevice
 from networktables import NetworkTable
 from components.vision import Vision
 from components.range_finder import RangeFinder
+from automations.profilefollower import ProfileFollower
 
 class ManipulateGear(StateMachine):
     gearalignmentdevice = GearAlignmentDevice
     geardepositiondevice = GearDepositionDevice
     range_finder = RangeFinder
+    profilefollower = ProfileFollower
     sd = NetworkTable
     aligned = False
     vision = Vision
 
-    @state(first=True, must_finish=True)
+    place_gear_range = 0.6
+    align_tolerance = 0.05
+
+    @state(first=True)
+    def init(self):
+        self.geardepositiondevice.retract_gear()
+        self.geardepositiondevice.lock_gear()
+        self.gearalignmentdevice.reset_position()
+        self.next_state("align_peg")
+
+
+    @state(must_finish=True)
     def align_peg(self):
         # do something to align with the peg
         # now move to the next state
         #move forward
-        self.sd.putString("state", "unloadingGear")
         self.put_dashboard()
-        if -0.1 <= self.vision.x <= 0.1:
+        # print("align peg, vision %s" % (self.vision.x))
+
+        if (-self.align_tolerance <= self.vision.x <= self.align_tolerance
+                and not self.profilefollower.queue[0]):
             self.gearalignmentdevice.stop_motors()
             aligned = True
-            if self.range_finder.getDistance() < 0.5:
-                self.next_state_now("push_gear")
-        elif -0.3 <= self.vision.x <= 0.3:
-            if self.vision.x > 0.1:
-                self.gearalignmentdevice.align(0.5)
-            if self.vision.x < 0.1:
-                self.gearalignmentdevice.align(-0.5)
-            aligned = False
+            if self.range_finder.getDistance() < self.place_gear_range:
+                self.next_state_now("forward_closed")
         else:
-            if self.vision.x > 0.1:
-                self.gearalignmentdevice.align(1)
-            if self.vision.x < 0.1:
-                self.gearalignmentdevice.align(-1)
+            # print("align_vision")
+            self.gearalignmentdevice.align()
             aligned = False
 
-    @timed_state(duration=0.5, next_state="drop_gear", must_finish=True)
-    def push_gear(self):
+    @timed_state(duration=0.5, next_state="forward_open", must_finish=True)
+    def forward_closed(self):
         self.put_dashboard()
         self.geardepositiondevice.push_gear()
 
-    @timed_state(duration=2.0, next_state="retract_gear", must_finish=True)
-    def drop_gear(self):
+    @timed_state(duration=0.25, must_finish=True)
+    def forward_open(self):
         self.put_dashboard()
         self.geardepositiondevice.drop_gear()
-
-    @timed_state(duration=0.5, next_state="lock_gear", must_finish=True)
-    def retract_gear(self):
-        self.put_dashboard()
-        self.geardepositiondevice.drop_gear()
-
-    @state
-    def lock_gear(self):
-        self.put_dashboard()
-        self.geardepositiondevice.lock_gear()
-
-        self.sd.putString("state", "stationary")
-        self.done()
 
     def put_dashboard(self):
         """Update all the variables on the smart dashboard"""
-        self.sd.putNumber("vision_y", self.range_finder.getDistance())
+        self.sd.putString("state", "unloadingGear")

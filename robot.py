@@ -2,6 +2,7 @@
 
 import magicbot
 import wpilib
+from wpilib import XboxController
 
 from ctre import CANTalon
 
@@ -65,7 +66,7 @@ class Robot(magicbot.MagicRobot):
 
         # boilerplate setup for the joystick
         self.joystick = wpilib.Joystick(0)
-        self.gamepad = wpilib.Joystick(1)
+        self.gamepad = XboxController(1)
         self.pressed_buttons_js = set()
         self.pressed_buttons_gp = set()
         self.drive_motor_a = CANTalon(2)
@@ -83,14 +84,32 @@ class Robot(magicbot.MagicRobot):
         self.test_trajectory = generate_trapezoidal_trajectory(
                 0, 0, 3, 0, Chassis.max_vel, 1, -1)
 
+        self.throttle = 1.0
+        self.direction = 1.0
+
     def putData(self):
         # update the data on the smart dashboard
         # put the inputs to the dashboard
         self.sd.putNumber("gyro", self.bno055.getHeading())
+        self.sd.putNumber("vision_x", self.vision.x)
+        self.sd.putNumber("range", self.range_finder.getDistance())
+        self.sd.putNumber("climbCurrent", self.winch_motor.getOutputCurrent())
+        self.sd.putNumber("rail_pos", self.gearalignmentdevice.get_rail_pos())
+        self.sd.putNumber("error_differential",
+                self.drive_motor_a.getClosedLoopError()-
+                self.drive_motor_c.getClosedLoopError())
+        self.sd.putNumber("left_speed_error", self.drive_motor_a.getClosedLoopError())
+        self.sd.putNumber("right_speed_error", self.drive_motor_c.getClosedLoopError())
+        self.sd.putNumber("x_throttle", self.chassis.inputs[0])
+        self.sd.putNumber("z_throttle", self.chassis.inputs[2])
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
         self.sd.putString("state", "stationary")
+        self.gearalignmentdevice.reset_position()
+        self.geardepositiondevice.retract_gear()
+        self.geardepositiondevice.lock_gear()
+        self.profilefollower.stop()
 
     def disabledPeriodic(self):
         self.putData()
@@ -99,70 +118,92 @@ class Robot(magicbot.MagicRobot):
     def teleopPeriodic(self):
         '''Called on each iteration of the control loop'''
         self.putData()
-        #self.winch_motor.set(1)
-        self.sd.putNumber("climbCurrent", self.winch_motor.getOutputCurrent())
-
-        # if you want to get access to the buttons,
-        # you should be doing it like so:
-        try:
-            if self.debounce(10):
-                self.profilefollower.modify_queue(linear=self.test_trajectory)
-                self.profilefollower.execute_queue()
-        except:
-            self.onException()
 
         try:
-            if self.debounce(1, gamepad=True):
-                #perform some action
-
-                self.profilefollower.execute_queue()
-
+            if self.debounce(8, gamepad=True) or self.debounce(1):
                 self.manipulategear.engage(force=True)
 
         except:
             self.onException()
-        
+
         try:
-            if self.debounce(2, gamepad=True):
-                #perform some action
+            if self.debounce(7, gamepad=True) or self.debounce(3):
                 self.winch_automation.engage(force=True)
         except:
             self.onException()
-        
+
         try:
-            if self.debounce(4, gamepad=True):
-                #perform some action
-
-                self.profilefollower.execute_queue()
-
+            if self.debounce(12):
+                # stop the winch
                 if self.winch_automation.is_executing:
                     self.winch_automation.done()
+                self.winch.piston_open()
                 self.winch.rotate_winch(0)
 
                 if self.manipulategear.is_executing:
                     self.manipulategear.done()
-                    self.gearalignmentdevice.stop_motors()
-
+                self.gearalignmentdevice.reset_position()
                 self.sd.putString("state", "stationary")
-
         except:
             self.onException()
-        
+
         try:
-            if self.debounce(3, gamepad=True):
-                #perform some action
-
-                self.profilefollower.execute_queue()
-
-                self.winch_automation.done()
-                self.winch_motor.set(-0.4)
+            if self.debounce(11):
+                if self.winch_automation.is_executing:
+                    self.winch_automation.done()
+                self.winch.rotate_winch(0)
         except:
             self.onException()
 
-        self.chassis.inputs = [-rescale_js(self.joystick.getY(), deadzone=0.05, exponential=1.2),
+        try:
+            if self.debounce(6):
+                self.winch.piston_open
+        except:
+            self.onException()
+
+        try:
+            if self.debounce(2):
+                self.geardepositiondevice.retract_gear()
+                self.geardepositiondevice.lock_gear()
+        except:
+            self.onException()
+
+        try:
+            if self.debounce(10):
+                # backdrive the winch
+                self.winch_automation.done()
+                self.winch.change_control_mode(False)
+                self.winch_motor.set(-0.3)
+        except:
+            self.onException()
+
+        if (not self.gamepad.getRawButton(5) and
+                not self.gamepad.getRawButton(6) and
+                not self.gamepad.getRawAxis(3) > 0.9):
+            self.throttle = 1
+            self.direction = 1
+            self.sd.putString("camera", "front")
+        elif self.gamepad.getRawButton(5):
+            # reverse
+            self.throttle = 1
+            self.direction = -1
+            self.sd.putString("camera", "back")
+        elif self.gamepad.getRawButton(6):
+            # slow down
+            self.throttle = 0.15
+            self.direction = 1
+            self.sd.putString("camera", "front")
+        elif self.gamepad.getRawAxis(3) > 0.9:
+            self.throttle = 0.3
+            self.direction = -1
+            self.sd.putString("camera", "back")
+
+        self.chassis.inputs = [(
+            self.direction
+            * -rescale_js(self.gamepad.getRawAxis(1), deadzone=0.05, exponential=15)),
                     - rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2),
-                    - rescale_js(self.joystick.getZ(), deadzone=0.2, exponential=15.0, rate=0.3),
-                    (self.joystick.getThrottle() - 1.0) / -2.0
+                    -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=15.0, rate=0.5),
+                    self.throttle
                     ]
 
     # the 'debounce' function keeps tracks of which buttons have been pressed
