@@ -63,7 +63,7 @@ def loop():
             sleep(1)
 
 
-def find_target(img, lower=np.array([110/2, 200, 75]), upper=np.array([155/2, 255, 255])):
+def find_target(img, lower=np.array([110//2, 40*255//100, 30*255//100]), upper=np.array([180//2, 100*255//100, 100*255//100])):
     """Given an image and thresholds, find the centre of mass of the target.
 
     All arguments must be np.arrays, and lower and upper must be a 3-array.
@@ -83,14 +83,15 @@ def find_target(img, lower=np.array([110/2, 200, 75]), upper=np.array([155/2, 25
     _, contours, __ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     # sort the contours into a list
     areas = []
-    for contour in contours:
+    for idx, contour in enumerate(contours):
         area = cv2.contourArea(contour)
         if area/(height*width) > AREA_THRESHOLD:
-            heapq.heappush(areas, (cv2.contourArea(contour), contour))
+            heapq.heappush(areas, (cv2.contourArea(contour), idx))
 
     areas = heapq.nlargest(2, areas)
     x_coord = 0
-    for _, contour in areas:
+    for _, idx in areas:
+        contour = contours[idx]
         moments = cv2.moments(contour)
         x_coord += moments['m10']/moments['m00'] / len(areas)
         cv2.drawContours(res, (contour, ), -1, (255, 0, 0), 1)
