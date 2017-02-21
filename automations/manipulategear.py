@@ -28,6 +28,7 @@ class ManipulateGear(StateMachine):
         self.geardepositiondevice.retract_gear()
         self.geardepositiondevice.lock_gear()
         self.gearalignmentdevice.reset_position()
+        self.gearalignmentdevice.position_mode()
         self.next_state("align_peg")
 
 
@@ -45,7 +46,7 @@ class ManipulateGear(StateMachine):
                 and abs(self.chassis.inputs[2]) < self.push_gear_input_tolerance):
             self.gearalignmentdevice.stop_motors()
             aligned = True
-            if self.range_finder._smoothed_d < self.place_gear_range:
+            if self.range_finder.getDistance() < self.place_gear_range:
                 self.chassis.input_enabled = False
                 self.next_state_now("forward_closed")
         else:

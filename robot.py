@@ -209,6 +209,13 @@ class Robot(magicbot.MagicRobot):
             self.direction = -1
             self.sd.putString("camera", "back")
 
+        if self.joystick.getRawButton(12):
+            if not self.manipulategear.is_executing:
+                self.gearalignmentdevice.move_right()
+        elif self.joystick.getRawButton(11):
+            if not self.manipulategear.is_executing:
+                self.gearalignmentdevice.move_left()
+
         self.chassis.inputs = [(
             self.direction
             * -rescale_js(self.gamepad.getRawAxis(1), deadzone=0.05, exponential=15)),
