@@ -177,6 +177,12 @@ class Robot(magicbot.MagicRobot):
         except:
             self.onException()
 
+        try:
+            if self.debounce(8):
+                self.vision.toggle_mode()
+        except:
+            self.onException()
+
         if (not self.gamepad.getRawButton(5) and
                 not self.gamepad.getRawButton(6) and
                 not self.gamepad.getRawAxis(3) > 0.9):
