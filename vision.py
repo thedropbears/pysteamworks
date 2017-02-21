@@ -22,6 +22,12 @@ def loop():
     front_cam_server = cs.MjpegServer("frontcamserver", 8082)
     front_cam_server.setSource(front_camera)
 
+    back_camera = cs.UsbCamera("backcam", 1)
+    back_camera.setVideoMode(*videomode)
+
+    back_cam_server = cs.MjpegServer("backcamserver", 8081)
+    back_cam_server.setSource(back_camera)
+
     cvsink = cs.CvSink("cvsink")
     cvsink.setSource(front_camera)
 
