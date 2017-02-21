@@ -7,6 +7,7 @@ AREA_THRESHOLD = 0.0005
 def loop():
     import cscore as cs
     from networktables import NetworkTables
+    from time import sleep
 
     nt = NetworkTables.getTable("/components/vision")
 
@@ -15,36 +16,45 @@ def loop():
     fps = 25
     videomode = cs.VideoMode.PixelFormat.kMJPEG, width, height, fps
 
-    camera = cs.UsbCamera("usbcam", 0)
-    camera.setVideoMode(*videomode)
+    front_camera = cs.UsbCamera("frontcam", 0)
+    front_camera.setVideoMode(*videomode)
 
-    camMjpegServer = cs.MjpegServer("httpserver", 8082)
-    camMjpegServer.setSource(camera)
+    front_cam_server = cs.MjpegServer("frontcamserver", 8082)
+    front_cam_server.setSource(front_camera)
 
     cvsink = cs.CvSink("cvsink")
-    cvsink.setSource(camera)
+    cvsink.setSource(front_camera)
 
     cvSource = cs.CvSource("cvsource", *videomode)
     cvmjpegServer = cs.MjpegServer("cvhttpserver", 8083)
     cvmjpegServer.setSource(cvSource)
 
-    #Setting the exposure.
-    camera.setExposureManual(0)
+    # Set the initial exposure of the front camera.
+    # It may take a while for the exposure setting to have an effect.
+    front_camera.setExposureManual(0)
 
     # Images are big. Preallocate an array to fill the image with.
     frame = np.zeros(shape=(height, width, 3), dtype=np.uint8)
 
     while True:
-        time, frame = cvsink.grabFrame(frame)
-        if time == 0:
-            # We got an error; report it through the output stream.
-            cvSource.notifyError(cvsink.getError())
+        if nt.getBoolean("vision_mode", True):
+            front_camera.setExposureManual(0)
+            time, frame = cvsink.grabFrame(frame)
+            if time == 0:
+                # We got an error; report it through the output stream.
+                cvSource.notifyError(cvsink.getError())
+            else:
+                x, img, num_targets = find_target(frame)
+                if num_targets > 0:
+                    nt.putNumber("x", x)
+                    nt.putNumber("time", time)
+                    nt.putNumber("num_targets", num_targets)
+                cvSource.putFrame(img)
         else:
-            x, img, num_targets = find_target(frame)
-            if num_targets > 0:
-                nt.putNumber("x", x)
-                nt.putNumber("time", time)
-            cvSource.putFrame(img)
+            # Let the driver use the front camera to see.
+            front_camera.setExposureAuto()
+            # Avoid pegging the CPU.
+            sleep(1)
 
 
 def find_target(img, lower=np.array([110/2, 200, 75]), upper=np.array([155/2, 255, 255])):
