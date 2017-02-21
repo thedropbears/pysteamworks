@@ -49,12 +49,14 @@ class PegAutonomous(AutonomousStateMachine):
 
     def generate_trajectories(self):
         if self.target == Targets.Center:
+            self.perpendicular_heading = 0
             self.displace_0 = generate_trapezoidal_trajectory(
-                    0, 0, self.center_tower_distance-self.center_to_front_bumper,
+                    0, 0, self.center_tower_distance-(2*self.center_to_front_bumper),
                     0, self.displace_velocity,
                     self.displace_accel, -self.displace_decel)
             self.rotate_0 = []
         elif self.target == Targets.Left:
+            self.perpendicular_heading = -self.side_rotate_angle
             self.displace_0 = generate_trapezoidal_trajectory(
                     0, 0, self.side_drive_forward_length-self.center_to_front_bumper,
                     0, self.displace_velocity,
@@ -63,6 +65,7 @@ class PegAutonomous(AutonomousStateMachine):
                     0, 0, -self.side_rotate_angle, 0, self.rotate_velocity,
                     self.rotate_accel_speed, -self.rotate_accel_speed/2)
         else:
+            self.perpendicular_heading = self.side_rotate_angle
             self.displace_0 = generate_trapezoidal_trajectory(
                     0, 0, self.side_drive_forward_length-self.center_to_front_bumper, 0,
                     self.displace_velocity,
@@ -92,10 +95,14 @@ class PegAutonomous(AutonomousStateMachine):
             self.profilefollower.execute_queue()
         if not self.profilefollower.queue[0]:
             self.profilefollower.stop()
-            self.profilefollower.modify_queue(heading=self.rotate_0, overwrite=True)
-            print("Rotate Start %s, Rotate End %s" % (self.rotate_0[0], self.rotate_0[-1]))
-            self.profilefollower.execute_queue()
-            self.next_state("rotate_towards_tower")
+            if not self.target == Targets.Center:
+                self.profilefollower.modify_queue(heading=self.rotate_0, overwrite=True)
+                print("Rotate Start %s, Rotate End %s" % (self.rotate_0[0], self.rotate_0[-1]))
+                self.profilefollower.execute_queue()
+                self.next_state("rotate_towards_tower")
+            else:
+                self.next_state("rotate_towards_peg")
+
 
     @state
     def rotate_towards_tower(self, initial_call):
@@ -111,19 +118,25 @@ class PegAutonomous(AutonomousStateMachine):
                 self.profilefollower.modify_queue(heading=measure_trajectory, overwrite=True)
                 self.profilefollower.execute_queue()
                 # self.done()
-            self.next_state("measure_position")
+            self.next_state("rotate_towards_peg")
 
     @state
     def measure_position(self, initial_call):
-        if not self.profilefollower.queue[0]:
+        if initial_call:
+            if self.vision.x != 0.0:
+                measure_trajectory = generate_trapezoidal_trajectory(
+                        self.bno055.getHeading(),
+                        0, self.bno055.getHeading()
+                        + self.vision.derive_vision_angle(), 0,
+                        self.rotate_velocity, self.rotate_accel_speed, -self.rotate_accel_speed/2)
+                print("vision_x %s, vision_angle %s, heading %s, heading_start %s, heading_end %s" % (
+                    self.vision.x, self.vision.derive_vision_angle(), self.bno055.getHeading(), measure_trajectory[0][0], measure_trajectory[-1][0]))
+                self.profilefollower.modify_queue(heading=measure_trajectory, overwrite=True)
+                self.profilefollower.execute_queue()
+        elif not self.profilefollower.queue[0]:
             print("end_mpos")
             # now measure our position relative to the targets
 
-            self.perpendicular_heading = 0
-            if self.target == Targets.Right:
-                self.perpendicular_heading = self.side_rotate_angle
-            elif self.target == Targets.Left:
-                self.perpendicular_heading = -self.side_rotate_angle
 
             r = (self.range_finder.getDistance() + self.center_to_front_bumper
                     - self.lidar_to_front_bumper)
@@ -135,7 +148,7 @@ class PegAutonomous(AutonomousStateMachine):
             print("vision_x: %s, range: %s, heading %s, displacement_error %s, raw_range %s" %
                     (self.vision.x, r, current_heading, displacement_error, self.range_finder.getDistance()))
 
-            self.rotate_to_straight = generate_trapezoidal_trajectory(
+            self.rotate_to_correct = generate_trapezoidal_trajectory(
                     current_heading, 0,
                     0, 0, self.rotate_velocity,
                     self.rotate_accel_speed, -self.rotate_accel_speed/2)
@@ -147,7 +160,7 @@ class PegAutonomous(AutonomousStateMachine):
                 print("WITHIN TOLERANCE, SKIPPING...")
                 self.next_state("rotate_towards_peg")
             else:
-                self.profilefollower.modify_queue(heading=self.rotate_to_straight)
+                self.profilefollower.modify_queue(heading=self.rotate_to_correct)
                 self.profilefollower.execute_queue()
                 self.next_state("rotate_straight")
 

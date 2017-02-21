@@ -133,7 +133,7 @@ class Robot(magicbot.MagicRobot):
             self.onException()
 
         try:
-            if self.debounce(12):
+            if self.debounce(10):
                 # stop the winch
                 if self.winch_automation.is_executing:
                     self.winch_automation.done()
@@ -148,7 +148,15 @@ class Robot(magicbot.MagicRobot):
             self.onException()
 
         try:
-            if self.debounce(11):
+            if self.debounce(2):
+                if self.manipulategear.is_executing:
+                    self.manipulategear.done()
+                self.gearalignmentdevice.reset_position()
+        except:
+            self.onException()
+
+        try:
+            if self.debounce(5):
                 if self.winch_automation.is_executing:
                     self.winch_automation.done()
                 self.winch.rotate_winch(0)
@@ -162,20 +170,17 @@ class Robot(magicbot.MagicRobot):
             self.onException()
 
         try:
-            if self.debounce(2):
+            if self.debounce(7):
                 self.geardepositiondevice.retract_gear()
                 self.geardepositiondevice.lock_gear()
         except:
             self.onException()
 
-        try:
-            if self.debounce(10):
-                # backdrive the winch
-                self.winch_automation.done()
-                self.winch.change_control_mode(False)
-                self.winch_motor.set(-0.3)
-        except:
-            self.onException()
+        if self.joystick.getRawButton(4):
+            # backdrive the winch
+            self.winch_automation.done()
+            self.winch.change_control_mode(False)
+            self.winch_motor.set(-0.3)
 
         try:
             if self.debounce(8):
