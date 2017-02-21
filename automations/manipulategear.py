@@ -20,6 +20,7 @@ class ManipulateGear(StateMachine):
 
     @state(first=True)
     def init(self):
+        self.vision.vision_mode = True
         self.geardepositiondevice.retract_gear()
         self.geardepositiondevice.lock_gear()
         self.gearalignmentdevice.reset_position()
@@ -54,6 +55,10 @@ class ManipulateGear(StateMachine):
     def forward_open(self):
         self.put_dashboard()
         self.geardepositiondevice.drop_gear()
+
+    def done(self):
+        super().done()
+        self.vision.vision_mode = False
 
     def put_dashboard(self):
         """Update all the variables on the smart dashboard"""
