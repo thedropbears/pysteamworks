@@ -8,29 +8,29 @@ class WinchAutomation(StateMachine):
     sd = NetworkTable
 
     @state(first=True)
-    def initialise_winch(self):
+    def catch_rope(self, state_tm):
         self.put_dashboard()
-
         self.winch.piston_open()
         self.winch.rotate_winch(0.3)
-        self.next_state("climb")
+
+        if self.winch.on_rope_engaged() and state_tm > 2:
+            self.next_state("climb")
 
     @state(must_finish=True)
-    def climb(self, state_tm):
+    def climb(self):
         self.put_dashboard()
-        if self.winch.on_rope_engaged() and state_tm > 2:
-            self.winch.piston_close()
-            self.winch.rotate_winch(1)
+        self.winch.piston_close()
+        self.winch.rotate_winch(1)
 
-            # self.next_state("press_touchpad")
+    #    if self.winch.on_touchpad_engaged() and state_tm > 2:
+    #        self.next_state("press_touchpad")
 
     # @state(must_finish=True)
     # def press_touchpad(self, state_tm):
     #     self.put_dashboard()
-    #     if self.winch.on_touchpad_engaged() and state_tm > 2:
-    #         self.winch.rotate_winch(0)
-    #         self.sd.putString("state", "stationary")
-    #         self.done()
+    #     self.winch.rotate_winch(0)
+    #     self.sd.putString("state", "stationary")
+    #     self.done()
 
     def put_dashboard(self):
         """Update all the variables on the smart dashboard"""
