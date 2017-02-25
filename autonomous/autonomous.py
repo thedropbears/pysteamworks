@@ -14,7 +14,7 @@ import math
 
 class Targets:
     Left = 0
-    Center = 1
+    Centre = 1
     Right = 2
 
 class PegAutonomous(AutonomousStateMachine):
@@ -28,10 +28,10 @@ class PegAutonomous(AutonomousStateMachine):
     gearalignmentdevice = GearAlignmentDevice
     geardepositiondevice = GearDepositionDevice
 
-    center_to_front_bumper = 0.49
+    centre_to_front_bumper = 0.49
     lidar_to_front_bumper = 0.36
 
-    center_airship_distance = 2.93
+    centre_airship_distance = 2.93
     side_drive_forward_length = 2.54
     side_rotate_angle = math.pi/3.0
     rotate_accel_speed = 2 # rad*s^-2
@@ -43,7 +43,7 @@ class PegAutonomous(AutonomousStateMachine):
     # rotate_accel_speed = 2 # rad*s^-2
     # rotate_velocity = 2
 
-    def __init__(self, target=Targets.Center):
+    def __init__(self, target=Targets.Centre):
         super().__init__()
         self.target = target
 
@@ -56,7 +56,7 @@ class PegAutonomous(AutonomousStateMachine):
             self.dr_displacement = self.side_drive_forward_length-self.centre_to_front_bumper
         else:
             self.perpendicular_heading = 0
-            self.dr_displacement = (self.center_airship_distance-(2*self.center_to_front_bumper))/2
+            self.dr_displacement = self.centre_airship_distance/2-self.centre_to_front_bumper
 
     def on_enable(self):
         super().on_enable()
@@ -80,7 +80,7 @@ class PegAutonomous(AutonomousStateMachine):
             self.profilefollower.modify_queue(heading=0, linear=displace)
             self.profilefollower.execute_queue()
         if not self.profilefollower.queue[0]:
-            if self.target is Targets.Center:
+            if self.target is Targets.Centre:
                 self.next_state("rotate_towards_peg")
             else:
                 self.next_state("rotate_towards_airship")
@@ -113,8 +113,8 @@ class PegAutonomous(AutonomousStateMachine):
                 self.profilefollower.execute_queue()
         if not self.profilefollower.queue[0]:
             # now measure our position relative to the targets
-            r = (self.range_finder.getDistance() + self.center_to_front_bumper
-                    - self.lidar_to_front_bumper)
+            r = (self.range_finder.getDistance() + self.centre_to_front_bumper
+                 - self.lidar_to_front_bumper)
             current_heading = self.bno055.getHeading()
 
             self.displacement_error = -(
@@ -215,15 +215,15 @@ class LeftPeg(PegAutonomous):
     def __init__(self):
         super().__init__(Targets.Left)
 
-class CenterPeg(PegAutonomous):
-    MODE_NAME = "Center Peg"
+class CentrePeg(PegAutonomous):
+    MODE_NAME = "Centre Peg"
 
     manipulategear = ManipulateGear
     profilefollower = ProfileFollower
     chassis = Chassis
 
     def __init__(self):
-        super().__init__(Targets.Center)
+        super().__init__(Targets.Centre)
 
 class RightPeg(PegAutonomous):
     MODE_NAME = "Right Peg"
