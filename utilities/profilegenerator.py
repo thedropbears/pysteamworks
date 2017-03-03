@@ -1,11 +1,13 @@
 from components.chassis import Chassis
 import math
 
+
 def sign(x):
     if x >= 0:
         return 1
     else:
         return -1
+
 
 def generate_interpolation_trajectory(x_start, x_final, v_max):
     """Generate a 1d interpolation profile, where the velocity is constant
@@ -18,6 +20,7 @@ def generate_interpolation_trajectory(x_start, x_final, v_max):
     num_segments = int(x/v_max*Chassis.motion_profile_speed)
     segments = [(i/num_segments, v_max, 0) for i in range(0, num_segments+1)]
     return segments
+
 
 def generate_trapezoidal_trajectory(
         x_start, v_start, x_final, v_final, v_max, a_pos, a_neg):
@@ -47,7 +50,7 @@ def generate_trapezoidal_trajectory(
     # time (since the start of the trajectory) that we hit v_max
     t_cruise = (v_max - v_start)/a_pos
     # distance we have travelled once we hit v_max
-    x_cruise = t_cruise*v_start + t_cruise*(t_cruise/a_pos)/2
+    x_cruise = t_cruise*(v_start + v_max)/2
     # time it takes to slow down to v_final
     t_slow = (v_final - v_max)/a_neg
     # time at which we start decelerating
@@ -58,15 +61,13 @@ def generate_trapezoidal_trajectory(
     # how far we have travelled since the start when we start decelerating
     x_decel = x_cruise + v_max*t_constant
     # time at which we finish the trajetory
-    t_f = (2*(x-t_cruise * (v_start+v_max)/2 - v_max*t_constant)
-            / (v_final+v_max) + t_decel)
-
+    t_f = t_decel + t_slow
 
     # interpolate the first (acceleration) portion of the path
     # number of discrete segments we pass through
-    num_segments = int(t_cruise*Chassis.motion_profile_speed)
+    num_segments = int(t_cruise * Chassis.motion_profile_speed)
     segments = []
-    if num_segments>0:
+    if num_segments > 0:
         for i in range(0, num_segments+1):
             # velocity in the current timestep
             v = (v_max-v_start)*i/num_segments+v_start
