@@ -5,7 +5,7 @@ import logging
 
 AREA_THRESHOLD = 0.0005
 
-def loop():
+def loop():  # pragma: no cover
     import cscore as cs
     from networktables import NetworkTables
     from time import sleep, time as now
