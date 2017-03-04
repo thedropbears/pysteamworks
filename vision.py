@@ -63,7 +63,7 @@ def loop():
             sleep(1)
 
 
-def find_target(img, lower=np.array([110//2, 40*255//100, 30*255//100]), upper=np.array([180//2, 100*255//100, 100*255//100])):
+def find_target(img, lower=np.array([110//2, 40*255//100, 5*255//100]), upper=np.array([180//2, 100*255//100, 100*255//100])):
     """Given an image and thresholds, find the centre of mass of the target.
 
     All arguments must be np.arrays, and lower and upper must be a 3-array.
