@@ -112,7 +112,7 @@ if __name__ == "__main__":
         image = cv2.imread(args.showfile, cv2.IMREAD_COLOR)
         x, image, num_targets = find_target(image)
         cv2.imshow('image', image)
-    while cv2.getWindowHandle('image') >= 0:
-        if cv2.waitKey(50) != -1:
-            break
+        while True:
+            if cv2.waitKey(50) != -1:
+                break
 
