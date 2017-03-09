@@ -15,10 +15,14 @@ def generate_interpolation_trajectory(x_start, x_final, v_max):
 
     :returns: a list of (pos, vel acc) tuples.
     """
-
     x = x_final - x_start
-    num_segments = int(x/v_max*Chassis.motion_profile_speed)
-    segments = [(i/num_segments, v_max, 0) for i in range(0, num_segments+1)]
+
+    direction = sign(x)
+
+    v_max = abs(v_max)* direction
+
+    num_segments = int(abs(x)/v_max*Chassis.motion_profile_speed)
+    segments = [(x_start+x*i/num_segments, v_max, 0) for i in range(0, num_segments+1)]
     return segments
 
 
