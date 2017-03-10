@@ -177,6 +177,7 @@ class PegAutonomous(AutonomousStateMachine):
     @state
     def drive_to_wall(self, initial_call):
         if initial_call:
+            self.profilefollower.stop()
             to_peg = generate_trapezoidal_trajectory(
                     0, 0, self.range_finder.getDistance()-self.lidar_to_front_bumper,
                     0,
@@ -186,7 +187,7 @@ class PegAutonomous(AutonomousStateMachine):
                     linear=to_peg, overwrite=True)
             self.profilefollower.execute_queue()
             self.manipulategear.engage()
-        if not self.manipulategear.is_executing:
+        elif not self.manipulategear.is_executing:
             self.next_state("roll_back")
     @state
     def roll_back(self, initial_call):
