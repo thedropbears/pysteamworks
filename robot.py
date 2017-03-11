@@ -165,7 +165,7 @@ class Robot(magicbot.MagicRobot):
 
         try:
             if self.debounce(6):
-                self.winch.piston_open
+                self.winch.piston_open()
         except:
             self.onException()
 
@@ -215,12 +215,21 @@ class Robot(magicbot.MagicRobot):
         elif self.joystick.getRawButton(11):
             if not self.manipulategear.is_executing:
                 self.gearalignmentdevice.move_left()
+        elif not self.manipulategear.is_executing:
+            self.gearalignmentdevice.stop_motors()
 
+        # self.chassis.inputs = [(
+        #     self.direction
+        #     * -rescale_js(self.gamepad.getRawAxis(1), deadzone=0.05, exponential=15)),
+        #             - rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2),
+        #             -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=15.0, rate=0.5),
+        #             self.throttle
+        #             ]
         self.chassis.inputs = [(
             self.direction
-            * -rescale_js(self.gamepad.getRawAxis(1), deadzone=0.05, exponential=15)),
+            * -rescale_js(self.gamepad.getRawAxis(1), rate=0.3, deadzone=0.05, exponential=15)),
                     - rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2),
-                    -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=15.0, rate=0.5),
+                    -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=15.0, rate=0.2),
                     self.throttle
                     ]
 
