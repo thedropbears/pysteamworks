@@ -20,6 +20,8 @@ class ManipulateGear(StateMachine):
     place_gear_range = 0.5
     align_tolerance = 0.05
 
+    move_back_close_tol = 0.2
+
     push_gear_input_tolerance = 0.05
 
     @state(first=True)
@@ -54,6 +56,7 @@ class ManipulateGear(StateMachine):
 
     @timed_state(duration=0.5, next_state="forward_open", must_finish=True)
     def forward_closed(self):
+        self.vision.vision_mode = False
         self.put_dashboard()
         self.geardepositiondevice.push_gear()
 
@@ -62,20 +65,26 @@ class ManipulateGear(StateMachine):
         self.put_dashboard()
         self.geardepositiondevice.drop_gear()
 
-    @timed_state(duration=0.5, next_state="backward_close", must_finish=True)
-    def backward_open(self):
+    @state(must_finish=True)
+    def backward_open(self, initial_call):
         self.put_dashboard()
         self.geardepositiondevice.retract_gear()
         self.chassis.input_enabled = True
+        if initial_call:
+            self.initial_distances = self.chassis.get_wheel_distances()
+        if ((abs(abs(self.initial_distances[0]) - abs(self.chassis.get_wheel_distances()[0]))
+            +abs(abs(self.initial_distances[1]) - abs(self.chassis.get_wheel_distances()[1])))
+            / 2 > self.move_back_close_tol):
+            self.next_state_now("backward_close")
 
-    @timed_state(duration=0.25, must_finish=True)
+    @state(must_finish=True)
     def backward_close(self):
         self.put_dashboard()
         self.geardepositiondevice.lock_gear()
+        self.done()
 
     def done(self):
         super().done()
-        self.vision.vision_mode = False
 
     def put_dashboard(self):
         """Update all the variables on the smart dashboard"""

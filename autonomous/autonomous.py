@@ -187,7 +187,7 @@ class PegAutonomous(AutonomousStateMachine):
                     linear=to_peg, overwrite=True)
             self.profilefollower.execute_queue()
             self.manipulategear.engage()
-        elif not self.manipulategear.is_executing:
+        elif self.manipulategear.current_state == "backward_open":
             self.next_state("roll_back")
     @state
     def roll_back(self, initial_call):
