@@ -22,7 +22,7 @@ class Chassis:
     inches_to_meters = 0.0254
     # some calculations that provide numbers used by the motion profiling
     wheel_circumference = 6*inches_to_meters*math.pi # m
-    counts_per_revolution = 1024
+    counts_per_revolution = 1440
     # convert from sensor units to meters
     counts_per_meter = counts_per_revolution/wheel_circumference
 
