@@ -9,7 +9,7 @@ def sign(x):
         return -1
 
 
-def generate_interpolation_trajectory(x_start, x_final, v_max):
+def generate_interpolation_trajectory(x_start, x_final, traj_to_match):
     """Generate a 1d interpolation profile, where the velocity is constant
     over the duration of the trajectory.
 
@@ -19,10 +19,10 @@ def generate_interpolation_trajectory(x_start, x_final, v_max):
 
     direction = sign(x)
 
-    v_max = abs(v_max)* direction
+    vel = 50*x/len(traj_to_match)
 
-    num_segments = int(abs(x)/v_max*Chassis.motion_profile_speed)
-    segments = [(x_start+x*i/num_segments, v_max, 0) for i in range(0, num_segments+1)]
+    num_segments = len(traj_to_match)
+    segments = [(x_start+x*i/num_segments, vel, 0) for i in range(0, num_segments)]
     return segments
 
 
