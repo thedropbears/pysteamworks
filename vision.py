@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import heapq
+import logging
 
 AREA_THRESHOLD = 0.0005
 
@@ -16,13 +17,27 @@ def loop():
     fps = 25
     videomode = cs.VideoMode.PixelFormat.kMJPEG, width, height, fps
 
-    front_camera = cs.UsbCamera("frontcam", 0)
+    cams = [cam.dev for cam in sorted(cs.UsbCamera.enumerateUsbCameras(), key=lambda x: x.name)]
+
+    if cams:
+        front_cam_id = cams[0]
+    else:
+        logging.warn("Cameras not found, streams may be on incorrect cameras if found later.")
+        front_cam_id = 0
+
+    if len(cams) > 1:
+        back_cam_id = cams[1]
+    else:
+        logging.warn("Second camera not found. Defaulting back cam stream to device 1.")
+        back_cam_id = 1
+
+    front_camera = cs.UsbCamera("frontcam", front_cam_id)
     front_camera.setVideoMode(*videomode)
 
     front_cam_server = cs.MjpegServer("frontcamserver", 8082)
     front_cam_server.setSource(front_camera)
 
-    back_camera = cs.UsbCamera("backcam", 1)
+    back_camera = cs.UsbCamera("backcam", back_cam_id)
     back_camera.setVideoMode(*videomode)
 
     back_cam_server = cs.MjpegServer("backcamserver", 8081)
