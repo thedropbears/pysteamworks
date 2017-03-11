@@ -17,7 +17,7 @@ class ManipulateGear(StateMachine):
     aligned = False
     vision = Vision
 
-    place_gear_range = 0.4
+    place_gear_range = 0.5
     align_tolerance = 0.05
 
     push_gear_input_tolerance = 0.05
@@ -38,7 +38,6 @@ class ManipulateGear(StateMachine):
         # now move to the next state
         #move forward
         self.put_dashboard()
-        # print("align peg, vision %s" % (self.vision.x))
 
         if (-self.align_tolerance <= self.vision.x <= self.align_tolerance
                 and not self.profilefollower.queue[0]
@@ -50,7 +49,6 @@ class ManipulateGear(StateMachine):
                 self.chassis.input_enabled = False
                 self.next_state_now("forward_closed")
         else:
-            # print("align_vision")
             self.gearalignmentdevice.align()
             aligned = False
 
@@ -59,12 +57,12 @@ class ManipulateGear(StateMachine):
         self.put_dashboard()
         self.geardepositiondevice.push_gear()
 
-    @timed_state(duration=0.25, next_state="backward_open", must_finish=True)
+    @timed_state(duration=0.5, next_state="backward_open", must_finish=True)
     def forward_open(self):
         self.put_dashboard()
         self.geardepositiondevice.drop_gear()
 
-    @timed_state(duration=0.25, next_state="backward_close", must_finish=True)
+    @timed_state(duration=0.5, next_state="backward_close", must_finish=True)
     def backward_open(self):
         self.put_dashboard()
         self.geardepositiondevice.retract_gear()
