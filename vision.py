@@ -11,8 +11,8 @@ def loop():
 
     nt = NetworkTables.getTable("/components/vision")
 
-    width = 320
-    height = 240
+    width = 160
+    height = 120
     fps = 25
     videomode = cs.VideoMode.PixelFormat.kMJPEG, width, height, fps
 
