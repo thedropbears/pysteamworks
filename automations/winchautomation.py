@@ -7,12 +7,11 @@ class WinchAutomation(StateMachine):
     winch = Winch
     sd = NetworkTable
 
-    @state(first=True)
+    @state(first=True, must_finish=True)
     def catch_rope(self, state_tm):
         self.put_dashboard()
         self.winch.piston_open()
         self.winch.rotate_winch(0.3)
-
         if self.winch.on_rope_engaged() and state_tm > 2:
             self.next_state("climb")
 
