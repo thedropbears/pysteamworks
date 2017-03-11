@@ -10,16 +10,9 @@ class Winch:
     def __init__(self):
         super().__init__()
 
-    def change_control_mode(self, current_mode):
-        """Change control mode to current mode"""
-        if current_mode:
-            self.winch_motor.setControlMode(CANTalon.ControlMode.Current)
-        else:
-            self.winch_motor.setControlMode(CANTalon.ControlMode.PercentVbus)
-
     def on_rope_engaged(self):
         """Return wether the current is over 5 as a boolean"""
-        return self.winch_motor.getOutputCurrent() >= 5
+        return self.winch_motor.getOutputCurrent() >= 1
 
     def on_touchpad_engaged(self):
         """Return wether the current is over 2 as a boolean"""
