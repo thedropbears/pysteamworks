@@ -12,9 +12,9 @@ class GearAlignmentDevice:
     gear_alignment_motor = CANTalon
     sd = NetworkTable
     vision = Vision
-    l_pos = 255
-    r_pos = 670
-    zero_pos = (l_pos+r_pos) / 2 #462.5
+    l_pos = 257 + 50
+    r_pos = 641 - 50
+    zero_pos = (l_pos+r_pos) / 2
 
     def __init__(self):
         pass
@@ -40,31 +40,21 @@ class GearAlignmentDevice:
         pass
 
     def align(self):
-        # if (abs(self.gear_alignment_motor.getClosedLoopError()) <
-        #         0.03*(self.r_pos-self.l_pos)/2):
         self.set_position(self.get_rail_pos()+self.vision.x)
 
     def move_left(self):
-        if not self.left_limit_switch():
-            self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.PercentVbus)
-            self.gear_alignment_motor.set(-1)
+        self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.PercentVbus)
+        self.gear_alignment_motor.set(-0.3)
 
     def move_right(self):
-        if not self.right_limit_switch():
-            self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.PercentVbus)
-            self.gear_alignment_motor.set(1)
+        self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.PercentVbus)
+        self.gear_alignment_motor.set(0.3)
 
     def position_mode(self):
         self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.Position)
 
     def stop_motors(self):
         self.gear_alignment_motor.stopMotor()
-
-    def left_limit_switch(self):
-        return self.gear_alignment_motor.isRevLimitSwitchClosed()
-
-    def right_limit_switch(self):
-        return self.gear_alignment_motor.isFwdLimitSwitchClosed()
 
     def get_rail_pos(self):
         return (self.gear_alignment_motor.getPosition()-self.zero_pos) \
