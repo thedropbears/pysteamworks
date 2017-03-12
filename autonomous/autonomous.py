@@ -195,7 +195,7 @@ class PegAutonomous(AutonomousStateMachine):
             roll_back = generate_trapezoidal_trajectory(
                     0, 0, -1, 0, self.displace_velocity,
                     self.displace_accel, -self.displace_decel)
-            self.profilefollower.modify_queue(self.perpendicular_heading,
+            self.profilefollower.modify_queue(self.bno055.getHeading(),
                     linear=roll_back, overwrite=True)
             self.profilefollower.execute_queue()
         if not self.profilefollower.queue[0]:
