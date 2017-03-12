@@ -39,8 +39,8 @@ class Chassis:
 
     pid_profile = {
             "kP": 1,
-            "kI": 0.0025,
-            "kD": 10,
+            "kI": 0.0010,
+            "kD": 3,
             "kF": 1023//max_vel_native,
             "ramp-rate" : 72 # change in volts, in v/sec
     }
@@ -54,10 +54,12 @@ class Chassis:
 
         self.input_enabled = True
 
+
     def setup(self):
         """Run just after createObjects.
         Useful if you want to run something after just once after the
         robot code is started, that depends on injected variables"""
+
         self.motors = [
                 self.drive_motor_a,
                 self.drive_motor_b,
@@ -102,6 +104,9 @@ class Chassis:
         self.motors[2].setInverted(True)
         self.motors[3].setInverted(True)
 
+        self.set_enc_pos()
+
+
     def on_enable(self):
         """Run by magicbot when the robot is enabled."""
         self.input_enabled = True
@@ -113,12 +118,23 @@ class Chassis:
         self.input_enabled = False
 
     def set_enc_pos(self, left=0, right=0):
-        self.motors[0].setPosition(int(left))
-        self.motors[2].setPosition(int(right))
+        self.offset_positions = [self.motors[0].getPosition()/self.counts_per_meter+left,
+                self.motors[2].getPosition()/self.counts_per_meter-right]
 
     def get_wheel_distances(self):
+        return [self.motors[0].getPosition()/self.counts_per_meter-self.offset_positions[0],
+                -(self.motors[2].getPosition()/self.counts_per_meter-self.offset_positions[1])]
+
+    def get_raw_wheel_distances(self):
         return [self.motors[0].getPosition()/self.counts_per_meter,
                 -self.motors[2].getPosition()/self.counts_per_meter]
+
+    def get_velocities(self):
+        return [self.motors[0].getEncVelocity()/self.velocity_to_native_units,
+                -self.motors[2].getEncVelocity()/self.velocity_to_native_units]
+
+    def get_velocity(self):
+        return (self.get_velocities()[0]+self.get_velocities()[1])/2
 
     def set_velocity(self, linear, angular):
         angular *= Chassis.wheelbase_width/2
@@ -143,3 +159,6 @@ class Chassis:
                 motor_inputs[i] *= self.inputs[3]
             self.motors[0].set(motor_inputs[0]*Chassis.max_vel_native)
             self.motors[2].set(motor_inputs[1]*Chassis.max_vel_native)
+            if motor_inputs[0] == 0 and motor_inputs[1] == 0:
+                self.motors[0].clearIaccum()
+                self.motors[1].clearIaccum()
