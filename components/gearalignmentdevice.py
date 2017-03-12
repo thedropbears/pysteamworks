@@ -44,11 +44,11 @@ class GearAlignmentDevice:
 
     def move_left(self):
         self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.PercentVbus)
-        self.gear_alignment_motor.set(-0.3)
+        self.gear_alignment_motor.set(-0.6)
 
     def move_right(self):
         self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.PercentVbus)
-        self.gear_alignment_motor.set(0.3)
+        self.gear_alignment_motor.set(0.6)
 
     def position_mode(self):
         self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.Position)
@@ -61,6 +61,7 @@ class GearAlignmentDevice:
         / (self.r_pos-self.zero_pos)
 
     def set_position(self, setpoint):
+        self.position_mode()
         sp = ((setpoint+1)/2)*(self.r_pos-self.l_pos)+self.l_pos
         sp = min(self.r_pos, max(self.l_pos, sp))
         self.gear_alignment_motor.set(sp)
