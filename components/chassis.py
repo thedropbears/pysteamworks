@@ -39,7 +39,7 @@ class Chassis:
 
     pid_profile = {
             "kP": 1,
-            "kI": 0.0010,
+            "kI": 0.0025,
             "kD": 3,
             "kF": 1023//max_vel_native,
             "ramp-rate" : 72 # change in volts, in v/sec
