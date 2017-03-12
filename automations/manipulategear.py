@@ -40,6 +40,7 @@ class ManipulateGear(StateMachine):
         # now move to the next state
         #move forward
         self.put_dashboard()
+        self.vision.vision_mode = True
 
         if (-self.align_tolerance <= self.vision.x <= self.align_tolerance
                 and not self.profilefollower.queue[0]
@@ -54,16 +55,19 @@ class ManipulateGear(StateMachine):
             self.gearalignmentdevice.align()
             aligned = False
 
-    @timed_state(duration=0.5, next_state="forward_open", must_finish=True)
-    def forward_closed(self):
-        self.vision.vision_mode = False
+    @state(must_finish=True)
+    def forward_closed(self, state_tm):
         self.put_dashboard()
         self.geardepositiondevice.push_gear()
+        if state_tm > 0.5:
+            self.next_state("forward_open")
 
-    @timed_state(duration=0.5, next_state="backward_open", must_finish=True)
-    def forward_open(self):
+    @state(must_finish=True)
+    def forward_open(self, state_tm):
         self.put_dashboard()
         self.geardepositiondevice.drop_gear()
+        if state_tm > 0.5:
+            self.next_state("backward_open")
 
     @state(must_finish=True)
     def backward_open(self, initial_call):
@@ -71,9 +75,9 @@ class ManipulateGear(StateMachine):
         self.geardepositiondevice.retract_gear()
         self.chassis.input_enabled = True
         if initial_call:
-            self.initial_distances = self.chassis.get_wheel_distances()
-        if ((abs(abs(self.initial_distances[0]) - abs(self.chassis.get_wheel_distances()[0]))
-            +abs(abs(self.initial_distances[1]) - abs(self.chassis.get_wheel_distances()[1])))
+            self.initial_distances = self.chassis.get_raw_wheel_distances()
+        if ((abs(abs(self.initial_distances[0]) - abs(self.chassis.get_raw_wheel_distances()[0]))
+            +abs(abs(self.initial_distances[1]) - abs(self.chassis.get_raw_wheel_distances()[1])))
             / 2 > self.move_back_close_tol):
             self.next_state_now("backward_close")
 
@@ -85,6 +89,7 @@ class ManipulateGear(StateMachine):
 
     def done(self):
         super().done()
+        self.vision.vision_mode = False
 
     def put_dashboard(self):
         """Update all the variables on the smart dashboard"""
