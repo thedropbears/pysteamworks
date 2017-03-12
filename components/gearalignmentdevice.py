@@ -16,6 +16,8 @@ class GearAlignmentDevice:
     r_pos = 641 - 50
     zero_pos = (l_pos+r_pos) / 2
 
+    sp_increment = (r_pos-l_pos)/(0.66*50)
+
     def __init__(self):
         pass
 
@@ -43,12 +45,13 @@ class GearAlignmentDevice:
         self.set_position(self.get_rail_pos()+self.vision.x)
 
     def move_left(self):
-        self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.PercentVbus)
-        self.gear_alignment_motor.set(-0.6)
+        if not self.gear_alignment_motor.getSetpoint()-self.sp_increment < self.l_pos:
+            self.gear_alignment_motor.set(self.gear_alignment_motor.getSetpoint()-self.sp_increment)
 
     def move_right(self):
-        self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.PercentVbus)
-        self.gear_alignment_motor.set(0.6)
+        if not self.gear_alignment_motor.getSetpoint()+self.sp_increment > self.r_pos:
+            self.gear_alignment_motor.set(self.gear_alignment_motor.getSetpoint()+self.sp_increment)
+        print("Move right, sp %s, pos increment %s" % (self.gear_alignment_motor.getSetpoint(), self.sp_increment))
 
     def position_mode(self):
         self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.Position)

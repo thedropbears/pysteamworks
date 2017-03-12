@@ -227,8 +227,6 @@ class Robot(magicbot.MagicRobot):
         elif self.joystick.getPOV() == 0 or self.joystick.getPOV() == 180:
             if not self.manipulategear.is_executing:
                 self.gearalignmentdevice.set_position(0)
-        elif not self.manipulategear.is_executing:
-            self.gearalignmentdevice.stop_motors()
 
         if 1.5/self.chassis.velocity_to_native_units < abs(self.chassis.get_velocity()) and not self.manipulategear.is_executing:
             self.gearalignmentdevice.set_position(0)
