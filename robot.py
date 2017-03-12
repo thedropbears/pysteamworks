@@ -76,14 +76,14 @@ class Robot(magicbot.MagicRobot):
         self.gear_alignment_motor = CANTalon(14)
         self.winch_motor = CANTalon(11)
         self.winch_motor.setInverted(True)
-        # self.rope_lock_solenoid = wpilib.DoubleSolenoid(forwardChannel=0,
-        #         reverseChannel=1)
-        self.rope_lock_solenoid = wpilib.DoubleSolenoid(forwardChannel=3,
-                reverseChannel=4)
-        # self.gear_push_solenoid = wpilib.Solenoid(2)
-        # self.gear_drop_solenoid = wpilib.Solenoid(3)
-        self.gear_push_solenoid = wpilib.DoubleSolenoid(forwardChannel=1, reverseChannel=2)
-        self.gear_drop_solenoid = wpilib.Solenoid(0)
+        self.rope_lock_solenoid = wpilib.DoubleSolenoid(forwardChannel=0,
+                reverseChannel=1)
+        # self.rope_lock_solenoid = wpilib.DoubleSolenoid(forwardChannel=3,
+        #         reverseChannel=4)
+        self.gear_push_solenoid = wpilib.Solenoid(2)
+        self.gear_drop_solenoid = wpilib.Solenoid(3)
+        # self.gear_push_solenoid = wpilib.DoubleSolenoid(forwardChannel=1, reverseChannel=2)
+        # self.gear_drop_solenoid = wpilib.Solenoid(0)
 
         self.test_trajectory = generate_trapezoidal_trajectory(
                 0, 0, 3, 0, Chassis.max_vel, 1, -1)
