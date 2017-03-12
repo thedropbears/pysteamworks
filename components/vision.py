@@ -1,7 +1,7 @@
 import math
 
 from magicbot import tunable
-from wpilib import CameraServer
+from wpilib import CameraServer, DigitalOutput
 
 
 class Vision:
@@ -16,8 +16,12 @@ class Vision:
     vision_mode = tunable(True, doc='True to use the front camera for vision processing, False to use it for the driver.')
     smoothed_x = tunable(0.0, doc='Weighted average of x.')
 
+    led_dio = DigitalOutput
+
     def __init__(self):
         CameraServer.launch('vision.py:loop')
+
+        self.led_on = False
 
     def setup(self):
         """Run just after createObjects.
@@ -36,6 +40,8 @@ class Vision:
     def execute(self):
         """Run at the end of the control loop"""
         self.smoothed_x = (1 - self.k) * self.x + self.k * self.smoothed_x
+
+        self.led_dio.set(not(self.vision_mode or self.led_on))
 
     def derive_vision_angle(self):
         "Calculate the camera's angle relative to the vision targets"

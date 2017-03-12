@@ -91,6 +91,8 @@ class Robot(magicbot.MagicRobot):
         self.throttle = 1.0
         self.direction = 1.0
 
+        self.led_dio = wpilib.DigitalOutput(1)
+
     def putData(self):
         # update the data on the smart dashboard
         # put the inputs to the dashboard
@@ -156,6 +158,8 @@ class Robot(magicbot.MagicRobot):
                 if self.manipulategear.is_executing:
                     self.manipulategear.done()
                 self.gearalignmentdevice.reset_position()
+                self.geardepositiondevice.retract_gear()
+                self.geardepositiondevice.lock_gear()
         except:
             self.onException()
 
@@ -183,7 +187,6 @@ class Robot(magicbot.MagicRobot):
         if self.joystick.getRawButton(4):
             # backdrive the winch
             self.winch_automation.done()
-            self.winch.change_control_mode(False)
             self.winch_motor.set(-0.3)
 
         try:
@@ -215,29 +218,36 @@ class Robot(magicbot.MagicRobot):
             self.direction = -1
             self.sd.putString("camera", "back")
 
-        if self.joystick.getRawButton(12):
+        if self.joystick.getPOV() == 90:
             if not self.manipulategear.is_executing:
                 self.gearalignmentdevice.move_right()
-        elif self.joystick.getRawButton(11):
+        elif self.joystick.getPOV() == 270:
             if not self.manipulategear.is_executing:
                 self.gearalignmentdevice.move_left()
+        elif self.joystick.getPOV() == 0 or self.joystick.getPOV() == 180:
+            if not self.manipulategear.is_executing:
+                self.gearalignmentdevice.set_position(0)
         elif not self.manipulategear.is_executing:
             self.gearalignmentdevice.stop_motors()
 
-        # self.chassis.inputs = [(
-        #     self.direction
-        #     * -rescale_js(self.gamepad.getRawAxis(1), deadzone=0.05, exponential=15)),
-        #             - rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2),
-        #             -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=15.0, rate=0.5),
-        #             self.throttle
-        #             ]
+        if 1.5/self.chassis.velocity_to_native_units < abs(self.chassis.get_velocity()) and not self.manipulategear.is_executing:
+            self.gearalignmentdevice.set_position(0)
+
         self.chassis.inputs = [(
             self.direction
-            * -rescale_js(self.gamepad.getRawAxis(1), rate=0.3, deadzone=0.05, exponential=15)),
+            * -rescale_js(self.gamepad.getRawAxis(1), deadzone=0.05, exponential=30)),
                     - rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2),
-                    -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=15.0, rate=0.2),
+                    -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=30, rate=0.4),
                     self.throttle
                     ]
+        # self.chassis.inputs = [(
+        #     self.direction
+        #     * -rescale_js(self.gamepad.getRawAxis(1), rate=0.3, deadzone=0.05, exponential=15)),
+        #             - rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2),
+        #             -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=15.0, rate=0.2),
+        #             self.throttle
+        #             ]
+        self.vision.led_on = self.joystick.getRawButton(11)
 
     # the 'debounce' function keeps tracks of which buttons have been pressed
     def debounce(self, button, gamepad=False):
