@@ -30,7 +30,7 @@ class Chassis:
     velocity_to_native_units = 0.1*counts_per_meter
 
     # max velocity as measured by talons driving flat out
-    max_vel_native = 800 # ticks / 100ms
+    max_vel_native = 1000 # ticks / 100ms
     # convert to SI units - m/s
     max_vel = (10*max_vel_native*wheel_circumference)/counts_per_revolution
     max_acc = 2 # m/s
@@ -38,9 +38,9 @@ class Chassis:
     wheelbase_width = 0.629666 # m
 
     pid_profile = {
-            "kP": 1,
-            "kI": 0.0025,
-            "kD": 3,
+            "kP": 1*1023//counts_per_revolution,
+            "kI": 0.0025*1023//counts_per_revolution,
+            "kD": 3*1023//counts_per_revolution,
             "kF": 1023//max_vel_native,
             "ramp-rate" : 72 # change in volts, in v/sec
     }

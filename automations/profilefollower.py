@@ -9,16 +9,21 @@ class ProfileFollower:
     # linear motion feedforward/back gains
     #
     # position P controller
-    kP = 1
+    kP = 3
     # velocity and acceleration feedforward
     kV = 1
     kA = 0
 
     # heading motion feedforward/back gains
     # heading feedback
-    kPh = 4.5
+    kPh = 7
     # angular velocity feedforward
-    kVh = 1.2
+    kVh = 1.4
+    # # heading motion feedforward/back gains
+    # # heading feedback
+    # kPh = 4.5
+    # # angular velocity feedforward
+    # kVh = 1.2
 
     chassis = Chassis
 

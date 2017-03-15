@@ -93,11 +93,14 @@ class Robot(magicbot.MagicRobot):
 
         self.led_dio = wpilib.DigitalOutput(1)
 
+        self.compressor = wpilib.Compressor()
+
     def putData(self):
         # update the data on the smart dashboard
         # put the inputs to the dashboard
         self.sd.putNumber("gyro", self.bno055.getHeading())
         self.sd.putNumber("vision_x", self.vision.x)
+        # if self.manipulategear.current_state == "align_peg":
         self.sd.putNumber("range", self.range_finder.getDistance())
         self.sd.putNumber("climbCurrent", self.winch_motor.getOutputCurrent())
         self.sd.putNumber("rail_pos", self.gearalignmentdevice.get_rail_pos())
@@ -116,6 +119,7 @@ class Robot(magicbot.MagicRobot):
         self.geardepositiondevice.retract_gear()
         self.geardepositiondevice.lock_gear()
         self.profilefollower.stop()
+        self.winch.enable_compressor()
 
     def disabledPeriodic(self):
         self.putData()
@@ -138,20 +142,20 @@ class Robot(magicbot.MagicRobot):
         except:
             self.onException()
 
-        try:
-            if self.debounce(10):
-                # stop the winch
-                if self.winch_automation.is_executing:
-                    self.winch_automation.done()
-                self.winch.piston_open()
-                self.winch.rotate_winch(0)
+        # try:
+        #     if self.debounce(10):
+        #         # stop the winch
+        #         if self.winch_automation.is_executing:
+        #             self.winch_automation.done()
+        #         self.winch.piston_open()
+        #         self.winch.rotate_winch(0)
 
-                if self.manipulategear.is_executing:
-                    self.manipulategear.done()
-                self.gearalignmentdevice.reset_position()
-                self.sd.putString("state", "stationary")
-        except:
-            self.onException()
+        #         if self.manipulategear.is_executing:
+        #             self.manipulategear.done()
+        #         self.gearalignmentdevice.reset_position()
+        #         self.sd.putString("state", "stationary")
+        # except:
+        #     self.onException()
 
         try:
             if self.debounce(2):
@@ -164,10 +168,19 @@ class Robot(magicbot.MagicRobot):
             self.onException()
 
         try:
-            if self.debounce(5):
+            if self.debounce(4):
                 if self.winch_automation.is_executing:
                     self.winch_automation.done()
                 self.winch.rotate_winch(0)
+        except:
+            self.onException()
+
+        try:
+            if self.debounce(5):
+                if self.winch_automation.is_executing:
+                    self.winch_automation.done()
+                self.winch.rotate_winch(1.0)
+                self.winch.piston_close()
         except:
             self.onException()
 
@@ -178,24 +191,32 @@ class Robot(magicbot.MagicRobot):
             self.onException()
 
         try:
-            if self.debounce(7):
+            if self.debounce(12):
                 self.geardepositiondevice.retract_gear()
                 self.geardepositiondevice.lock_gear()
         except:
             self.onException()
 
-        if self.joystick.getRawButton(4):
-            # backdrive the winch
-            self.winch_automation.done()
-            self.winch_motor.set(-0.3)
+        # if self.joystick.getRawButton(8):
+        #     # backdrive the winch
+        #     self.winch_automation.done()
+        #     self.winch_motor.set(-0.3)
 
         try:
-            if self.debounce(8):
-                # self.vision.toggle_mode()
-                self.geardepositiondevice.push_gear()
-                self.geardepositiondevice.drop_gear()
+            if self.debounce(10):
+                # self.geardepositiondevice.push_gear()
+                # self.geardepositiondevice.drop_gear()
+                self.manipulategear.engage(initial_state="forward_closed")
         except:
             self.onException()
+
+        try:
+            if self.debounce(12):
+                self.geardepositiondevice.retract_gear()
+                self.geardepositiondevice.lock_gear()
+        except:
+            self.onException()
+
 
         if (not self.gamepad.getRawButton(5) and
                 not self.gamepad.getRawButton(6) and
@@ -224,9 +245,9 @@ class Robot(magicbot.MagicRobot):
         elif self.joystick.getPOV() == 270:
             if not self.manipulategear.is_executing:
                 self.gearalignmentdevice.move_left()
-        elif self.joystick.getPOV() == 0 or self.joystick.getPOV() == 180:
-            if not self.manipulategear.is_executing:
-                self.gearalignmentdevice.set_position(0)
+        # elif self.joystick.getPOV() == 0 or self.joystick.getPOV() == 180:
+        #     if not self.manipulategear.is_executing:
+        #         self.gearalignmentdevice.set_position(0)
 
         if 1.5/self.chassis.velocity_to_native_units < abs(self.chassis.get_velocity()) and not self.manipulategear.is_executing:
             self.gearalignmentdevice.set_position(0)

@@ -12,8 +12,8 @@ class GearAlignmentDevice:
     gear_alignment_motor = CANTalon
     sd = NetworkTable
     vision = Vision
-    l_pos = 257 + 50
-    r_pos = 641 - 50
+    l_pos = 219 + 50
+    r_pos = 689 - 50
     zero_pos = (l_pos+r_pos) / 2
 
     sp_increment = (r_pos-l_pos)/(0.66*50)

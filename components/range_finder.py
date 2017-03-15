@@ -30,4 +30,3 @@ class RangeFinder:
         if d > 40:  # Max range is around 40m
             d = 40
         self._smoothed_d = alpha * d + (1.0 - alpha) * self._smoothed_d
-        self.sd.putNumber("range", self.getDistance())

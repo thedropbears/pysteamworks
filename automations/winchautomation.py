@@ -11,15 +11,25 @@ class WinchAutomation(StateMachine):
     def catch_rope(self, state_tm):
         self.put_dashboard()
         self.winch.piston_open()
-        self.winch.rotate_winch(0.3)
+        self.winch.rotate_winch(0.5)
+        self.winch.disable_compressor()
         if self.winch.on_rope_engaged() and state_tm > 2:
+            self.next_state("fire_piston")
+
+    @state(must_finish=True)
+    def fire_piston(self, state_tm):
+        self.put_dashboard()
+        self.winch.piston_close()
+        self.winch.rotate_winch(0.0)
+        self.winch.disable_compressor()
+        if state_tm > 0.2:
             self.next_state("climb")
 
     @state(must_finish=True)
     def climb(self):
         self.put_dashboard()
         self.winch.piston_close()
-        self.winch.rotate_winch(1)
+        self.winch.rotate_winch(1.0)
 
     #    if self.winch.on_touchpad_engaged() and state_tm > 2:
     #        self.next_state("press_touchpad")

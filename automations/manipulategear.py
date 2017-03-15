@@ -20,6 +20,8 @@ class ManipulateGear(StateMachine):
     place_gear_range = 0.5
     align_tolerance = 0.05
 
+    deploy_jitter = 0.1
+
     move_back_close_tol = 0.2
 
     push_gear_input_tolerance = 0.05
@@ -48,8 +50,15 @@ class ManipulateGear(StateMachine):
                 and abs(self.chassis.inputs[2]) < self.push_gear_input_tolerance):
             self.gearalignmentdevice.stop_motors()
             aligned = True
-            if self.range_finder.getDistance() < self.place_gear_range:
+            r = self.range_finder.getDistance()
+            if r<0.1:
+                r = 40
+            if r < self.place_gear_range:
                 self.chassis.input_enabled = False
+                if self.gearalignmentdevice.get_rail_pos() >= 0:
+                    self.gearalignmentdevice.set_position(self.gearalignmentdevice.get_rail_pos()-self.deploy_jitter)
+                elif self.gearalignmentdevice.get_rail_pos() < 0:
+                    self.gearalignmentdevice.set_position(self.gearalignmentdevice.get_rail_pos()+self.deploy_jitter)
                 self.next_state_now("forward_closed")
         else:
             self.gearalignmentdevice.align()

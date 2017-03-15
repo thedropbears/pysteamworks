@@ -37,11 +37,11 @@ def loop():
     front_cam_server = cs.MjpegServer("frontcamserver", 8082)
     front_cam_server.setSource(front_camera)
 
-    back_camera = cs.UsbCamera("backcam", back_cam_id)
-    back_camera.setVideoMode(*videomode)
+    # back_camera = cs.UsbCamera("backcam", back_cam_id)
+    # back_camera.setVideoMode(*videomode)
 
-    back_cam_server = cs.MjpegServer("backcamserver", 8081)
-    back_cam_server.setSource(back_camera)
+    # back_cam_server = cs.MjpegServer("backcamserver", 8081)
+    # back_cam_server.setSource(back_camera)
 
     cvsink = cs.CvSink("cvsink")
     cvsink.setSource(front_camera)
@@ -58,24 +58,18 @@ def loop():
     frame = np.zeros(shape=(height, width, 3), dtype=np.uint8)
 
     while True:
-        if nt.getBoolean("vision_mode", True):
-            front_camera.setExposureManual(0)
-            time, frame = cvsink.grabFrame(frame)
-            if time == 0:
-                # We got an error; report it through the output stream.
-                cvSource.notifyError(cvsink.getError())
-            else:
-                x, img, num_targets = find_target(frame)
-                if num_targets > 0:
-                    nt.putNumber("x", x)
-                    nt.putNumber("time", time)
-                    nt.putNumber("num_targets", num_targets)
-                cvSource.putFrame(img)
+        front_camera.setExposureManual(0)
+        time, frame = cvsink.grabFrame(frame)
+        if time == 0:
+            # We got an error; report it through the output stream.
+            cvSource.notifyError(cvsink.getError())
         else:
-            # Let the driver use the front camera to see.
-            front_camera.setExposureAuto()
-            # Avoid pegging the CPU.
-            sleep(1)
+            x, img, num_targets = find_target(frame)
+            if num_targets > 0:
+                nt.putNumber("x", x)
+                nt.putNumber("time", time)
+                nt.putNumber("num_targets", num_targets)
+            cvSource.putFrame(img)
 
 
 def find_target(img, lower=np.array([110//2, 40*255//100, 20*255//100]), upper=np.array([180//2, 100*255//100, 100*255//100])):
