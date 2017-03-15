@@ -16,6 +16,7 @@ from components.winch import Winch
 from automations.manipulategear import ManipulateGear
 from automations.profilefollower import ProfileFollower
 from automations.winchautomation import WinchAutomation
+from automations.vision_filter import VisionFilter
 
 from utilities.profilegenerator import generate_trapezoidal_trajectory
 
@@ -37,6 +38,7 @@ class Robot(magicbot.MagicRobot):
     winch = Winch
     profilefollower = ProfileFollower
     range_finder = RangeFinder
+    vision_filter = VisionFilter
 
     def createObjects(self):
         '''Create motors and stuff here'''
@@ -111,6 +113,7 @@ class Robot(magicbot.MagicRobot):
         self.sd.putNumber("right_speed_error", self.drive_motor_c.getClosedLoopError())
         self.sd.putNumber("x_throttle", self.chassis.inputs[0])
         self.sd.putNumber("z_throttle", self.chassis.inputs[2])
+        self.sd.putNumber("filtered_x", self.vision_filter.x)
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
