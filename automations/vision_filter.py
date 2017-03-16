@@ -16,7 +16,7 @@ class VisionFilter:
     init_dx_variance = 0.01
 
     # the vision sensor noise
-    vision_x_variance = 0.01
+    vision_x_variance = 0.002
 
     # the variance in the unknown acceleration impulse
     acceleration_variance = 1
@@ -78,8 +78,10 @@ class VisionFilter:
         self.last_vision_time = self.vision.time
 
     def execute(self):
-        timesteps_since_vision = int((time.time() - self.vision.time)*1/50)
-        if timesteps_since_vision > 50:
+        if self.vision.time == 0:
+            return
+        timesteps_since_vision = int((time.time() - self.vision.time)/50)
+        if timesteps_since_vision > 10 or not self.vision.vision_mode:
             # dont do matrix regeneration every single timestep
             if self.is_reset:
                 return
@@ -96,3 +98,7 @@ class VisionFilter:
     @property
     def x(self):
         return self.filter.x_hat[0][0]
+
+    @property
+    def dx(self):
+        return self.filter.x_hat[1][0]

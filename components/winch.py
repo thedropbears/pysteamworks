@@ -13,12 +13,11 @@ class Winch:
     def __init__(self):
         super().__init__()
 
-        # self.last_currents = deque(maxlen=5)
+        self.locked = False
+        self.compressor_enabled = True
 
     def on_rope_engaged(self):
         """Return wether the current is over 5 as a boolean"""
-        # self.last_currents.append(self.winch_motor.getOutputCurrent())
-        # return np.mean(list(self.last_currents)) >= 2
         return self.winch_motor.getOutputCurrent() > 10
 
     def on_touchpad_engaged(self):
@@ -31,17 +30,17 @@ class Winch:
 
     def piston_open(self):
         """Open piston"""
-        self.rope_lock_solenoid.set(DoubleSolenoid.Value.kReverse)
+        self.locked = False
 
     def piston_close(self):
         """Close piston"""
-        self.rope_lock_solenoid.set(DoubleSolenoid.Value.kForward)
+        self.locked = True
 
     def disable_compressor(self):
-        self.compressor.setClosedLoopControl(False)
+        self.compressor_enabled = False
 
     def enable_compressor(self):
-        self.compressor.setClosedLoopControl(True)
+        self.compressor_enabled = True
 
     def setup(self):
         """Run just after createObjects.
@@ -50,6 +49,7 @@ class Winch:
 
     def on_enable(self):
         """Run every time the robot transitions to being enabled"""
+        self.locked = False
         self.enable_compressor()
 
     def on_disable(self):
@@ -58,4 +58,10 @@ class Winch:
 
     def execute(self):
         """Run at the end of every control loop iteration"""
-        pass
+        if self.locked:
+            self.rope_lock_solenoid.set(DoubleSolenoid.Value.kForward)
+        else:
+            self.rope_lock_solenoid.set(DoubleSolenoid.Value.kReverse)
+
+        self.compressor.setClosedLoopControl(self.compressor_enabled)
+

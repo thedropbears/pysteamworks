@@ -114,6 +114,10 @@ class Robot(magicbot.MagicRobot):
         self.sd.putNumber("x_throttle", self.chassis.inputs[0])
         self.sd.putNumber("z_throttle", self.chassis.inputs[2])
         self.sd.putNumber("filtered_x", self.vision_filter.x)
+        self.sd.putNumber("filtered_dx", self.vision_filter.dx)
+        self.sd.putNumber("vision_filter_x_variance", self.vision_filter.filter.P[0][0])
+        self.sd.putNumber("vision_filter_dx_variance", self.vision_filter.filter.P[1][1])
+        self.sd.putNumber("vision_filter_covariance", self.vision_filter.filter.P[0][1])
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
@@ -127,6 +131,7 @@ class Robot(magicbot.MagicRobot):
     def disabledPeriodic(self):
         self.putData()
         self.sd.putString("state", "stationary")
+        self.vision_filter.execute()
 
     def teleopPeriodic(self):
         '''Called on each iteration of the control loop'''
@@ -200,16 +205,11 @@ class Robot(magicbot.MagicRobot):
         except:
             self.onException()
 
-        # if self.joystick.getRawButton(8):
-        #     # backdrive the winch
-        #     self.winch_automation.done()
-        #     self.winch_motor.set(-0.3)
-
         try:
             if self.debounce(10):
                 # self.geardepositiondevice.push_gear()
                 # self.geardepositiondevice.drop_gear()
-                self.manipulategear.engage(initial_state="forward_closed")
+                self.manipulategear.engage(initial_state="forward_closed", force=True)
         except:
             self.onException()
 

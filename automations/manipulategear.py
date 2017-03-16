@@ -6,6 +6,7 @@ from components.vision import Vision
 from components.range_finder import RangeFinder
 from components.chassis import Chassis
 from automations.profilefollower import ProfileFollower
+from automations.vision_filter import VisionFilter
 
 class ManipulateGear(StateMachine):
     gearalignmentdevice = GearAlignmentDevice
@@ -16,6 +17,7 @@ class ManipulateGear(StateMachine):
     sd = NetworkTable
     aligned = False
     vision = Vision
+    vision_filter = VisionFilter
 
     place_gear_range = 0.5
     align_tolerance = 0.05
@@ -35,7 +37,6 @@ class ManipulateGear(StateMachine):
         self.gearalignmentdevice.position_mode()
         self.next_state("align_peg")
 
-
     @state(must_finish=True)
     def align_peg(self):
         # do something to align with the peg
@@ -44,11 +45,10 @@ class ManipulateGear(StateMachine):
         self.put_dashboard()
         self.vision.vision_mode = True
 
-        if (-self.align_tolerance <= self.vision.x <= self.align_tolerance
+        if (-self.align_tolerance <= self.vision_filter.x <= self.align_tolerance
                 and not self.profilefollower.queue[0]
                 and abs(self.chassis.inputs[0]) < self.push_gear_input_tolerance
                 and abs(self.chassis.inputs[2]) < self.push_gear_input_tolerance):
-            self.gearalignmentdevice.stop_motors()
             aligned = True
             r = self.range_finder.getDistance()
             if r<0.1:

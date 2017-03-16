@@ -8,7 +8,7 @@ AREA_THRESHOLD = 0.0005
 def loop():
     import cscore as cs
     from networktables import NetworkTables
-    from time import sleep
+    from time import sleep, time as now
 
     nt = NetworkTables.getTable("/components/vision")
 
@@ -60,6 +60,7 @@ def loop():
     while True:
         front_camera.setExposureManual(0)
         time, frame = cvsink.grabFrame(frame)
+        t = now()
         if time == 0:
             # We got an error; report it through the output stream.
             cvSource.notifyError(cvsink.getError())
@@ -67,12 +68,12 @@ def loop():
             x, img, num_targets = find_target(frame)
             if num_targets > 0:
                 nt.putNumber("x", x)
-                nt.putNumber("time", time)
+                nt.putNumber("time", t)
                 nt.putNumber("num_targets", num_targets)
             cvSource.putFrame(img)
 
 
-def find_target(img, lower=np.array([110//2, 40*255//100, 20*255//100]), upper=np.array([180//2, 100*255//100, 100*255//100])):
+def find_target(img, lower=np.array([110//2, 10*255//100, 20*255//100]), upper=np.array([180//2, 100*255//100, 100*255//100])):
     """Given an image and thresholds, find the centre of mass of the target.
 
     All arguments must be np.arrays, and lower and upper must be a 3-array.

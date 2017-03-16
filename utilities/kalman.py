@@ -25,7 +25,9 @@ class Kalman:
         self.history=deque(iterable=[[self.x_hat, self.P]], maxlen=history_len)
 
     def roll_back(self, timesteps):
-        if timesteps == 0:
+        if timesteps <= 0:
+            if timesteps < 0:
+                print("WARNING: timesteps to roll back is less than 0")
             return
         self.history = deque(islice(self.history, 0, -timesteps))
         self.x_hat = self.history[-1][0]

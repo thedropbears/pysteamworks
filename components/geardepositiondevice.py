@@ -7,11 +7,11 @@ class GearDepositionDevice:
     # initialize them in createObjects in robot.py
     sd = NetworkTable
     gear_push_solenoid = wpilib.Solenoid
-    # gear_push_solenoid = wpilib.DoubleSolenoid
     gear_drop_solenoid = wpilib.Solenoid
 
     def __init__(self):
-        pass
+        self.push_piston = False
+        self.drop_piston = False
 
     def setup(self):
         """Run just after createObjects.
@@ -26,19 +26,18 @@ class GearDepositionDevice:
         pass
 
     def push_gear(self):
-        self.gear_push_solenoid.set(True)
-        # self.gear_push_solenoid.set(wpilib.DoubleSolenoid.Value.kForward)
+        self.push_piston = True
 
     def retract_gear(self):
-        self.gear_push_solenoid.set(False)
-        # self.gear_push_solenoid.set(wpilib.DoubleSolenoid.Value.kReverse)
+        self.push_piston = False
 
     def drop_gear(self):
-        self.gear_drop_solenoid.set(True)
+        self.drop_piston = True
 
     def lock_gear(self):
-        self.gear_drop_solenoid.set(False)
+        self.drop_piston = False
 
     def execute(self):
         """Run at the end of every control loop iteration"""
-        pass
+        self.gear_push_solenoid.set(self.push_piston)
+        self.gear_drop_solenoid.set(self.drop_piston)

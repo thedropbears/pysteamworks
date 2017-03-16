@@ -53,7 +53,7 @@ class Chassis:
         self.inputs = [0.0] * 4
 
         self.input_enabled = True
-
+        self.mp_enabled = False
 
     def setup(self):
         """Run just after createObjects.
@@ -137,12 +137,13 @@ class Chassis:
         return (self.get_velocities()[0]+self.get_velocities()[1])/2
 
     def set_velocity(self, linear, angular):
+        self.mp_enabled = True
         angular *= Chassis.wheelbase_width/2
         left_out = linear - angular
         right_out = linear + angular
 
-        self.motors[0].set(left_out*Chassis.velocity_to_native_units)
-        self.motors[2].set(right_out*Chassis.velocity_to_native_units)
+        self.mp_setpoints = [left_out*Chassis.velocity_to_native_units,
+        right_out*Chassis.velocity_to_native_units]
 
     def execute(self):
         """Run at the end of every control loop iteration"""
@@ -162,3 +163,7 @@ class Chassis:
             if motor_inputs[0] == 0 and motor_inputs[1] == 0:
                 self.motors[0].clearIaccum()
                 self.motors[1].clearIaccum()
+        elif self.mp_enabled:
+            self.mp_enabled = False
+            self.motors[0].set(self.mp_setpoints[0])
+            self.motors[2].set(self.mp_setpoints[1])

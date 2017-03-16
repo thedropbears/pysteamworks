@@ -33,7 +33,7 @@ class PegAutonomous(AutonomousStateMachine):
     centre_to_front_bumper = 0.49
     lidar_to_front_bumper = 0.36
 
-    centre_airship_distance = 2.93
+    centre_airship_distance = 2.85
     side_drive_forward_length = 2.54
     side_rotate_angle = math.pi/3.0
     rotate_accel_speed = 2 # rad*s^-2
@@ -204,7 +204,7 @@ class PegAutonomous(AutonomousStateMachine):
                         0,
                         self.displace_velocity,
                         self.displace_accel, -self.displace_decel*2)
-            self.profilefollower.modify_queue(self.perpendicular_heading,
+            self.profilefollower.modify_queue(self.bno055.getHeading(),
                     linear=to_peg, overwrite=True)
             self.profilefollower.execute_queue()
             self.manipulategear.engage()

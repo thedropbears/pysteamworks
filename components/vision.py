@@ -27,7 +27,7 @@ class Vision:
         """Run just after createObjects.
         Useful if you want to run something after just once after the
         robot code is started, that depends on injected variables"""
-        pass
+        self.led_dio.set(False)
 
     def on_enable(self):
         """Run every time the robot transitions to being enabled"""
@@ -35,7 +35,7 @@ class Vision:
 
     def on_disable(self):
         """Run every time the robot transitions to being disabled"""
-        pass
+        self.vision_mode = True
 
     def execute(self):
         """Run at the end of the control loop"""

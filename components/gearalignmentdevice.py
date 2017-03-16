@@ -4,6 +4,7 @@ import math
 from networktables import NetworkTable
 
 from components.vision import Vision
+from automations.vision_filter import VisionFilter
 
 class GearAlignmentDevice:
 
@@ -18,8 +19,12 @@ class GearAlignmentDevice:
 
     sp_increment = (r_pos-l_pos)/(0.66*50)
 
+    vision_filter = VisionFilter
+
+    setpoint_leading_timesteps = 5
+
     def __init__(self):
-        pass
+        self.setpoint = self.zero_pos
 
     def setup(self):
         """Run just after createObjects.
@@ -37,27 +42,26 @@ class GearAlignmentDevice:
 
         self.gear_alignment_motor.enableLimitSwitch(True, True)
 
+        self.setpoint = self.gear_alignment_motor.getPosition()
+
     def on_disable(self):
         """Run every time the robot transitions to being disabled"""
         pass
 
     def align(self):
-        self.set_position(self.get_rail_pos()+self.vision.x)
+        # self.set_position(self.get_rail_pos()+self.vision.x)
+        self.set_position(self.get_rail_pos()+self.vision_filter.x+self.vision_filter.dx*self.setpoint_leading_timesteps/50)
 
     def move_left(self):
         if not self.gear_alignment_motor.getSetpoint()-self.sp_increment < self.l_pos:
-            self.gear_alignment_motor.set(self.gear_alignment_motor.getSetpoint()-self.sp_increment)
+            self.setpoint = self.gear_alignment_motor.getSetpoint()-self.sp_increment
 
     def move_right(self):
         if not self.gear_alignment_motor.getSetpoint()+self.sp_increment > self.r_pos:
-            self.gear_alignment_motor.set(self.gear_alignment_motor.getSetpoint()+self.sp_increment)
-        print("Move right, sp %s, pos increment %s" % (self.gear_alignment_motor.getSetpoint(), self.sp_increment))
+            self.setpoint = self.gear_alignment_motor.getSetpoint()+self.sp_increment
 
     def position_mode(self):
         self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.Position)
-
-    def stop_motors(self):
-        self.gear_alignment_motor.stopMotor()
 
     def get_rail_pos(self):
         return (self.gear_alignment_motor.getPosition()-self.zero_pos) \
@@ -67,10 +71,11 @@ class GearAlignmentDevice:
         self.position_mode()
         sp = ((setpoint+1)/2)*(self.r_pos-self.l_pos)+self.l_pos
         sp = min(self.r_pos, max(self.l_pos, sp))
-        self.gear_alignment_motor.set(sp)
+        self.setpoint = sp
 
     def reset_position(self):
         self.set_position(0)
 
     def execute(self):
         """Run at the end of every control loop iteration"""
+        self.gear_alignment_motor.set(self.setpoint)
