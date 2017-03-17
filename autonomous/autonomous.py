@@ -40,12 +40,12 @@ class PegAutonomous(AutonomousStateMachine):
     centre_airship_distance = 2.85
     side_drive_forward_length = 2.54
     side_rotate_angle = math.pi/3.0
-    rotate_accel_speed = 2 # rad*s^-2
-    rotate_velocity = 3
+    rotate_accel_speed = 4 # rad*s^-2
+    rotate_velocity = 4
     peg_align_tolerance = 0.15
     displace_velocity = Chassis.max_vel
     displace_accel = Chassis.max_acc
-    displace_decel = Chassis.max_acc/3
+    displace_decel = Chassis.max_acc/5
     # rotate_accel_speed = 2 # rad*s^-2
     # rotate_velocity = 2
 

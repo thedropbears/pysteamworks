@@ -202,7 +202,7 @@ class Robot(magicbot.MagicRobot):
 
         try:
             if self.debounce(6):
-                self.winch.piston_open()
+                self.winch.locked = not self.winch.locked
         except:
             self.onException()
 
@@ -242,7 +242,7 @@ class Robot(magicbot.MagicRobot):
             self.sd.putString("camera", "back")
         elif self.gamepad.getRawButton(6):
             # slow down
-            self.throttle = 0.15
+            self.throttle = 0.3
             self.direction = 1
             self.sd.putString("camera", "front")
         elif self.gamepad.getRawAxis(3) > 0.9:
@@ -267,7 +267,7 @@ class Robot(magicbot.MagicRobot):
             self.direction
             * -rescale_js(self.gamepad.getRawAxis(1), deadzone=0.05, exponential=30)),
                     - rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2),
-                    -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=30, rate=0.6),
+                    -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=30, rate=0.6 if self.throttle == 1 else 1),
                     self.throttle
                     ]
         # self.chassis.inputs = [(

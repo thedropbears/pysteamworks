@@ -33,7 +33,7 @@ class Chassis:
     max_vel_native = 1000 # ticks / 100ms
     # convert to SI units - m/s
     max_vel = (10*max_vel_native*wheel_circumference)/counts_per_revolution
-    max_acc = 2 # m/s
+    max_acc = 3 # m/s
 
     wheelbase_width = 0.629666 # m
 
