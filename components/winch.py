@@ -18,7 +18,7 @@ class Winch:
 
     def on_rope_engaged(self):
         """Return wether the current is over 5 as a boolean"""
-        return self.winch_motor.getOutputCurrent() > 10
+        return self.winch_motor.getOutputCurrent() > 3
 
     def on_touchpad_engaged(self):
         """Return wether the current is over 2 as a boolean"""

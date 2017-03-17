@@ -17,6 +17,7 @@ from automations.manipulategear import ManipulateGear
 from automations.profilefollower import ProfileFollower
 from automations.winchautomation import WinchAutomation
 from automations.vision_filter import VisionFilter
+from automations.range_filter import RangeFilter
 
 from utilities.profilegenerator import generate_trapezoidal_trajectory
 
@@ -39,6 +40,7 @@ class Robot(magicbot.MagicRobot):
     profilefollower = ProfileFollower
     range_finder = RangeFinder
     vision_filter = VisionFilter
+    range_filter = RangeFilter
 
     def createObjects(self):
         '''Create motors and stuff here'''
@@ -118,6 +120,8 @@ class Robot(magicbot.MagicRobot):
         self.sd.putNumber("vision_filter_x_variance", self.vision_filter.filter.P[0][0])
         self.sd.putNumber("vision_filter_dx_variance", self.vision_filter.filter.P[1][1])
         self.sd.putNumber("vision_filter_covariance", self.vision_filter.filter.P[0][1])
+        self.sd.putNumber("filtered_range", self.range_filter.filter.x_hat[0][0])
+        self.sd.putNumber("range_filter_variance", self.range_filter.filter.P[0][0])
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
@@ -127,11 +131,15 @@ class Robot(magicbot.MagicRobot):
         self.geardepositiondevice.lock_gear()
         self.profilefollower.stop()
         self.winch.enable_compressor()
+        self.vision.vision_mode = False
+        print("TELEOP INIT RANGE: %s" % (self.range_finder.getDistance()))
+        print("TELEOP INIT FILTER RANGE: %s" % (self.range_filter.range))
 
     def disabledPeriodic(self):
         self.putData()
         self.sd.putString("state", "stationary")
         self.vision_filter.execute()
+        self.range_filter.execute()
 
     def teleopPeriodic(self):
         '''Called on each iteration of the control loop'''
@@ -259,7 +267,7 @@ class Robot(magicbot.MagicRobot):
             self.direction
             * -rescale_js(self.gamepad.getRawAxis(1), deadzone=0.05, exponential=30)),
                     - rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2),
-                    -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=30, rate=0.4),
+                    -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=30, rate=0.6),
                     self.throttle
                     ]
         # self.chassis.inputs = [(

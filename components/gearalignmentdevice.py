@@ -21,7 +21,7 @@ class GearAlignmentDevice:
 
     vision_filter = VisionFilter
 
-    setpoint_leading_timesteps = 5
+    setpoint_leading_timesteps = 10
 
     def __init__(self):
         self.setpoint = self.zero_pos
@@ -40,7 +40,8 @@ class GearAlignmentDevice:
 
         self.gear_alignment_motor.setPID(20, 0, 0)
 
-        self.gear_alignment_motor.enableLimitSwitch(True, True)
+        # self.gear_alignment_motor.enableLimitSwitch(True, True)
+        self.gear_alignment_motor.enableLimitSwitch(False, False)
 
         self.setpoint = self.gear_alignment_motor.getPosition()
 

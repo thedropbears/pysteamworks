@@ -29,7 +29,7 @@ class Kalman:
             if timesteps < 0:
                 print("WARNING: timesteps to roll back is less than 0")
             return
-        self.history = deque(islice(self.history, 0, -timesteps))
+        self.history = deque(islice(self.history, 0, len(self.history)-timesteps+1))
         self.x_hat = self.history[-1][0]
         self.P = self.history[-1][1]
 

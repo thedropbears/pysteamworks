@@ -5,8 +5,11 @@ from networktables import NetworkTable
 from components.vision import Vision
 from components.range_finder import RangeFinder
 from components.chassis import Chassis
+from utilities.profilegenerator import generate_trapezoidal_trajectory
 from automations.profilefollower import ProfileFollower
 from automations.vision_filter import VisionFilter
+from automations.range_filter import RangeFilter
+from components.bno055 import BNO055
 
 class ManipulateGear(StateMachine):
     gearalignmentdevice = GearAlignmentDevice
@@ -14,17 +17,19 @@ class ManipulateGear(StateMachine):
     range_finder = RangeFinder
     chassis = Chassis
     profilefollower = ProfileFollower
+    bno055 = BNO055
     sd = NetworkTable
     aligned = False
     vision = Vision
     vision_filter = VisionFilter
+    range_filter = RangeFilter
 
     place_gear_range = 0.5
     align_tolerance = 0.05
 
     deploy_jitter = 0.1
 
-    move_back_close_tol = 0.2
+    move_back_close_tol = 0.4
 
     push_gear_input_tolerance = 0.05
 
@@ -35,6 +40,7 @@ class ManipulateGear(StateMachine):
         self.geardepositiondevice.lock_gear()
         self.gearalignmentdevice.reset_position()
         self.gearalignmentdevice.position_mode()
+        self.vision_filter.reset()
         self.next_state("align_peg")
 
     @state(must_finish=True)
@@ -51,6 +57,7 @@ class ManipulateGear(StateMachine):
                 and abs(self.chassis.inputs[2]) < self.push_gear_input_tolerance):
             aligned = True
             r = self.range_finder.getDistance()
+            # r = self.range_filter.range
             if r<0.1:
                 r = 40
             if r < self.place_gear_range:
@@ -72,23 +79,31 @@ class ManipulateGear(StateMachine):
             self.next_state("forward_open")
 
     @state(must_finish=True)
-    def forward_open(self, state_tm):
+    def forward_open(self, initial_call, state_tm):
         self.put_dashboard()
         self.geardepositiondevice.drop_gear()
-        if state_tm > 0.5:
-            self.next_state("backward_open")
-
-    @state(must_finish=True)
-    def backward_open(self, initial_call):
-        self.put_dashboard()
-        self.geardepositiondevice.retract_gear()
         self.chassis.input_enabled = True
+        if initial_call:
+            self.profilefollower.stop()
+            roll_back = generate_trapezoidal_trajectory(
+                    0, 0, -0.5, 0, 2,
+                    0.6, -2)
+            self.profilefollower.modify_queue(self.bno055.getHeading(),
+                    linear=roll_back, overwrite=True)
+            self.profilefollower.execute_queue()
         if initial_call:
             self.initial_distances = self.chassis.get_raw_wheel_distances()
         if ((abs(abs(self.initial_distances[0]) - abs(self.chassis.get_raw_wheel_distances()[0]))
             +abs(abs(self.initial_distances[1]) - abs(self.chassis.get_raw_wheel_distances()[1])))
             / 2 > self.move_back_close_tol):
-            self.next_state_now("backward_close")
+            self.next_state_now("backward_open")
+
+    @state(must_finish=True)
+    def backward_open(self, initial_call, state_tm):
+        self.put_dashboard()
+        self.geardepositiondevice.retract_gear()
+        if not self.profilefollower.queue[0]:
+            self.next_state("backward_close")
 
     @state(must_finish=True)
     def backward_close(self):

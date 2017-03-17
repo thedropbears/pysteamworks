@@ -11,7 +11,7 @@ class WinchAutomation(StateMachine):
     def catch_rope(self, state_tm):
         self.put_dashboard()
         self.winch.piston_open()
-        self.winch.rotate_winch(0.5)
+        self.winch.rotate_winch(0.3)
         self.winch.disable_compressor()
         if self.winch.on_rope_engaged() and state_tm > 2:
             self.next_state("fire_piston")

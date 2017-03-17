@@ -7,8 +7,9 @@ import hal
 class RangeFinder:
 
     def __init__(self, dio_number=0):
-        self.range_finder_counter = wpilib.Counter(dio_number)
+        self.range_finder_counter = wpilib.Counter(dio_number, mode=wpilib.Counter.Mode.kPulseLength)
         self.range_finder_counter.setSemiPeriodMode(highSemiPeriod=True)
+        self.range_finder_counter.setSamplesToAverage(10)
         self._smoothed_d = 0.0
         self.sd = NetworkTable.getTable('SmartDashboard')
 

@@ -11,14 +11,14 @@ class ProfileFollower:
     # position P controller
     kP = 3
     # velocity and acceleration feedforward
-    kV = 1
+    kV = 1.2
     kA = 0
 
     # heading motion feedforward/back gains
     # heading feedback
     kPh = 7
     # angular velocity feedforward
-    kVh = 1.4
+    kVh = 1.2
     # # heading motion feedforward/back gains
     # # heading feedback
     # kPh = 4.5
@@ -83,6 +83,7 @@ class ProfileFollower:
                 + self.kA * linear_seg[2])
 
             self.sd.putNumber("distance_error_mp", pos_error)
+            self.sd.putNumber("linear_output_mp", linear_output)
 
             # generate the linear output to the chassis (m/s)
             heading = self.bno055.getRawHeading() - self.bno055.offset

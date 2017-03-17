@@ -6,8 +6,6 @@ import time
 
 class VisionFilter:
 
-    hist_len = 50
-
     vision = Vision
 
     state_vector_size = 2
@@ -16,12 +14,14 @@ class VisionFilter:
     init_dx_variance = 0.01
 
     # the vision sensor noise
-    vision_x_variance = 0.002
+    vision_x_variance = 0.0005
 
     # the variance in the unknown acceleration impulse
-    acceleration_variance = 1
+    acceleration_variance = 0.25
 
     loop_dt = 1/50
+
+    reset_thresh = 0.2
 
     def __init__(self):
         pass
@@ -30,8 +30,6 @@ class VisionFilter:
         self.reset()
 
     def reset(self):
-
-        self.is_reset = True
 
         # starting state
         x_hat = np.array([self.vision.x, 0]).reshape(-1, 1)
@@ -47,7 +45,7 @@ class VisionFilter:
 
         # error vision and error rate of change of vision are correlated
         R = np.array([[VisionFilter.vision_x_variance, VisionFilter.vision_x_variance],
-            [VisionFilter.vision_x_variance, VisionFilter.vision_x_variance*2]]).reshape(self.state_vector_size, self.state_vector_size)
+            [VisionFilter.vision_x_variance, VisionFilter.vision_x_variance*6]]).reshape(self.state_vector_size, self.state_vector_size)
 
         self.filter = Kalman(x_hat, P, Q, R)
 
@@ -81,19 +79,16 @@ class VisionFilter:
         if self.vision.time == 0:
             return
         timesteps_since_vision = int((time.time() - self.vision.time)/50)
-        if timesteps_since_vision > 10 or not self.vision.vision_mode:
-            # dont do matrix regeneration every single timestep
-            if self.is_reset:
-                return
+        if timesteps_since_vision > 10:
+            return
+        elif abs(self.vision.x - self.filter.x_hat[0][0]) > self.reset_thresh:
             self.reset()
-        else:
-            self.is_reset = False
-            self.predict()
-            if self.vision.time != self.last_vision_time:
-                self.filter.roll_back(timesteps_since_vision)
-                self.update()
-                for i in range(timesteps_since_vision):
-                    self.predict()
+        self.predict()
+        if self.vision.time != self.last_vision_time:
+            self.filter.roll_back(timesteps_since_vision)
+            self.update()
+            for i in range(timesteps_since_vision):
+                self.predict()
 
     @property
     def x(self):
@@ -102,3 +97,7 @@ class VisionFilter:
     @property
     def dx(self):
         return self.filter.x_hat[1][0]
+
+    @property
+    def angle(self):
+        return -(self.x*self.horizontal_fov/2)

@@ -1,5 +1,7 @@
 from automations.manipulategear import ManipulateGear
 from automations.profilefollower import ProfileFollower
+from automations.vision_filter import VisionFilter
+from automations.range_filter import RangeFilter
 from components.chassis import Chassis
 from components.bno055 import BNO055
 from components.vision import Vision
@@ -29,6 +31,8 @@ class PegAutonomous(AutonomousStateMachine):
     gearalignmentdevice = GearAlignmentDevice
     geardepositiondevice = GearDepositionDevice
     winch = Winch
+    vision_filter = VisionFilter
+    range_filter = RangeFilter
 
     centre_to_front_bumper = 0.49
     lidar_to_front_bumper = 0.36
@@ -69,6 +73,7 @@ class PegAutonomous(AutonomousStateMachine):
         self.geardepositiondevice.lock_gear()
         self.generate_trajectories()
         self.winch.enable_compressor()
+        self.vision.vision_mode = True
 
     @state(first=True)
     def drive_to_airship(self, initial_call):
@@ -76,6 +81,9 @@ class PegAutonomous(AutonomousStateMachine):
         # gyro to close the loop on position
         if initial_call:
             self.vision.vision_mode = True
+            if self.target == Targets.Centre:
+                self.next_state("drive_to_wall")
+                return
             displace = generate_trapezoidal_trajectory(
                     0, 0, self.dr_displacement,
                     0, self.displace_velocity,
@@ -104,11 +112,12 @@ class PegAutonomous(AutonomousStateMachine):
     @state
     def measure_position(self, initial_call):
         if initial_call:
+            # use unfiltered vision here
             if self.vision.x != 0.0:
                 measure_trajectory = generate_trapezoidal_trajectory(
                         self.bno055.getHeading(),
                         0, self.bno055.getHeading()
-                        + self.vision.derive_vision_angle(), 0,
+                        + self.vision_filter.angle, 0,
                         self.rotate_velocity, self.rotate_accel_speed, -self.rotate_accel_speed/2)
                 print(self.vision.derive_vision_angle())
                 print("vision_x %s, vision_angle %s, heading %s, heading_start %s, heading_end %s" % (
@@ -117,7 +126,7 @@ class PegAutonomous(AutonomousStateMachine):
                 self.profilefollower.execute_queue()
         if not self.profilefollower.queue[0]:
             # now measure our position relative to the targets
-            r = (self.range_finder.getDistance() + self.centre_to_front_bumper
+            r = (self.range_filter.range + self.centre_to_front_bumper
                  - self.lidar_to_front_bumper)
             current_heading = self.bno055.getHeading()+self.vision.derive_vision_angle()
 
@@ -184,39 +193,52 @@ class PegAutonomous(AutonomousStateMachine):
             self.profilefollower.stop()
             peg_range = 1.5-self.centre_to_front_bumper
             if self.target == Targets.Centre:
-                peg_range = (self.centre_airship_distance/2)-self.centre_to_front_bumper
-            r = self.range_finder.getDistance()
+                peg_range = (self.centre_airship_distance)-self.centre_to_front_bumper
+            # r = self.range_filter.range
+            r = self.range_filter.range
+            print("AUTO DRIVE WALL RANGE: %s" % (self.range_finder.getDistance()))
+            print("AUTO DRIVE WALL FILTER RANGE: %s" % (self.range_filter.range))
             # 40 is range finder max distance, better failure mode than inf or really small
-            if float(r) is float('inf'):
+            if float(r) is float('inf') or float(r) is float('nan'):
                 r = 40
             elif r < 0.5:
                 r = 40
             to_peg = None
-            if r>2:
+            if (r>2 and self.target != Targets.Centre) or (r>4 and self.target == Targets.Centre):
+                print("DEAD RECKON AUTO")
                 to_peg = generate_trapezoidal_trajectory(
                         0, 0, peg_range+0.1,
                         0,
                         self.displace_velocity,
-                        self.displace_accel, -self.displace_decel*2)
+                        self.displace_accel, -self.displace_decel)
             else:
+                print("RANGE AUTO")
                 to_peg = generate_trapezoidal_trajectory(
-                        0, 0, self.range_finder.getDistance()-self.lidar_to_front_bumper+0.3,
+                        0, 0, self.range_finder.getDistance()-self.lidar_to_front_bumper+0.1,
                         0,
                         self.displace_velocity,
-                        self.displace_accel, -self.displace_decel*2)
+                        self.displace_accel, -self.displace_decel)
             self.profilefollower.modify_queue(self.bno055.getHeading(),
                     linear=to_peg, overwrite=True)
             self.profilefollower.execute_queue()
             self.manipulategear.engage()
-        elif self.manipulategear.current_state == "backward_open":
-            self.next_state("roll_back")
+        elif self.manipulategear.current_state == "forward_open":
+            self.done()
+            # self.next_state("roll_back")
+
+        if not self.profilefollower.queue[0]:
+            if not (self.manipulategear.current_state == "forward_open" or self.manipulategear.current_state == "forward_closed"):
+                self.manipulategear.engage(initial_state="forward_closed", force=True)
+        # elif self.manipulategear.current_state == "backward_open":
+        #     self.next_state("roll_back")
+
     @state
     def roll_back(self, initial_call):
         if initial_call:
             self.profilefollower.stop()
             roll_back = generate_trapezoidal_trajectory(
                     0, 0, -2, 0, self.displace_velocity,
-                    self.displace_accel, -self.displace_decel)
+                    self.displace_accel/2, -self.displace_decel)
             self.profilefollower.modify_queue(self.bno055.getHeading(),
                     linear=roll_back, overwrite=True)
             self.profilefollower.execute_queue()

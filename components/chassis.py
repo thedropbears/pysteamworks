@@ -147,7 +147,11 @@ class Chassis:
 
     def execute(self):
         """Run at the end of every control loop iteration"""
-        if self.input_enabled:
+        if self.mp_enabled:
+            self.mp_enabled = False
+            self.motors[0].set(self.mp_setpoints[0])
+            self.motors[2].set(self.mp_setpoints[1])
+        elif self.input_enabled:
             motor_inputs = [self.inputs[0]-self.inputs[2],
                     self.inputs[0]+self.inputs[2]]
 
@@ -163,7 +167,3 @@ class Chassis:
             if motor_inputs[0] == 0 and motor_inputs[1] == 0:
                 self.motors[0].clearIaccum()
                 self.motors[1].clearIaccum()
-        elif self.mp_enabled:
-            self.mp_enabled = False
-            self.motors[0].set(self.mp_setpoints[0])
-            self.motors[2].set(self.mp_setpoints[1])
