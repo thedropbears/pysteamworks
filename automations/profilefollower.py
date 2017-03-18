@@ -11,7 +11,7 @@ class ProfileFollower:
     # position P controller
     kP = 3
     # velocity and acceleration feedforward
-    kV = 1.2
+    kV = 1.15
     kA = 0
 
     # heading motion feedforward/back gains

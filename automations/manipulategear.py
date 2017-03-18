@@ -25,13 +25,15 @@ class ManipulateGear(StateMachine):
     range_filter = RangeFilter
 
     place_gear_range = 0.5
-    align_tolerance = 0.05
+    align_tolerance = 0.02
 
     deploy_jitter = 0.1
 
     move_back_close_tol = 0.2
 
     push_gear_input_tolerance = 0.05
+
+    rail_travel = 0.4
 
     @state(first=True)
     def init(self):
