@@ -1,6 +1,4 @@
-from components.chassis import Chassis
 import math
-
 
 def sign(x):
     if x >= 0:
@@ -27,7 +25,7 @@ def generate_interpolation_trajectory(x_start, x_final, traj_to_match):
 
 
 def generate_trapezoidal_trajectory(
-        x_start, v_start, x_final, v_final, v_max, a_pos, a_neg):
+        x_start, v_start, x_final, v_final, v_max, a_pos, a_neg, frequency):
     """Generate a 1d trapezoidal profile.
 
     :returns: a list of (pos, vel acc) tuples
@@ -69,7 +67,7 @@ def generate_trapezoidal_trajectory(
 
     # interpolate the first (acceleration) portion of the path
     # number of discrete segments we pass through
-    num_segments = int(t_cruise * Chassis.motion_profile_speed)
+    num_segments = int(t_cruise * frequency)
     segments = []
     if num_segments > 0:
         for i in range(0, num_segments+1):
@@ -81,13 +79,13 @@ def generate_trapezoidal_trajectory(
 
     # interpolate along the cruise section of the path
     # do it as a list comprehension so that it runs faster
-    num_segments = int(t_decel*Chassis.motion_profile_speed - num_segments)
+    num_segments = int(t_decel*frequency - num_segments)
     segments += [(
         (x_start+x_cruise + v_max * (t_decel-t_cruise) * i / num_segments),
                   v_max, 0) for i in range(1, num_segments+1)]
 
     # interpolate along the deceleration portion of the path
-    num_segments = int((t_f-t_decel)*Chassis.motion_profile_speed)
+    num_segments = int((t_f-t_decel)*frequency)
     for i in range(1, num_segments+1):
         v = v_max - (v_max-v_final) * i/num_segments
         segments.append((

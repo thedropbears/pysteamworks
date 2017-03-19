@@ -45,7 +45,7 @@ class Chassis:
             "ramp-rate" : 72 # change in volts, in v/sec
     }
 
-    motion_profile_speed = 50 # Hz
+    motion_profile_freq = 50 # Hz
 
 
     def __init__(self):
