@@ -6,6 +6,35 @@ def sign(x):
     else:
         return -1
 
+def cubic_generator(keypoints):
+    """Return a function that returns the distance and speed at a given time.
+
+    :args: a list of (time, distance, speed) tuples.
+    """
+
+    # Approach taken from Introduction to Robotics: Mechanics, Planning and
+    # Control. Craig, 2005.
+    coefficients = []
+    for idx in range(len(keypoints)-1):
+        start = keypoints[idx]
+        finish = keypoints[idx+1]
+        tf = finish[0]-start[0]
+        d0, v0 = start[1:3]
+        df, vf = finish[1:3]
+        coefficients.append((start[0], finish[0],
+            (d0, v0,
+                3/tf**2*(df-d0)-2*v0/tf-vf/tf,
+                -2/tf**3*(df-d0)+(vf+v0)/tf**2)))
+    def trajectory(t):
+        for coeff in coefficients:
+            if coeff[0] <= t <= coeff[1]:
+                t_rel = t-coeff[0]
+                c = coeff[2]
+                d = c[0]+c[1]*t_rel+c[2]*t_rel**2+c[3]*t_rel**3
+                v = c[1]+2*c[2]*t_rel+3*c[3]*t_rel**2
+                a = 2*c[2]+6*c[3]*t_rel
+                return (d,v,a)
+    return trajectory
 
 def generate_interpolation_trajectory(x_start, x_final, traj_to_match):
     """Generate a 1d interpolation profile, where the velocity is constant
