@@ -19,7 +19,7 @@ def test_sample_images():
             image = cv2.imread('sample_img/' + sample[0])
             # Rescale if necessary
             height, width, channels = image.shape
-            x, img, num_targets = find_target(image)
+            x, img, num_targets, target_sep = find_target(image)
             assert num_targets == int(sample[2])
             if num_targets == 0:
                 x = None

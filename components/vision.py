@@ -12,11 +12,14 @@ class Vision:
     x = tunable(0.0, doc='The centre of the vision target, in the interval [-1.0, 1.0].')
     time = tunable(0, doc='Timestamp of when x was last updated by the vision loop.')
     num_targets = tunable(0, doc='The number of targets visible from the camera.')
+    target_sep = tunable(0, doc='If we are seeing the two vision targets - the separation between them as a fraction of image width, else 0.')
 
     vision_mode = tunable(True, doc='True to use the front camera for vision processing, False to use it for the driver.')
     smoothed_x = tunable(0.0, doc='Weighted average of x.')
 
     led_dio = DigitalOutput
+
+    vision_target_separation = 0.20955 # m
 
     def __init__(self):
         CameraServer.launch('vision.py:loop')
@@ -43,9 +46,15 @@ class Vision:
 
         self.led_dio.set(not(self.vision_mode or self.led_on))
 
-    def derive_vision_angle(self):
+    def derive_vision_angle(self, vision_x=None):
         "Calculate the camera's angle relative to the vision targets"
-        return -(self.horizontal_fov/2 * (self.smoothed_x))
+        if not vision_x:
+            vision_x = self.smoothed_x
+        return -(self.horizontal_fov/2 * (vision_x))
+
+    def derive_target_range(self, separation):
+        """Estimate the camera's range from the vision targets based of their distance from each other."""
+        return self.vision_target_separation/(2*math.tan(self.horizontal_fov*separation/2))
 
     def toggle_mode(self):
         """Toggle the vision loop mode."""

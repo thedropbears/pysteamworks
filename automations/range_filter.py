@@ -1,6 +1,7 @@
 from components.range_finder import RangeFinder
 from components.chassis import Chassis
 from utilities.kalman import Kalman
+from components.bno055 import BNO055
 
 import numpy as np
 
@@ -27,6 +28,11 @@ class RangeFilter:
     range_std_update_thresh = 0.2
 
     reset_thresh = 3
+
+    bno055 = BNO055
+
+    # scaling factor as uncertainty increases with range
+    vision_predicted_range_sf = 0.25
 
     def __init__(self):
         pass
@@ -77,13 +83,12 @@ class RangeFilter:
         r = self.range_finder.getDistance()
         if float(r) is float('inf'):
             return
-        self.range_deque.append(r)
-        if abs(self.range_deque[-1]-self.range_deque[-2]) > self.range_change_update_thresh or np.std(list(self.range_deque)) > self.range_std_update_thresh:
+        if abs(self.vision_predicted_range - r) > self.vision_predicted_range_sf*self.vision.derive_target_range():
             return
-        if abs(self.range_deque[-1] - self.filter.x_hat[0][0]) > self.reset_thresh:
+        elif abs(r - self.filter.x_hat[0][0]) > self.reset_thresh:
             self.reset()
 
-        z = np.array([self.range_deque[-1]]).reshape(-1, 1)
+        z = np.array([r]).reshape(-1, 1)
         H = np.identity(self.state_vector_size)
 
         self.filter.update(z, H)
@@ -100,3 +105,20 @@ class RangeFilter:
     @property
     def range(self):
         return self.filter.x_hat[0][0]
+
+    @property
+    def vision_predicted_range(self):
+        """ Predict what our range finder reading should be based off of the distance between
+        the vision targets. Used in order to gate the ranges that are used to update our kalman
+        filter. """
+        target_angle = 0
+        if self.bno055.getHeading() > math.pi/6:
+            # we think that we are looking at the right hand target
+            target_angle = math.pi/3
+        elif self.bno055.getHeading() < -math.pi/6:
+            # we think that we are looking at the left hand target
+            target_angle = -math.pi/3
+        perpendicular_to_heading = target_angle - self.bno055.getHeading()
+        theta_alpha = math.pi/2 - perpendicular_to_heading - self.vision.derive_vision_angle
+        predicted_range = self.vision.derive_target_range * math.sin(perpendicular_to_heading * math.pi/2) / math.sin(theta_alpha)
+        return predicted_range

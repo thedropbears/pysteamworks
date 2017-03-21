@@ -65,11 +65,12 @@ def loop():
             # We got an error; report it through the output stream.
             cvSource.notifyError(cvsink.getError())
         else:
-            x, img, num_targets = find_target(frame)
+            x, img, num_targets, target_sep = find_target(frame)
             if num_targets > 0:
                 nt.putNumber("x", x)
                 nt.putNumber("time", t)
                 nt.putNumber("num_targets", num_targets)
+                nt.putNumber("target_sep", target_sep)
             cvSource.putFrame(img)
 
 
@@ -99,16 +100,22 @@ def find_target(img, lower=np.array([110//2, 10*255//100, 20*255//100]), upper=n
             heapq.heappush(areas, (cv2.contourArea(contour), idx))
 
     areas = heapq.nlargest(2, areas)
+    areas_x = []
     x_coord = 0
     for _, idx in areas:
         contour = contours[idx]
         moments = cv2.moments(contour)
         x_coord += moments['m10']/moments['m00'] / len(areas)
+        areas_x.append(moments['m10']/moments['m00'])
         cv2.drawContours(res, (contour, ), -1, (255, 0, 0), 1)
     if len(areas) > 0:
         cv2.line(res, (int(x_coord), 60), (int(x_coord), 180), (255,255,0), thickness=2, lineType=8, shift=0)
+    target_sep = 0
+    if len(areas_x) > 1:
+        # target sep returned as a % of image width, not in vision coordinates
+        target_sep = abs(areas_x[0]-areas_x[1]) / width
     pos = 2 * x_coord / width - 1
-    return pos, res, len(areas)
+    return pos, res, len(areas), target_sep
 
 # Allow easy testing of captured sample images
 if __name__ == "__main__":
@@ -120,7 +127,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.showfile:
         image = cv2.imread(args.showfile, cv2.IMREAD_COLOR)
-        x, image, num_targets = find_target(image)
+        x, image, num_targets, target_sep = find_target(image)
         cv2.imshow('image', image)
         while True:
             if cv2.waitKey(50) != -1:
