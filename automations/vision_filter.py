@@ -101,7 +101,7 @@ class VisionFilter:
             self.filter.roll_back(timesteps_since_vision)
             self.update()
             for i in range(timesteps_since_vision):
-                self.predict(timestep=timesteps_since_vision)
+                self.predict(timestep=timesteps_since_vision-i)
 
     @property
     def x(self):
