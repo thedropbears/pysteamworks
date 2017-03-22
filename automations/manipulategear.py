@@ -43,6 +43,7 @@ class ManipulateGear(StateMachine):
         self.gearalignmentdevice.reset_position()
         self.gearalignmentdevice.position_mode()
         self.vision_filter.reset()
+        self.range_filter.reset()
         self.next_state("align_peg")
 
     @state(must_finish=True)
@@ -58,8 +59,8 @@ class ManipulateGear(StateMachine):
                 and abs(self.chassis.inputs[0]) < self.push_gear_input_tolerance
                 and abs(self.chassis.inputs[2]) < self.push_gear_input_tolerance):
             aligned = True
-            r = self.range_finder.getDistance()
-            # r = self.range_filter.range
+            # r = self.range_finder.getDistance()
+            r = self.range_filter.range
             if r<0.1:
                 r = 40
             if r < self.place_gear_range:

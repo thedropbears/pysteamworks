@@ -10,7 +10,7 @@ def m_dot(*args):
 
 class Kalman:
 
-    def __init__(self, x_hat, P, Q, R, history_len=50):
+    def __init__(self, x_hat, P, Q, R=None, history_len=50):
         """
         :param x_hat: the initial state of the system
         :param P: the covariance matrix of the initial state of the system
@@ -52,14 +52,21 @@ class Kalman:
         self.P = m_dot(F, self.P, np.transpose(F)) + self.Q
         self.history.append([self.x_hat, self.P])
 
-    def update(self, z, H):
+    def update(self, z, H, R=None):
         """
         :param z: the sensor readings in this timestep
         :param H: the matrix that translates x_hat (the state vector)
         into the sensor space (z)
         :param R: the covariance matrix representing the noise in the
-        sensor reading
+        sensor reading. If not supplied, defaults to member variable R.
         """
+
+        if not R and not self.R:
+            print("WARNING: Kalman filter cannot predict - sensor covariance not supplied.")
+            return
+        elif not R:
+            R = self.R
+
         # the difference between the means of the estimated state (x_hat)
         # and the state given by the sensors (z)
         y = z - np.dot(H, self.x_hat)
@@ -68,9 +75,11 @@ class Kalman:
         # distributions, represented by the current state of the system
         # and the sensor readings in this state
         kalman_gain = m_dot(self.P, np.transpose(H), np.linalg.inv(
-            m_dot(H, self.P, H.T)+self.R))
+            m_dot(H, self.P, H.T)+R))
 
         self.x_hat = self.x_hat + np.dot(kalman_gain, y)
 
         # the new covariance matrix around the new mean
-        self.P = self.P - m_dot(kalman_gain, H, self.P)
+        # self.P = self.P - m_dot(kalman_gain, H, self.P)
+
+        self.P = (np.identity(len(self.x_hat)) - kalman_gain.dot(H)).dot(self.P)

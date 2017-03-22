@@ -52,9 +52,11 @@ class Vision:
             vision_x = self.smoothed_x
         return -(self.horizontal_fov/2 * (vision_x))
 
-    def derive_target_range(self, separation):
+    def derive_target_range(self):
         """Estimate the camera's range from the vision targets based of their distance from each other."""
-        return self.vision_target_separation/(2*math.tan(self.horizontal_fov*separation/2))
+        if self.target_sep == 0:
+            return 0.0
+        return self.vision_target_separation/(2*math.tan(self.horizontal_fov*self.target_sep/2))
 
     @staticmethod
     def rad_to_vision_units(rad):
