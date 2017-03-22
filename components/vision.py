@@ -56,6 +56,10 @@ class Vision:
         """Estimate the camera's range from the vision targets based of their distance from each other."""
         return self.vision_target_separation/(2*math.tan(self.horizontal_fov*separation/2))
 
+    @staticmethod
+    def rad_to_vision_units(rad):
+        return rad/Vision.horizontal_fov
+
     def toggle_mode(self):
         """Toggle the vision loop mode."""
         self.vision_mode = not self.vision_mode

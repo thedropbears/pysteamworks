@@ -1,5 +1,8 @@
 from components.vision import Vision
+from components.bno055 import BNO055
 from utilities.kalman import Kalman
+
+from collections import deque
 
 import numpy as np
 import time
@@ -7,6 +10,7 @@ import time
 class VisionFilter:
 
     vision = Vision
+    bno055 = BNO055
 
     state_vector_size = 2
 
@@ -49,16 +53,25 @@ class VisionFilter:
 
         self.filter = Kalman(x_hat, P, Q, R)
 
+        self.imu_deque = deque(maxlen=50, iterable=[self.get_heading_state()])
+
+    def get_heading_state(self):
+        return np.array([self.bno055.getHeading(), self.bno055.getHeadingRate()]).reshape(-1, 1)
 
     def on_enable(self):
         self.reset()
 
-    def predict(self):
+    def predict(self, timestep=1):
+        """Predict what the measurement should be in the next timestep.
+        :param timestep: the number of timesteps in the past that we are predicting forward *from*"""
+
         F = np.identity(self.state_vector_size)
         F[0][1] = self.loop_dt
         B = np.identity(self.state_vector_size)
 
-        u = np.zeros(shape=(self.state_vector_size, 1))
+        self.imu_deque.append(self.get_heading_state())
+
+        u = Vision.rad_to_vision_units(self.imu_deque[-timestep] - self.imu_deque[-timestep-1])
 
         self.filter.predict(F, u, B)
 
@@ -88,7 +101,7 @@ class VisionFilter:
             self.filter.roll_back(timesteps_since_vision)
             self.update()
             for i in range(timesteps_since_vision):
-                self.predict()
+                self.predict(timestep=timesteps_since_vision)
 
     @property
     def x(self):
