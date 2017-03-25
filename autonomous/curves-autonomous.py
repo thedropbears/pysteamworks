@@ -108,7 +108,7 @@ class PegAutonomous(AutonomousStateMachine):
 
 
 class LeftPegCurves(PegAutonomous):
-    # MODE_NAME = "Left Peg Curves"
+    MODE_NAME = "Left Peg Curves"
 
     manipulategear = ManipulateGear
     profilefollower = ProfileFollower
@@ -119,8 +119,7 @@ class LeftPegCurves(PegAutonomous):
 
 
 class RightPegCurves(PegAutonomous):
-    # MODE_NAME = "Right Peg Curves"
-    # DEFAULT = True
+    MODE_NAME = "Right Peg Curves"
 
     manipulategear = ManipulateGear
     profilefollower = ProfileFollower
