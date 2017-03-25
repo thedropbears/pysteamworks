@@ -26,6 +26,7 @@ from networktables import NetworkTable
 import logging
 
 import math
+import time
 
 
 class Robot(magicbot.MagicRobot):
@@ -122,6 +123,7 @@ class Robot(magicbot.MagicRobot):
         self.sd.putNumber("vision_filter_covariance", self.vision_filter.filter.P[0][1])
         self.sd.putNumber("filtered_range", self.range_filter.filter.x_hat[0][0])
         self.sd.putNumber("range_filter_variance", self.range_filter.filter.P[0][0])
+        self.sd.putNumber("time", time.time())
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''
@@ -134,6 +136,9 @@ class Robot(magicbot.MagicRobot):
         self.vision.vision_mode = False
         print("TELEOP INIT RANGE: %s" % (self.range_finder.getDistance()))
         print("TELEOP INIT FILTER RANGE: %s" % (self.range_filter.range))
+
+    def autonomousPeriodic(self):
+        self.sd.putData()
 
     def disabledInit(self):
         self.sd.putBoolean("log", False)
