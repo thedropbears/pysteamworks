@@ -135,6 +135,9 @@ class Robot(magicbot.MagicRobot):
         print("TELEOP INIT RANGE: %s" % (self.range_finder.getDistance()))
         print("TELEOP INIT FILTER RANGE: %s" % (self.range_filter.range))
 
+    def disabledInit(self):
+        self.sd.putBoolean("log", False)
+
     def disabledPeriodic(self):
         self.putData()
         self.sd.putString("state", "stationary")
@@ -155,6 +158,12 @@ class Robot(magicbot.MagicRobot):
         try:
             if self.debounce(7, gamepad=True) or self.debounce(3):
                 self.winch_automation.engage(force=True)
+        except:
+            self.onException()
+
+        try:
+            if self.debounce(7):
+                self.sd.putBoolean("log", True)
         except:
             self.onException()
 

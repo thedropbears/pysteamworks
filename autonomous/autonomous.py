@@ -12,6 +12,7 @@ from magicbot.state_machine import AutonomousStateMachine, state
 from utilities.profilegenerator import generate_interpolation_trajectory
 from utilities.profilegenerator import generate_trapezoidal_trajectory
 from components.winch import Winch
+from networktables import NetworkTable
 
 import math
 
@@ -33,6 +34,7 @@ class PegAutonomous(AutonomousStateMachine):
     winch = Winch
     vision_filter = VisionFilter
     range_filter = RangeFilter
+    sd = NetworkTable
 
     centre_to_front_bumper = 0.49
     lidar_to_front_bumper = 0.36
@@ -74,6 +76,7 @@ class PegAutonomous(AutonomousStateMachine):
         self.generate_trajectories()
         self.winch.enable_compressor()
         self.vision.vision_mode = True
+        self.sd.putBoolean("log", True)
 
     @state(first=True)
     def drive_to_airship(self, initial_call):

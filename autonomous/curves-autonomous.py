@@ -8,6 +8,7 @@ from components.geardepositiondevice import GearDepositionDevice
 from components.range_finder import RangeFinder
 from magicbot.state_machine import AutonomousStateMachine, state
 from utilities.profilegenerator import cubic_generator
+from networktables import NetworkTable
 
 import math
 
@@ -26,6 +27,7 @@ class PegAutonomous(AutonomousStateMachine):
     range_finder = RangeFinder
     gearalignmentdevice = GearAlignmentDevice
     geardepositiondevice = GearDepositionDevice
+    sd = NetworkTable
 
     center_to_front_bumper = 0.49
     lidar_to_front_bumper = 0.36
@@ -84,6 +86,7 @@ class PegAutonomous(AutonomousStateMachine):
         self.geardepositiondevice.retract_gear()
         self.geardepositiondevice.lock_gear()
         self.generate_trajectories()
+        self.sd.putBoolean("log", True)
 
     @state(first=True)
     def drive_to_airship(self, initial_call):
