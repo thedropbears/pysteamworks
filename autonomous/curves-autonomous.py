@@ -9,6 +9,7 @@ from components.range_finder import RangeFinder
 from magicbot.state_machine import AutonomousStateMachine, state
 from utilities.profilegenerator import cubic_generator
 from networktables import NetworkTable
+import numpy as np
 
 import math
 
@@ -34,10 +35,11 @@ class PegAutonomous(AutonomousStateMachine):
 
     center_airship_distance = 2.93 - center_to_front_bumper
     side_drive_forward_distance = 2.54 - center_to_front_bumper
+    side_to_wall_distance = 1.5-center_to_front_bumper
     side_rotate_angle = math.pi/3.0
-    rotate_radius = 2
-    rotate_linear_velocity = 0.5
-    delta_s = rotate_radius*math.tan(side_rotate_angle/2)
+    rotate_radius = 0.7
+    rotate_linear_velocity = 1.5
+    delta_s = abs(rotate_radius*math.tan(side_rotate_angle/2))
     rotate_arc_length = rotate_radius * side_rotate_angle
 
     dt = 0.02
@@ -55,14 +57,15 @@ class PegAutonomous(AutonomousStateMachine):
             self.gear_mech__on = 3/self.dt # Segments left when gear mech enabled
             self.heading_trajectory = [0,]*int(3/self.dt)
         else:
-            t1 = 2 #s, time for segment 1
+            t1 = 1 #s, time for segment 1
             rotate_time = self.rotate_arc_length/self.rotate_linear_velocity
-            t3 = 2 #s, time for segment 3
+            t3 = 1 #s, time for segment 3
             distance_keypoints = [(0,0,0),
-                    (t1, self.side_drive_forward_distance,self.rotate_linear_velocity),
-                    (t1 + rotate_time, self.side_drive_forward_distance+self.rotate_arc_length,self.rotate_linear_velocity),
-                    (t1 + rotate_time + t3, self.side_drive_forward_distance+self.rotate_arc_length+self.side_to_wall_distance, 0)
+                    (t1, self.side_drive_forward_distance-self.delta_s,self.rotate_linear_velocity),
+                    (t1 + rotate_time, self.side_drive_forward_distance-self.delta_s+self.rotate_arc_length,self.rotate_linear_velocity),
+                    (t1 + rotate_time + t3, self.side_drive_forward_distance+self.rotate_arc_length+self.side_to_wall_distance-2*self.delta_s, 0)
                     ]
+            print("Delta S %s, drive_forward_distance sub ds %s, rotate_arc_length %s, rotate_tm %s" % (self.delta_s, self.side_drive_forward_distance-self.delta_s, self.rotate_arc_length, rotate_time))
             self.gear_mech_on = int(t3/self.dt) # Segments left when gear mech enabled
             if self.target is Targets.Left:
                 perpendicular_heading = -self.side_rotate_angle
@@ -77,6 +80,11 @@ class PegAutonomous(AutonomousStateMachine):
         cubic = cubic_generator(distance_keypoints)
         for t in np.arange(0, distance_keypoints[-1][0], self.dt):
             self.distance_trajectory.append(cubic(t))
+        print("Distance Traj Len %s, Heading Traj Len %s" % (len(self.distance_trajectory), len(self.heading_trajectory)))
+        print("Distance trajectory", self.distance_trajectory[int(t1/self.dt)])
+        print("Heading trajectory", self.heading_trajectory[int(t1/self.dt)])
+        print("Distance trajectory", self.distance_trajectory[int(t1/self.dt)+1])
+        print("Heading trajectory", self.heading_trajectory[int(t1/self.dt)+1])
 
     def on_enable(self):
         super().on_enable()
@@ -90,6 +98,8 @@ class PegAutonomous(AutonomousStateMachine):
 
     @state(first=True)
     def drive_to_airship(self, initial_call):
+        self.sd.putNumber("left_speed_error", self.chassis.drive_motor_a.getClosedLoopError())
+        self.sd.putNumber("right_speed_error", self.chassis.drive_motor_c.getClosedLoopError())
         # Drive to a range where we can close the loop using vision, lidar and
         # gyro to close the loop on position
         if initial_call:

@@ -8,17 +8,29 @@ class ProfileFollower:
 
     # linear motion feedforward/back gains
     #
+    # # position P controller
+    # kP = 6
+    # # velocity and acceleration feedforward
+    # kV = 1
+    # kI = 0.3
+    # kD = 1
     # position P controller
-    kP = 3
+    kP = 5
     # velocity and acceleration feedforward
-    kV = 1.15
-    kA = 0
+    kV = 1
+    kI = 0.1
+    kD = 0.7
+    kA = 0.0
 
     # heading motion feedforward/back gains
     # heading feedback
-    kPh = 7
+    kPh = 4
     # angular velocity feedforward
-    kVh = 1.2
+    kVh = 1
+    # kIh = 0.5
+    # kDh = 40
+    kIh = 0.1
+    kDh = 20
     # # heading motion feedforward/back gains
     # # heading feedback
     # kPh = 4.5
@@ -58,6 +70,10 @@ class ProfileFollower:
             self.executing = True
             self.chassis.input_enabled = False
             self.chassis.set_enc_pos()
+            self.position_error_i = 0
+            self.heading_error_i = 0
+            self.last_position_error = 0
+            self.last_heading_error = 0
 
     def stop(self):
         """Stop executing the motion profile.  Also clears the MP queue, and
@@ -66,6 +82,8 @@ class ProfileFollower:
         self.executing = False
         self.queue = [[], []]
         self.chassis.input_enabled = True
+        self.heading_error_i = 0
+        self.position_error_i = 0
 
     def execute(self):
         if self.executing:
@@ -79,8 +97,11 @@ class ProfileFollower:
             pos = (left_pos + right_pos) / 2 # average the two wheel distances
             pos_error = linear_seg[0] - pos
 
+            self.d_pos_error = (pos_error - self.last_position_error)
+            self.position_error_i += pos_error
+
             linear_output = (self.kP * pos_error + self.kV * linear_seg[1]
-                + self.kA * linear_seg[2])
+                + self.kA * linear_seg[2] + self.kI*self.position_error_i + self.kD*self.d_pos_error)
 
             self.sd.putNumber("distance_error_mp", pos_error)
             self.sd.putNumber("linear_output_mp", linear_output)
@@ -92,9 +113,15 @@ class ProfileFollower:
             heading_error = math.atan2(math.sin(heading_error),
                     math.cos(heading_error))
 
+            self.heading_error_i += heading_error
+            d_heading_error = (heading_error - self.last_heading_error)
+
             # generate the rotational output to the chassis
             heading_output = (
-                self.kPh * heading_error + self.kVh * heading_seg[1])
+                self.kPh * heading_error + self.kVh * heading_seg[1] + self.heading_error_i*self.kIh + d_heading_error*self.kDh)
+
+            self.last_heading_error = heading_error
+            self.last_position_error = pos_error
 
             self.sd.putNumber("heading_error_mp", heading_error)
 

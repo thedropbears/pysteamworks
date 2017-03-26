@@ -112,6 +112,7 @@ class Robot(magicbot.MagicRobot):
         self.sd.putNumber("error_differential",
                 self.drive_motor_a.getClosedLoopError()-
                 self.drive_motor_c.getClosedLoopError())
+        self.sd.putNumber("velocity", self.chassis.get_velocity())
         self.sd.putNumber("left_speed_error", self.drive_motor_a.getClosedLoopError())
         self.sd.putNumber("right_speed_error", self.drive_motor_c.getClosedLoopError())
         self.sd.putNumber("x_throttle", self.chassis.inputs[0])
@@ -138,7 +139,7 @@ class Robot(magicbot.MagicRobot):
         print("TELEOP INIT FILTER RANGE: %s" % (self.range_filter.range))
 
     def autonomousPeriodic(self):
-        self.sd.putData()
+        self.putData()
 
     def disabledInit(self):
         self.sd.putBoolean("log", False)
