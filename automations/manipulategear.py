@@ -90,7 +90,7 @@ class ManipulateGear(StateMachine):
             self.profilefollower.stop()
             roll_back = generate_trapezoidal_trajectory(
                     0, 0, -0.3, 0, 2,
-                    1.0, -2)
+                    1.0, -2, 50)
             self.profilefollower.modify_queue(self.bno055.getHeading(),
                     linear=roll_back, overwrite=True)
             self.profilefollower.execute_queue()
