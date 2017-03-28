@@ -61,10 +61,10 @@ class Kalman:
         sensor reading. If not supplied, defaults to member variable R.
         """
 
-        if not R and not self.R:
+        if R == None and self.R == None:
             print("WARNING: Kalman filter cannot predict - sensor covariance not supplied.")
             return
-        elif not R:
+        elif R == None:
             R = self.R
 
         # the difference between the means of the estimated state (x_hat)
