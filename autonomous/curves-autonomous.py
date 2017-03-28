@@ -33,7 +33,7 @@ class PegAutonomous(AutonomousStateMachine):
     center_to_front_bumper = 0.49
     lidar_to_front_bumper = 0.36
 
-    center_airship_distance = 2.93 - center_to_front_bumper
+    center_airship_distance = 2.93
     side_drive_forward_distance = 2.54 - center_to_front_bumper
     side_to_wall_distance = 1.5-center_to_front_bumper
     side_rotate_angle = math.pi/3.0
@@ -51,11 +51,12 @@ class PegAutonomous(AutonomousStateMachine):
 
     def generate_trajectories(self):
         if self.target is Targets.Center:
+            t1 = 1.5
             perpendicular_heading = 0
             distance_keypoints = [(0,0,0),
-                    (3, self.center_airship_distance, 0)]
-            self.gear_mech__on = 3/self.dt # Segments left when gear mech enabled
-            self.heading_trajectory = [0,]*int(3/self.dt)
+                    (t1, self.center_airship_distance-2*self.center_to_front_bumper, 0)]
+            self.gear_mech_on = t1/self.dt # Segments left when gear mech enabled
+            self.heading_trajectory = [[0,0,0]]*int(t1/self.dt)
         else:
             t1 = 1 #s, time for segment 1
             rotate_time = self.rotate_arc_length/self.rotate_linear_velocity
@@ -80,11 +81,11 @@ class PegAutonomous(AutonomousStateMachine):
         cubic = cubic_generator(distance_keypoints)
         for t in np.arange(0, distance_keypoints[-1][0], self.dt):
             self.distance_trajectory.append(cubic(t))
-        print("Distance Traj Len %s, Heading Traj Len %s" % (len(self.distance_trajectory), len(self.heading_trajectory)))
-        print("Distance trajectory", self.distance_trajectory[int(t1/self.dt)])
-        print("Heading trajectory", self.heading_trajectory[int(t1/self.dt)])
-        print("Distance trajectory", self.distance_trajectory[int(t1/self.dt)+1])
-        print("Heading trajectory", self.heading_trajectory[int(t1/self.dt)+1])
+        # print("Distance Traj Len %s, Heading Traj Len %s" % (len(self.distance_trajectory), len(self.heading_trajectory)))
+        # print("Distance trajectory", self.distance_trajectory[int(t1/self.dt)])
+        # print("Heading trajectory", self.heading_trajectory[int(t1/self.dt)])
+        # print("Distance trajectory", self.distance_trajectory[int(t1/self.dt)+1])
+        # print("Heading trajectory", self.heading_trajectory[int(t1/self.dt)+1])
 
     def on_enable(self):
         super().on_enable()
@@ -109,6 +110,9 @@ class PegAutonomous(AutonomousStateMachine):
             self.profilefollower.execute_queue()
         if len(self.profilefollower.queue) == self.gear_mech_on:
             self.manipulategear.engage()
+        elif not self.profilefollower.queue[0]:
+            if not (self.manipulategear.current_state == "forward_open" or self.manipulategear.current_state == "forward_closed"):
+                self.manipulategear.engage(initial_state="forward_closed", force=True)
         if self.manipulategear.current_state == "forward_open":
             self.done()
 
@@ -137,3 +141,13 @@ class RightPegCurves(PegAutonomous):
 
     def __init__(self):
         super().__init__(Targets.Right)
+
+class CenterPegCurves(PegAutonomous):
+    MODE_NAME = "Center Peg Curves"
+
+    manipulategear = ManipulateGear
+    profilefollower = ProfileFollower
+    chassis = Chassis
+
+    def __init__(self):
+        super().__init__(Targets.Center)
