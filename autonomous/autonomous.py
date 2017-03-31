@@ -94,7 +94,7 @@ class PegAutonomous(AutonomousStateMachine):
                     Chassis.motion_profile_freq)
             self.profilefollower.modify_queue(heading=0, linear=displace)
             self.profilefollower.execute_queue()
-        if not self.profilefollower.queue[0]:
+        if not self.profilefollower.executing:
             if self.target is Targets.Centre:
                 self.next_state("rotate_towards_peg")
             else:
@@ -111,7 +111,7 @@ class PegAutonomous(AutonomousStateMachine):
             self.profilefollower.modify_queue(heading=rotate, overwrite=True)
             print("Rotate Start %s, Rotate End %s" % (rotate[0], rotate[-1]))
             self.profilefollower.execute_queue()
-        if not self.profilefollower.queue[0]:
+        if not self.profilefollower.executing:
             self.next_state("rotate_towards_peg")
 
     @state
@@ -130,7 +130,7 @@ class PegAutonomous(AutonomousStateMachine):
                     self.vision.x, self.vision.derive_vision_angle(), self.bno055.getHeading(), measure_trajectory[0][0], measure_trajectory[-1][0]))
                 self.profilefollower.modify_queue(heading=measure_trajectory, overwrite=True)
                 self.profilefollower.execute_queue()
-        if not self.profilefollower.queue[0]:
+        if not self.profilefollower.executing:
             # now measure our position relative to the targets
             r = (self.range_filter.range + self.centre_to_front_bumper
                  - self.lidar_to_front_bumper)
@@ -161,7 +161,7 @@ class PegAutonomous(AutonomousStateMachine):
                     Chassis.motion_profile_freq)
             self.profilefollower.modify_queue(heading=self.rotate_to_correct)
             self.profilefollower.execute_queue()
-        if not self.profilefollower.queue[0]:
+        if not self.profilefollower.executing:
             self.next_state("drive_align_segment")
 
     @state
@@ -175,7 +175,7 @@ class PegAutonomous(AutonomousStateMachine):
             self.profilefollower.modify_queue(0,
                     linear=displacement_correction)
             self.profilefollower.execute_queue()
-        if not self.profilefollower.queue[0]:
+        if not self.profilefollower.executing:
             self.next_state("rotate_towards_airship")
 
     @state
@@ -193,7 +193,7 @@ class PegAutonomous(AutonomousStateMachine):
                 self.profilefollower.modify_queue(heading=measure_trajectory, overwrite=True)
                 self.profilefollower.execute_queue()
                 # self.done()
-        if not self.profilefollower.queue[0]:
+        if not self.profilefollower.executing:
             self.next_state("drive_to_wall")
 
     @state
@@ -235,7 +235,7 @@ class PegAutonomous(AutonomousStateMachine):
             self.done()
             # self.next_state("roll_back")
 
-        if not self.profilefollower.queue[0]:
+        if not self.profilefollower.executing:
             if not (self.manipulategear.current_state == "forward_open" or self.manipulategear.current_state == "forward_closed"):
                 self.manipulategear.engage(initial_state="forward_closed", force=True)
         # elif self.manipulategear.current_state == "backward_open":
@@ -252,7 +252,7 @@ class PegAutonomous(AutonomousStateMachine):
             self.profilefollower.modify_queue(self.bno055.getHeading(),
                     linear=roll_back, overwrite=True)
             self.profilefollower.execute_queue()
-        elif not self.profilefollower.queue[0]:
+        elif not self.profilefollower.executing:
             self.done()
 
     def done(self):

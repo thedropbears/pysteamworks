@@ -55,7 +55,7 @@ class ManipulateGear(StateMachine):
         self.vision.vision_mode = True
 
         if (-self.align_tolerance <= self.vision_filter.x <= self.align_tolerance
-                and not self.profilefollower.queue[0]
+                and not self.profilefollower.executing
                 and abs(self.chassis.inputs[0]) < self.push_gear_input_tolerance
                 and abs(self.chassis.inputs[2]) < self.push_gear_input_tolerance):
             aligned = True
@@ -105,7 +105,7 @@ class ManipulateGear(StateMachine):
     def backward_open(self, initial_call, state_tm):
         self.put_dashboard()
         self.geardepositiondevice.retract_gear()
-        if not self.profilefollower.queue[0]:
+        if not self.profilefollower.executing:
             self.next_state("backward_close")
 
     @state(must_finish=True)

@@ -1,8 +1,10 @@
-from components.chassis import Chassis
-from components.bno055 import BNO055
+import math
+from collections import deque
 from networktables import NetworkTable
 
-import math
+from components.chassis import Chassis
+from components.bno055 import BNO055
+
 
 class ProfileFollower:
 
@@ -43,30 +45,32 @@ class ProfileFollower:
     sd = NetworkTable
 
     def __init__(self):
-        # queue of segments to be exectued
-        # in the form [linear, angular]
-        self.queue = [[],[]]
+        # queues of segments to be executed
+        self.linear_queue = deque()
+        self.heading_queue = deque()
         self.executing = False
 
     def modify_queue(self, heading, linear=None, overwrite=False):
-        """Modify the motion profiling queue, or overwrite it.
-        """
-        if type(heading) == int or type(heading) == float:
+        """Modify the motion profiling queue, or overwrite it."""
+        if isinstance(heading, (int, float)):
             heading = [(heading, 0.0, 0.0)] * len(linear)
         if not linear:
-           linear = [[0.0, 0.0, 0.0]] * len(heading)
+            linear = [(0.0, 0.0, 0.0)] * len(heading)
         if overwrite:
-            self.queue = [linear, heading]
+            self.linear_queue = deque(linear)
+            self.heading_queue = deque(heading)
         else:
-            self.queue = [self.queue[0]+linear, self.queue[1]+heading]
+            self.linear_queue.extend(linear)
+            self.heading_queue.extend(heading)
 
     def execute_queue(self):
         """Start executing the queue that is in the motion profile buffer.
+
         Also resets encoder positions in the chassis, and disables driver
         input to the chassis in teleop.
         """
         # ensure that there is a queue to execute from
-        if len(self.queue[0]):
+        if self.linear_queue:
             self.executing = True
             self.chassis.input_enabled = False
             self.chassis.set_enc_pos()
@@ -74,13 +78,17 @@ class ProfileFollower:
             self.heading_error_i = 0
             self.last_position_error = 0
             self.last_heading_error = 0
+        else:
+            self.executing = False
 
     def stop(self):
-        """Stop executing the motion profile.  Also clears the MP queue, and
-        re-enables chassis driver input.
+        """Stop executing the motion profile.
+
+        Also clears the MP queue, and re-enables chassis driver input.
         """
         self.executing = False
-        self.queue = [[], []]
+        self.linear_queue.clear()
+        self.heading_queue.clear()
         self.chassis.input_enabled = True
         self.heading_error_i = 0
         self.position_error_i = 0
@@ -89,8 +97,8 @@ class ProfileFollower:
         if self.executing:
             # get the next linear and angular segments from the front of the
             # queue
-            linear_seg = self.queue[0].pop(0)
-            heading_seg = self.queue[1].pop(0)
+            linear_seg = self.linear_queue.popleft()
+            heading_seg = self.heading_queue.popleft()
 
             [left_pos, right_pos] = self.chassis.get_wheel_distances()
 
@@ -125,9 +133,10 @@ class ProfileFollower:
 
             self.sd.putNumber("heading_error_mp", heading_error)
 
-            if self.queue[0]:
+            if self.linear_queue:
                 self.chassis.set_velocity(linear_output, heading_output)
             else:
                 self.chassis.set_velocity(linear_seg[1], heading_seg[1])
-        if not self.queue[0]:
+
+        if not self.linear_queue:
             self.executing = False

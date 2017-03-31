@@ -108,9 +108,9 @@ class PegAutonomous(AutonomousStateMachine):
             self.profilefollower.modify_queue(heading=self.heading_trajectory,
                     linear=self.distance_trajectory)
             self.profilefollower.execute_queue()
-        if len(self.profilefollower.queue) == self.gear_mech_on:
+        if len(self.profilefollower.linear_queue) >= self.gear_mech_on:
             self.manipulategear.engage()
-        elif not self.profilefollower.queue[0]:
+        elif not self.profilefollower.executing:
             if not (self.manipulategear.current_state == "forward_open" or self.manipulategear.current_state == "forward_closed"):
                 self.manipulategear.engage(initial_state="forward_closed", force=True)
         if self.manipulategear.current_state == "forward_open":
