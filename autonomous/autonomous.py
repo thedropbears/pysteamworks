@@ -203,12 +203,11 @@ class PegAutonomous(AutonomousStateMachine):
             peg_range = 1.5-self.centre_to_front_bumper
             if self.target == Targets.Centre:
                 peg_range = (self.centre_airship_distance)-self.centre_to_front_bumper
-            # r = self.range_filter.range
             r = self.range_filter.range
             print("AUTO DRIVE WALL RANGE: %s" % (self.range_finder.getDistance()))
             print("AUTO DRIVE WALL FILTER RANGE: %s" % (self.range_filter.range))
             # 40 is range finder max distance, better failure mode than inf or really small
-            if float(r) is float('inf') or float(r) is float('nan'):
+            if not math.isfinite(r):
                 r = 40
             elif r < 0.5:
                 r = 40

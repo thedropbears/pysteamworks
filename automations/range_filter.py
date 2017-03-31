@@ -42,13 +42,13 @@ class RangeFilter:
     def reset(self):
 
         r = self.range_finder.getDistance()
-        if float(r) is float('inf'):
+        if math.isinf(r):
             r = 0
 
         self.is_reset = True
 
         r = self.range_finder.getDistance()
-        if float(r) is float('inf'):
+        if math.isinf(r):
             r = 40
 
         # starting state
@@ -71,7 +71,7 @@ class RangeFilter:
     def update_deques(self):
         self.odometry_deque.append(np.array(self.chassis.get_raw_wheel_distances()))
         r = self.range_finder.getDistance()
-        self.range_deque.append(40 if float(r) is float('inf') else r)
+        self.range_deque.append(40 if math.isinf(r) else r)
 
     def predict(self, timesteps=1):
         F = np.identity(self.state_vector_size)
@@ -110,7 +110,7 @@ class RangeFilter:
         self.update_deques()
         if self.range < 0.1 or self.range >= 40:
             r = self.range_deque[-1]
-            if float(r) is float('inf'):
+            if math.isinf(r):
                 print("reset")
                 self.reset()
         timesteps_since_vision = int((time.time() - self.vision.time)/50)
