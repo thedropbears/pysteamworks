@@ -15,7 +15,7 @@ import math
 
 class Targets:
     Left = 0
-    Center = 1
+    Centre = 1
     Right = 2
 
 class PegAutonomous(AutonomousStateMachine):
@@ -30,12 +30,12 @@ class PegAutonomous(AutonomousStateMachine):
     geardepositiondevice = GearDepositionDevice
     sd = NetworkTable
 
-    center_to_front_bumper = 0.49
+    centre_to_front_bumper = 0.49
     lidar_to_front_bumper = 0.36
 
-    center_airship_distance = 2.93
-    side_drive_forward_distance = 2.54 - center_to_front_bumper
-    side_to_wall_distance = 1.5-center_to_front_bumper
+    centre_airship_distance = 2.93
+    side_drive_forward_distance = 2.54 - centre_to_front_bumper
+    side_to_wall_distance = 1.5-centre_to_front_bumper
     side_rotate_angle = math.pi/3.0
     rotate_radius = 0.7
     rotate_linear_velocity = 1.5
@@ -45,16 +45,16 @@ class PegAutonomous(AutonomousStateMachine):
     dt = 0.02
 
 
-    def __init__(self, target=Targets.Center):
+    def __init__(self, target=Targets.Centre):
         super().__init__()
         self.target = target
 
     def generate_trajectories(self):
-        if self.target is Targets.Center:
+        if self.target is Targets.Centre:
             t1 = 1.5
             perpendicular_heading = 0
             distance_keypoints = [(0,0,0),
-                    (t1, self.center_airship_distance-2*self.center_to_front_bumper, 0)]
+                    (t1, self.centre_airship_distance - 2*self.centre_to_front_bumper, 0)]
             self.gear_mech_on = t1/self.dt # Segments left when gear mech enabled
             self.heading_trajectory = [[0,0,0]]*int(t1/self.dt)
         else:
@@ -142,12 +142,12 @@ class RightPegCurves(PegAutonomous):
     def __init__(self):
         super().__init__(Targets.Right)
 
-class CenterPegCurves(PegAutonomous):
-    MODE_NAME = "Center Peg Curves"
+class CentrePegCurves(PegAutonomous):
+    MODE_NAME = "Centre Peg Curves"
 
     manipulategear = ManipulateGear
     profilefollower = ProfileFollower
     chassis = Chassis
 
     def __init__(self):
-        super().__init__(Targets.Center)
+        super().__init__(Targets.Centre)
