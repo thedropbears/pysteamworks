@@ -65,7 +65,7 @@ class PegAutonomous(AutonomousStateMachine):
         self.geardepositiondevice.lock_gear()
         self.init_trajectories()
         self.winch.enable_compressor()
-        self.vision.vision_mode = True
+        self.vision.enabled = True
         self.sd.putBoolean("log", True)
 
     @state(first=True)
@@ -73,7 +73,7 @@ class PegAutonomous(AutonomousStateMachine):
         # Drive to a range where we can close the loop using vision, lidar and
         # gyro to close the loop on position
         if initial_call:
-            self.vision.vision_mode = True
+            self.vision.enabled = True
             if self.target == Targets.Centre:
                 self.next_state("drive_to_wall")
                 return
@@ -242,7 +242,7 @@ class PegAutonomous(AutonomousStateMachine):
 
     def done(self):
         super().done()
-        self.vision.vision_mode = False
+        self.vision.enabled = False
 
 
 class LeftPeg(PegAutonomous):

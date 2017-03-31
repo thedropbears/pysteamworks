@@ -106,7 +106,7 @@ class PegAutonomous(AutonomousStateMachine):
         # Drive to a range where we can close the loop using vision, lidar and
         # gyro to close the loop on position
         if initial_call:
-            self.vision.vision_mode = True
+            self.vision.enabled = True
             self.profilefollower.modify_queue(heading=self.heading_trajectory,
                     linear=self.distance_trajectory)
             self.profilefollower.execute_queue()
@@ -124,7 +124,7 @@ class PegAutonomous(AutonomousStateMachine):
 
     def done(self):
         super().done()
-        self.vision.vision_mode = False
+        self.vision.enabled = False
 
 
 class LeftPegCurves(PegAutonomous):

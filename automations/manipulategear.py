@@ -37,7 +37,7 @@ class ManipulateGear(StateMachine):
 
     @state(first=True)
     def init(self):
-        self.vision.vision_mode = True
+        self.vision.enabled = True
         self.geardepositiondevice.retract_gear()
         self.geardepositiondevice.lock_gear()
         self.gearalignmentdevice.reset_position()
@@ -52,7 +52,7 @@ class ManipulateGear(StateMachine):
         # now move to the next state
         #move forward
         self.put_dashboard()
-        self.vision.vision_mode = True
+        self.vision.enabled = True
 
         if (-self.align_tolerance <= self.vision_filter.x <= self.align_tolerance
                 and not self.profilefollower.executing
@@ -116,7 +116,7 @@ class ManipulateGear(StateMachine):
 
     def done(self):
         super().done()
-        self.vision.vision_mode = False
+        self.vision.enabled = False
 
     def put_dashboard(self):
         """Update all the variables on the smart dashboard"""

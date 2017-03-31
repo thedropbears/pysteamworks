@@ -1,53 +1,35 @@
 import numpy as np
 import cv2
 import heapq
-import logging
 
 AREA_THRESHOLD = 0.0005
 
 def loop():  # pragma: no cover
     import cscore as cs
     from networktables import NetworkTables
-    from time import sleep, time as now
+    from time import time as now
 
     nt = NetworkTables.getTable("/components/vision")
 
-    width = 160
-    height = 120
+    width = 320
+    height = 240
     fps = 25
     videomode = cs.VideoMode.PixelFormat.kMJPEG, width, height, fps
 
-    cams = [cam.dev for cam in sorted(cs.UsbCamera.enumerateUsbCameras(), key=lambda x: x.name)]
-
-    if cams:
-        front_cam_id = cams[0]
-    else:
-        logging.warn("Cameras not found, streams may be on incorrect cameras if found later.")
-        front_cam_id = 0
-
-    if len(cams) > 1:
-        back_cam_id = cams[1]
-    else:
-        logging.warn("Second camera not found. Defaulting back cam stream to device 1.")
-        back_cam_id = 1
+    #front_cam_id = "/dev/v4l/by-id/usb-046d_C922_Pro_Stream_Webcam_5FC7BADF-video-index0"
+    front_cam_id = "/dev/v4l/by-id/usb-046d_HD_Pro_Webcam_C920_332E8C9F-video-index0"
 
     front_camera = cs.UsbCamera("frontcam", front_cam_id)
     front_camera.setVideoMode(*videomode)
 
-    front_cam_server = cs.MjpegServer("frontcamserver", 8082)
+    front_cam_server = cs.MjpegServer("frontcamserver", 5803)
     front_cam_server.setSource(front_camera)
-
-    # back_camera = cs.UsbCamera("backcam", back_cam_id)
-    # back_camera.setVideoMode(*videomode)
-
-    # back_cam_server = cs.MjpegServer("backcamserver", 8081)
-    # back_cam_server.setSource(back_camera)
 
     cvsink = cs.CvSink("cvsink")
     cvsink.setSource(front_camera)
 
     cvSource = cs.CvSource("cvsource", *videomode)
-    cvmjpegServer = cs.MjpegServer("cvhttpserver", 8083)
+    cvmjpegServer = cs.MjpegServer("cvhttpserver", 5804)
     cvmjpegServer.setSource(cvSource)
 
     # Set the initial exposure of the front camera.
@@ -58,25 +40,25 @@ def loop():  # pragma: no cover
     frame = np.zeros(shape=(height, width, 3), dtype=np.uint8)
 
     while True:
-        front_camera.setExposureManual(0)
         time, frame = cvsink.grabFrame(frame)
-        t = now()
         if time == 0:
             # We got an error; report it through the output stream.
             cvSource.notifyError(cvsink.getError())
         else:
+            t = now()
             x, img, num_targets, target_sep = find_target(frame)
             if num_targets > 0:
                 nt.putNumber("x", x)
                 nt.putNumber("time", t)
                 nt.putNumber("num_targets", num_targets)
                 nt.putNumber("target_sep", target_sep)
+                nt.putNumber("dt", now() - t)
+                NetworkTables.flush()
             cvSource.putFrame(img)
 
 
 def find_target(img, lower=np.array([110//2, 10*255//100, 20*255//100]), upper=np.array([180//2, 100*255//100, 100*255//100])):
     """Given an image and thresholds, find the centre of mass of the target.
-
     All arguments must be np.arrays, and lower and upper must be a 3-array.
     """
 
@@ -132,4 +114,3 @@ if __name__ == "__main__":
         while True:
             if cv2.waitKey(50) != -1:
                 break
-

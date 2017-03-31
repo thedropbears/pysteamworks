@@ -134,7 +134,7 @@ class Robot(magicbot.MagicRobot):
         self.geardepositiondevice.lock_gear()
         self.profilefollower.stop()
         self.winch.enable_compressor()
-        self.vision.vision_mode = False
+        self.vision.enabled = False
         print("TELEOP INIT RANGE: %s" % (self.range_finder.getDistance()))
         print("TELEOP INIT FILTER RANGE: %s" % (self.range_filter.range))
 
