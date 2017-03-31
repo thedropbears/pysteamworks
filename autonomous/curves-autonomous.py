@@ -111,9 +111,13 @@ class PegAutonomous(AutonomousStateMachine):
         if len(self.profilefollower.linear_queue) >= self.gear_mech_on:
             self.manipulategear.engage()
         elif not self.profilefollower.executing:
-            if not (self.manipulategear.current_state == "forward_open" or self.manipulategear.current_state == "forward_closed"):
-                self.manipulategear.engage(initial_state="forward_closed", force=True)
-        if self.manipulategear.current_state == "forward_open":
+            self.next_state("deploying_gear")
+
+    @state
+    def deploying_gear(self, initial_call):
+        if initial_call:
+            self.manipulategear.engage(initial_state="forward_closed", force=True)
+        elif self.manipulategear.current_state == "forward_open":
             self.done()
 
     def done(self):

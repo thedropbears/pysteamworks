@@ -231,15 +231,19 @@ class PegAutonomous(AutonomousStateMachine):
                     linear=to_peg, overwrite=True)
             self.profilefollower.execute_queue()
             self.manipulategear.engage()
-        elif self.manipulategear.current_state == "forward_open":
-            self.done()
-            # self.next_state("roll_back")
 
         if not self.profilefollower.executing:
-            if not (self.manipulategear.current_state == "forward_open" or self.manipulategear.current_state == "forward_closed"):
-                self.manipulategear.engage(initial_state="forward_closed", force=True)
+            self.next_state("deploying_gear")
+
+    @state
+    def deploying_gear(self):
+        if self.manipulategear.current_state == "forward_open":
+            # self.next_state("roll_back")
+            self.done()
         # elif self.manipulategear.current_state == "backward_open":
         #     self.next_state("roll_back")
+        elif self.manipulategear.current_state != "forward_closed":
+            self.manipulategear.engage(initial_state="forward_closed", force=True)
 
     @state
     def roll_back(self, initial_call):
