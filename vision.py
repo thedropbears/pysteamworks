@@ -35,11 +35,13 @@ def loop():  # pragma: no cover
     frame = np.zeros(shape=(height, width, 3), dtype=np.uint8)
 
     # Set the exposure to something bogus, in an attempt to work around a kernel bug when restarting the vision code?
-    front_camera.setExposureManual(10)
+    front_camera.setExposureAuto()
+    sleep(1)
     cvsink.grabFrame(frame)
 
     # Set the exposure of the front camera to something usable.
     front_camera.setExposureManual(0)
+    sleep(1)
 
     while True:
         time, frame = cvsink.grabFrame(frame)
