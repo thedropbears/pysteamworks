@@ -25,19 +25,20 @@ class RangeFilter:
     range_variance = 0.0005
 
     # the encoder noise
-    odometry_variance = 1e-5
+    odometry_variance = 1e-3
 
     loop_dt = 1/50
 
-    reset_thresh = 3
+    reset_thresh = 0.5
 
-    vision_based_range_variance = 0.05
+    vision_based_range_variance = 0.1
 
     def __init__(self):
         pass
 
     def setup(self):
         self.reset()
+        self.last_vision_mode = self.vision.enabled
 
     def reset(self):
 
@@ -107,8 +108,14 @@ class RangeFilter:
         self.filter.update(z, H, R)
 
     def execute(self):
+        if not self.vision.enabled:
+            if self.last_vision_mode:
+                self.reset()
+            self.last_vision_mode = self.vision.enabled
+            return
+        self.last_vision_mode = self.vision.enabled
         self.update_deques()
-        if self.range < 0.1 or self.range >= 40:
+        if self.range < 0.1 or self.range >= 5:
             r = self.range_deque[-1]
             if math.isinf(r):
                 print("reset")
@@ -117,12 +124,16 @@ class RangeFilter:
         self.predict()
         self.range_update()
         if self.vision.time != self.last_vision_time and self.vision_predicted_range() != 0:
-            self.filter.roll_back(timesteps_since_vision)
-            self.vision_update()
-            for i in range(timesteps_since_vision):
-                self.predict(timestep=timesteps_since_vision-i)
-                self.range_update(timestep=timesteps_since_vision-i)
-            self.last_vision_time = self.vision.time
+            if timesteps_since_vision > 25:
+                self.reset()
+            else:
+                to_roll_back = min(timesteps_since_vision, len(self.filter.history), len(self.odometry_deque)-1)
+                self.filter.roll_back(to_roll_back)
+                self.vision_update()
+                for i in range(to_roll_back):
+                    self.predict(timesteps=to_roll_back-i)
+                    self.range_update(timesteps=to_roll_back-i)
+                self.last_vision_time = self.vision.time
 
     @property
     def range(self):
@@ -132,16 +143,17 @@ class RangeFilter:
         """ Predict what our range finder reading should be based off of the distance between
         the vision targets. Used in order to gate the ranges that are used to update our kalman
         filter. """
-        if self.vision.target_sep == 0:
-            return 0
-        target_angle = 0
-        if self.bno055.getHeading() > math.pi/6:
-            # we think that we are looking at the right hand target
-            target_angle = math.pi/3
-        elif self.bno055.getHeading() < -math.pi/6:
-            # we think that we are looking at the left hand target
-            target_angle = -math.pi/3
-        perpendicular_to_heading = target_angle - self.bno055.getHeading()
-        theta_alpha = math.pi/2 - perpendicular_to_heading - self.vision.derive_vision_angle()
-        predicted_range = self.vision.derive_target_range() * math.sin(perpendicular_to_heading * math.pi/2) / math.sin(theta_alpha)
-        return predicted_range
+        # if self.vision.target_sep == 0:
+        #     return 0
+        # target_angle = 0
+        # if self.bno055.getHeading() > math.pi/6:
+        #     # we think that we are looking at the right hand target
+        #     target_angle = math.pi/3
+        # elif self.bno055.getHeading() < -math.pi/6:
+        #     # we think that we are looking at the left hand target
+        #     target_angle = -math.pi/3
+        # perpendicular_to_heading = target_angle - self.bno055.getHeading()
+        # theta_alpha = math.pi/2 - perpendicular_to_heading - self.vision.derive_vision_angle()
+        # predicted_range = self.vision.derive_target_range() * math.sin(perpendicular_to_heading * math.pi/2) / math.sin(theta_alpha)
+        # return predicted_range
+        return self.vision.derive_target_range()

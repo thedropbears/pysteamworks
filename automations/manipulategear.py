@@ -53,6 +53,7 @@ class ManipulateGear(StateMachine):
         #move forward
         self.put_dashboard()
         self.vision.enabled = True
+        print("set vision enabled")
 
         if (-self.align_tolerance <= self.vision_filter.x <= self.align_tolerance
                 and not self.profilefollower.executing

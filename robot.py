@@ -109,6 +109,7 @@ class Robot(magicbot.MagicRobot):
         self.sd.putNumber("range", self.range_finder.getDistance())
         self.sd.putNumber("climbCurrent", self.winch_motor.getOutputCurrent())
         self.sd.putNumber("rail_pos", self.gearalignmentdevice.get_rail_pos())
+        self.sd.putNumber("raw_rail_pos", self.gear_alignment_motor.getPosition())
         self.sd.putNumber("error_differential",
                 self.drive_motor_a.getClosedLoopError()-
                 self.drive_motor_c.getClosedLoopError())
@@ -125,6 +126,8 @@ class Robot(magicbot.MagicRobot):
         self.sd.putNumber("filtered_range", self.range_filter.filter.x_hat[0][0])
         self.sd.putNumber("range_filter_variance", self.range_filter.filter.P[0][0])
         self.sd.putNumber("time", time.time())
+        self.sd.putNumber("vision_predicted_range", self.range_filter.vision_predicted_range())
+        self.sd.putNumber("vision_predicted_target_dist", self.vision.derive_target_range())
 
     def teleopInit(self):
         '''Called when teleop starts; optional'''

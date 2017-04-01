@@ -45,6 +45,7 @@ class Vision:
         self.smoothed_x = (1 - self.k) * self.x + self.k * self.smoothed_x
 
         self.led_dio.set(not (self.enabled or self.led_on))
+        print(not(self.enabled or self.led_on or self.led_on))
 
     def derive_vision_angle(self, vision_x=None):
         "Calculate the camera's angle relative to the vision targets"

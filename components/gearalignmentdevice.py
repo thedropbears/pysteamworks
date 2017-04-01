@@ -13,8 +13,8 @@ class GearAlignmentDevice:
     gear_alignment_motor = CANTalon
     sd = NetworkTable
     vision = Vision
-    l_pos = 219 + 50
-    r_pos = 689 - 50
+    l_pos = -733 + 50
+    r_pos = -237 - 50
     zero_pos = (l_pos+r_pos) / 2
 
     sp_increment = (r_pos-l_pos)/(0.66*50)
@@ -44,6 +44,8 @@ class GearAlignmentDevice:
         self.gear_alignment_motor.enableLimitSwitch(False, False)
 
         self.setpoint = self.gear_alignment_motor.getPosition()
+
+        self.gear_alignment_motor.reverseSensor(True)
 
     def on_disable(self):
         """Run every time the robot transitions to being disabled"""

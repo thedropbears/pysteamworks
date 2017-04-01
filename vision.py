@@ -2,12 +2,11 @@ import numpy as np
 import cv2
 import heapq
 
-AREA_THRESHOLD = 0.0005
 
 def loop():  # pragma: no cover
     import cscore as cs
     from networktables import NetworkTables
-    from time import time as now
+    from time import sleep, time as now
 
     nt = NetworkTables.getTable("/components/vision")
 
@@ -32,12 +31,15 @@ def loop():  # pragma: no cover
     cvmjpegServer = cs.MjpegServer("cvhttpserver", 5804)
     cvmjpegServer.setSource(cvSource)
 
-    # Set the initial exposure of the front camera.
-    # It may take a while for the exposure setting to have an effect.
-    front_camera.setExposureManual(0)
-
     # Images are big. Preallocate an array to fill the image with.
     frame = np.zeros(shape=(height, width, 3), dtype=np.uint8)
+
+    # Set the exposure to something bogus, in an attempt to work around a kernel bug when restarting the vision code?
+    front_camera.setExposureManual(10)
+    cvsink.grabFrame(frame)
+
+    # Set the exposure of the front camera to something usable.
+    front_camera.setExposureManual(0)
 
     while True:
         time, frame = cvsink.grabFrame(frame)
@@ -57,9 +59,9 @@ def loop():  # pragma: no cover
             cvSource.putFrame(img)
 
 
-def find_target(img, lower=np.array([110//2, 10*255//100, 20*255//100]), upper=np.array([180//2, 100*255//100, 100*255//100])):
+def find_target(img, lower=np.array([110//2, 10*255//100, 20*255//100]), upper=np.array([180//2, 100*255//100, 100*255//100]), area_threshold=0.025 ** 2):
     """Given an image and thresholds, find the centre of mass of the target.
-    All arguments must be np.arrays, and lower and upper must be a 3-array.
+    All arguments must be np.arrays, except for area_threshold, and lower and upper must be a 3-array.
     """
 
     #Converting from RGB to HSV.
@@ -78,7 +80,7 @@ def find_target(img, lower=np.array([110//2, 10*255//100, 20*255//100]), upper=n
     areas = []
     for idx, contour in enumerate(contours):
         area = cv2.contourArea(contour)
-        if area/(height*width) > AREA_THRESHOLD:
+        if area/(height*width) > area_threshold:
             heapq.heappush(areas, (cv2.contourArea(contour), idx))
 
     areas = heapq.nlargest(2, areas)

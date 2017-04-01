@@ -5,6 +5,7 @@ from networktables import NetworkTable
 
 from automations.manipulategear import ManipulateGear
 from automations.profilefollower import ProfileFollower
+from automations.vision_filter import VisionFilter
 from components.chassis import Chassis
 from components.bno055 import BNO055
 from components.vision import Vision
@@ -27,6 +28,7 @@ class PegAutonomous(AutonomousStateMachine):
     chassis = Chassis
     bno055 = BNO055
     vision = Vision
+    vision_filter = VisionFilter
     range_finder = RangeFinder
     gearalignmentdevice = GearAlignmentDevice
     geardepositiondevice = GearDepositionDevice
@@ -61,7 +63,7 @@ class PegAutonomous(AutonomousStateMachine):
         else:
             t1 = 1  # s, time for segment 1
             rotate_time = self.rotate_arc_length/self.rotate_linear_velocity
-            t3 = 1  # s, time for segment 3
+            t3 = 1 # s, time for segment 3
             distance_keypoints = [
                 (0, 0, 0),
                 (t1, self.side_drive_forward_distance-self.delta_s, self.rotate_linear_velocity),
@@ -69,7 +71,7 @@ class PegAutonomous(AutonomousStateMachine):
                 (t1 + rotate_time + t3, self.side_drive_forward_distance + self.rotate_arc_length + self.side_to_wall_distance - 2*self.delta_s, 0)
             ]
             print("Delta S %s, drive_forward_distance sub ds %s, rotate_arc_length %s, rotate_tm %s" % (self.delta_s, self.side_drive_forward_distance-self.delta_s, self.rotate_arc_length, rotate_time))
-            self.gear_mech_on = int(t3/self.dt) # Segments left when gear mech enabled
+            self.gear_mech_on = int((t3+0.5)/self.dt) # Segments left when gear mech enabled
             if self.target is Targets.Left:
                 perpendicular_heading = -self.side_rotate_angle
             else:
@@ -110,8 +112,9 @@ class PegAutonomous(AutonomousStateMachine):
             self.profilefollower.modify_queue(heading=self.heading_trajectory,
                     linear=self.distance_trajectory)
             self.profilefollower.execute_queue()
-        if len(self.profilefollower.linear_queue) >= self.gear_mech_on:
+        if len(self.profilefollower.linear_queue) <= self.gear_mech_on:
             self.manipulategear.engage()
+            self.vision_filter.reset()
         elif not self.profilefollower.executing:
             self.next_state("deploying_gear")
 

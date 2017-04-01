@@ -20,8 +20,10 @@ class VisionFilter:
     # the vision sensor noise
     vision_x_variance = 0.0005
 
+    init_x_variance = 0.01
+
     # the variance in the unknown acceleration impulse
-    acceleration_variance = 0.25
+    acceleration_variance = 0.4
 
     loop_dt = 1/50
 
@@ -35,11 +37,15 @@ class VisionFilter:
 
     def reset(self):
 
+        timesteps_since_vision = int((time.time() - self.vision.time)/50)
+        start_x = 0
+        if timesteps_since_vision < 10:
+            start_x = 0
         # starting state
-        x_hat = np.array([self.vision.x, 0]).reshape(-1, 1)
+        x_hat = np.array([start_x, 0]).reshape(-1, 1)
 
         P = np.zeros(shape=(self.state_vector_size, self.state_vector_size))
-        P[0][0] = VisionFilter.vision_x_variance
+        P[0][0] = VisionFilter.init_x_variance
         P[1][1] = VisionFilter.init_dx_variance
         Q = (np.array(
                 [[self.loop_dt**4/4, self.loop_dt**3/3],[self.loop_dt**3/2, self.loop_dt**2]]).
@@ -98,7 +104,8 @@ class VisionFilter:
             self.reset()
         self.predict()
         if self.vision.time != self.last_vision_time:
-            self.filter.roll_back(timesteps_since_vision)
+            to_roll_back = min(timesteps_since_vision, len(self.filter.history))
+            self.filter.roll_back(to_roll_back)
             self.update()
             for i in range(timesteps_since_vision):
                 self.predict(timestep=timesteps_since_vision-i)

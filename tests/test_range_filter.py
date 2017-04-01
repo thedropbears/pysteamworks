@@ -51,13 +51,13 @@ def test_noisy_range_predict(control, hal_data):
             if np.random.uniform() <= bad_range_chance:
                 rf.range_finder.getDistance = MagicMock(return_value=np.random.uniform(0, 1))
             rf.chassis.get_raw_wheel_distances = MagicMock(return_value=[start_range-r+(odometry_bias*(step/steps))]*2)
-            vision_bias = vision_max_bias*math.sin(2*math.pi*step/steps)
+            vision_bias = 0#vision_max_bias*math.sin(2*math.pi*step/steps)
             rf.vision_predicted_range = MagicMock(return_value=np.random.normal(loc=r+vision_bias, scale=math.sqrt(rf.vision_based_range_variance)))
             rf.vision.time = time.time()
             rf.execute()
             # TODO: make this a test not a simulation :p
-            # sigma = math.sqrt(rf.filter.P[0][0])
-            # print("%s %s %s %s %s %s" % (r, rf.range, rf.range-3*sigma, rf.range+3*sigma, rf.range_finder.getDistance(), rf.vision_predicted_range()))
+            sigma = math.sqrt(rf.filter.P[0][0])
+            print("%s %s %s %s %s %s" % (r, rf.range, rf.range-3*sigma, rf.range+3*sigma, rf.range_finder.getDistance(), rf.vision_predicted_range()))
         else:
             assert abs(rf.range)<0.02
             return False

@@ -17,22 +17,22 @@ class ProfileFollower:
     # kI = 0.3
     # kD = 1
     # position P controller
-    kP = 5
+    kP = 6
     # velocity and acceleration feedforward
     kV = 1
-    kI = 0.1
-    kD = 0.7
+    kI = 0.3
+    kD = 1
     kA = 0.0
 
     # heading motion feedforward/back gains
     # heading feedback
-    kPh = 4
+    kPh = 6
     # angular velocity feedforward
     kVh = 1
     # kIh = 0.5
     # kDh = 40
-    kIh = 0.1
-    kDh = 20
+    kIh = 0.2
+    kDh = 40
     # # heading motion feedforward/back gains
     # # heading feedback
     # kPh = 4.5
