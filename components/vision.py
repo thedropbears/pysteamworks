@@ -13,6 +13,7 @@ class Vision:
     time = tunable(0, doc='Timestamp of when x was last updated by the vision loop.')
     num_targets = tunable(0, doc='The number of targets visible from the camera.')
     target_sep = tunable(0, doc='If we are seeing the two vision targets - the separation between them as a fraction of image width, else 0.')
+    dt = tunable(0)
 
     enabled = tunable(True, doc='True to enable vision processing.')
     smoothed_x = tunable(0.0, doc='Weighted average of x.')

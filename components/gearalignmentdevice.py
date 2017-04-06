@@ -13,8 +13,8 @@ class GearAlignmentDevice:
     gear_alignment_motor = CANTalon
     sd = NetworkTable
     vision = Vision
-    l_pos = -733 + 50
-    r_pos = -237 - 50
+    r_pos = -230 - 50
+    l_pos = -730 + 50
     zero_pos = (l_pos+r_pos) / 2
 
     sp_increment = (r_pos-l_pos)/(0.66*50)
@@ -30,6 +30,19 @@ class GearAlignmentDevice:
         """Run just after createObjects.
         Useful if you want to run something after just once after the
         robot code is started, that depends on injected variables"""
+        self.gear_alignment_motor.clearStickyFaults()
+
+        self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.Position)
+        self.gear_alignment_motor.setFeedbackDevice(CANTalon.FeedbackDevice.AnalogPot)
+
+        self.gear_alignment_motor.setPID(20, 0, 0)
+
+        # self.gear_alignment_motor.enableLimitSwitch(True, True)
+        self.gear_alignment_motor.enableLimitSwitch(False, False)
+
+        self.setpoint = self.gear_alignment_motor.getPosition()
+
+        self.gear_alignment_motor.reverseSensor(True)
 
     def on_enable(self):
         """Run every time the robot transitions to being enabled"""

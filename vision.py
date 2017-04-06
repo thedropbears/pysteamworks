@@ -17,6 +17,13 @@ def loop():  # pragma: no cover
 
     #front_cam_id = "/dev/v4l/by-id/usb-046d_C922_Pro_Stream_Webcam_5FC7BADF-video-index0"
     front_cam_id = "/dev/v4l/by-id/usb-046d_HD_Pro_Webcam_C920_332E8C9F-video-index0"
+    # winch_cam_id = "/dev/v4l/by-id/usb-046d_C922_Pro_Stream_Webcam_5FC7BADF-video-index0"
+
+    # winch_camera = cs.UsbCamera("winchcam", winch_cam_id)
+    # winch_camera.setVideoMode(*videomode)
+
+    # winch_cam_server = cs.MjpegServer("winchcamserver", 5802)
+    # winch_cam_server.setSource(winch_camera)
 
     front_camera = cs.UsbCamera("frontcam", front_cam_id)
     front_camera.setVideoMode(*videomode)
@@ -40,8 +47,9 @@ def loop():  # pragma: no cover
     cvsink.grabFrame(frame)
 
     # Set the exposure of the front camera to something usable.
-    front_camera.setExposureManual(0)
+    front_camera.setExposureManual(1)
     sleep(1)
+    front_camera.setExposureManual(0)
 
     while True:
         time, frame = cvsink.grabFrame(frame)

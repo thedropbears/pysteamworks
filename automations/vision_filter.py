@@ -33,6 +33,7 @@ class VisionFilter:
 
     control_loop_average_delay = MagicRobot.control_loop_wait_time/2
 
+
     def __init__(self):
         pass
 
@@ -64,6 +65,8 @@ class VisionFilter:
         self.filter = Kalman(x_hat, P, Q, R)
 
         self.imu_deque = deque(maxlen=50, iterable=[self.get_heading_state()])
+
+        self.last_vision_local_time = time.time()
 
     def get_heading_state(self):
         return np.array([self.bno055.getHeading(), self.bno055.getHeadingRate()]).reshape(-1, 1)

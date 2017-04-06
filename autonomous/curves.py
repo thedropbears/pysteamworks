@@ -39,7 +39,7 @@ class PegAutonomous(AutonomousStateMachine):
 
     centre_airship_distance = 2.93
     side_drive_forward_distance = 2.54 - centre_to_front_bumper
-    side_to_wall_distance = 1.5-centre_to_front_bumper
+    side_to_wall_distance = 1.62-centre_to_front_bumper+lidar_to_front_bumper
     side_rotate_angle = math.pi/3.0
     rotate_radius = 0.7
     rotate_linear_velocity = 1.5
