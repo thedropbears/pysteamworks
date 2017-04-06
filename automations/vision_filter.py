@@ -7,6 +7,8 @@ from collections import deque
 import numpy as np
 import time
 
+from magicbot import MagicRobot
+
 class VisionFilter:
 
     vision = Vision
@@ -28,6 +30,8 @@ class VisionFilter:
     loop_dt = 1/50
 
     reset_thresh = 0.2
+
+    control_loop_average_delay = MagicRobot.control_loop_wait_time/2
 
     def __init__(self):
         pass
@@ -97,13 +101,15 @@ class VisionFilter:
     def execute(self):
         if self.vision.time == 0:
             return
-        timesteps_since_vision = int((time.time() - self.vision.time)/50)
+        vision_delay = self.vision.dt + self.control_loop_average_delay + (time.time() - self.last_vision_local_time)
+        timesteps_since_vision = int(vision_delay/50)
         if timesteps_since_vision > 10:
             return
         elif abs(self.vision.x - self.filter.x_hat[0][0]) > self.reset_thresh:
             self.reset()
         self.predict()
         if self.vision.time != self.last_vision_time:
+            self.last_vision_local_time = time.time()
             to_roll_back = min(timesteps_since_vision, len(self.filter.history))
             self.filter.roll_back(to_roll_back)
             self.update()

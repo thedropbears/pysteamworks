@@ -6,7 +6,7 @@ import heapq
 def loop():  # pragma: no cover
     import cscore as cs
     from networktables import NetworkTables
-    from time import sleep, time as now
+    from time import sleep, monotonic as now
 
     nt = NetworkTables.getTable("/components/vision")
 
