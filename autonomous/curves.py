@@ -39,7 +39,7 @@ class PegAutonomous(AutonomousStateMachine):
 
     centre_airship_distance = 2.93
     side_drive_forward_distance = 2.54 - centre_to_front_bumper
-    side_to_wall_distance = 1.62-centre_to_front_bumper+lidar_to_front_bumper
+    side_to_wall_distance = 1.62-centre_to_front_bumper+0.4 #.4 added in order to drive hard into wall
     side_rotate_angle = math.pi/3.0
     rotate_radius = 0.7
     rotate_linear_velocity = 1.5
@@ -63,7 +63,7 @@ class PegAutonomous(AutonomousStateMachine):
         else:
             t1 = 1  # s, time for segment 1
             rotate_time = self.rotate_arc_length/self.rotate_linear_velocity
-            t3 = 1 # s, time for segment 3
+            t3 = 1.5 # s, time for segment 3
             distance_keypoints = [
                 (0, 0, 0),
                 (t1, self.side_drive_forward_distance-self.delta_s, self.rotate_linear_velocity),

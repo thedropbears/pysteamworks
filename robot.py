@@ -278,14 +278,14 @@ class Robot(magicbot.MagicRobot):
         #     if not self.manipulategear.is_executing:
         #         self.gearalignmentdevice.set_position(0)
 
-        if 1.5/self.chassis.velocity_to_native_units < abs(self.chassis.get_velocity()) and not self.manipulategear.is_executing:
+        if 1.5 < abs(self.chassis.get_velocity()) and not self.manipulategear.is_executing:
             self.gearalignmentdevice.set_position(0)
 
         self.chassis.inputs = [(
             self.direction
             * -rescale_js(self.gamepad.getRawAxis(1), deadzone=0.05, exponential=30)),
                     - rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2),
-                    -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=30, rate=0.6 if self.throttle == 1 else 1),
+                    -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=30, rate=0.4 if self.throttle == 1 else 1),
                     self.throttle
                     ]
         # self.chassis.inputs = [(

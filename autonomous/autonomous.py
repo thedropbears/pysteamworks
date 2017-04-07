@@ -246,7 +246,7 @@ class PegAutonomous(AutonomousStateMachine):
 
 
 class LeftPeg(PegAutonomous):
-    MODE_NAME = "Left Peg"
+    # MODE_NAME = "Left Peg"
 
     def __init__(self):
         super().__init__(Targets.Left)
@@ -257,7 +257,7 @@ class LeftPeg(PegAutonomous):
 
 
 class CentrePeg(PegAutonomous):
-    MODE_NAME = "Centre Peg"
+    # MODE_NAME = "Centre Peg"
 
     def __init__(self):
         super().__init__(Targets.Centre)
@@ -268,7 +268,7 @@ class CentrePeg(PegAutonomous):
 
 
 class RightPeg(PegAutonomous):
-    MODE_NAME = "Right Peg"
+    # MODE_NAME = "Right Peg"
     # DEFAULT = True
 
     def __init__(self):

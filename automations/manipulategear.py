@@ -24,7 +24,7 @@ class ManipulateGear(StateMachine):
     vision_filter = VisionFilter
     range_filter = RangeFilter
 
-    place_gear_range = 0.42
+    place_gear_range = 0.48
     align_tolerance = 0.02
 
     deploy_jitter = 0.1
