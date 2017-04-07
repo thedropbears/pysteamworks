@@ -69,7 +69,7 @@ def loop():  # pragma: no cover
             cvSource.putFrame(img)
 
 
-def find_target(img, lower=np.array([110//2, 10*255//100, 20*255//100]), upper=np.array([180//2, 100*255//100, 100*255//100]), area_threshold=0.025 ** 2):
+def find_target(img, lower=np.array([110//2, 10*255//100, 15*255//100]), upper=np.array([180//2, 100*255//100, 100*255//100]), area_threshold=0.025 ** 2):
     """Given an image and thresholds, find the centre of mass of the target.
     All arguments must be np.arrays, except for area_threshold, and lower and upper must be a 3-array.
     """

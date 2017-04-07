@@ -47,6 +47,8 @@ class Chassis:
 
     motion_profile_freq = 50 # Hz
 
+    compressor = wpilib.Compressor
+
 
     def __init__(self):
         super().__init__()
@@ -54,6 +56,7 @@ class Chassis:
 
         self.input_enabled = True
         self.mp_enabled = False
+        self.compressor_enabled = True
 
     def setup(self):
         """Run just after createObjects.
@@ -164,6 +167,10 @@ class Chassis:
             for i in range(len(motor_inputs)):
                 motor_inputs[i] /= max_i
                 motor_inputs[i] *= self.inputs[3]
+            if abs(self.inputs[0]) > 0.3 or abs(self.inputs[2]) > 0.3:
+                self.compressor_enabled = False
+            else:
+                self.compressor_enabled = True
             self.motors[0].set(motor_inputs[0]*Chassis.max_vel_native)
             self.motors[2].set(motor_inputs[1]*Chassis.max_vel_native)
             if motor_inputs[0] == 0 and motor_inputs[1] == 0:

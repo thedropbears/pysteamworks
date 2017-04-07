@@ -62,6 +62,3 @@ class Winch:
             self.rope_lock_solenoid.set(DoubleSolenoid.Value.kForward)
         else:
             self.rope_lock_solenoid.set(DoubleSolenoid.Value.kReverse)
-
-        self.compressor.setClosedLoopControl(self.compressor_enabled)
-

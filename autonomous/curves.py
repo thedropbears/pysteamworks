@@ -42,7 +42,7 @@ class PegAutonomous(AutonomousStateMachine):
     side_to_wall_distance = 1.62-centre_to_front_bumper+0.4 #.4 added in order to drive hard into wall
     side_rotate_angle = math.pi/3.0
     rotate_radius = 0.7
-    rotate_linear_velocity = 1.5
+    rotate_linear_velocity = 1
     delta_s = abs(rotate_radius*math.tan(side_rotate_angle/2))
     rotate_arc_length = rotate_radius * side_rotate_angle
 
@@ -61,7 +61,7 @@ class PegAutonomous(AutonomousStateMachine):
             self.gear_mech_on = t1/self.dt # Segments left when gear mech enabled
             self.heading_trajectory = [(0, 0, 0)] * int(t1/self.dt)
         else:
-            t1 = 1  # s, time for segment 1
+            t1 = 1.5  # s, time for segment 1
             rotate_time = self.rotate_arc_length/self.rotate_linear_velocity
             t3 = 1.5 # s, time for segment 3
             distance_keypoints = [
@@ -71,7 +71,7 @@ class PegAutonomous(AutonomousStateMachine):
                 (t1 + rotate_time + t3, self.side_drive_forward_distance + self.rotate_arc_length + self.side_to_wall_distance - 2*self.delta_s, 0)
             ]
             print("Delta S %s, drive_forward_distance sub ds %s, rotate_arc_length %s, rotate_tm %s" % (self.delta_s, self.side_drive_forward_distance-self.delta_s, self.rotate_arc_length, rotate_time))
-            self.gear_mech_on = int((t3+0.5)/self.dt) # Segments left when gear mech enabled
+            self.gear_mech_on = int((t3)/self.dt) # Segments left when gear mech enabled
             if self.target is Targets.Left:
                 perpendicular_heading = -self.side_rotate_angle
             else:
@@ -112,15 +112,16 @@ class PegAutonomous(AutonomousStateMachine):
             self.profilefollower.modify_queue(heading=self.heading_trajectory,
                     linear=self.distance_trajectory)
             self.profilefollower.execute_queue()
-        if len(self.profilefollower.linear_queue) <= self.gear_mech_on:
-            self.manipulategear.engage()
+        if len(self.profilefollower.linear_queue) <= self.gear_mech_on and not self.manipulategear.is_executing:
             self.vision_filter.reset()
-        elif not self.profilefollower.executing:
+            self.manipulategear.engage()
+        if not self.profilefollower.executing:
             self.next_state("deploying_gear")
 
     @state
     def deploying_gear(self, initial_call):
-        if initial_call:
+        gear_state = self.manipulategear.current_state
+        if initial_call and self.manipulategear.current_state == "align_peg":
             self.manipulategear.engage(initial_state="forward_closed", force=True)
         elif self.manipulategear.current_state == "forward_open":
             self.done()

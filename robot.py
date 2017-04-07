@@ -157,6 +157,8 @@ class Robot(magicbot.MagicRobot):
         '''Called on each iteration of the control loop'''
         self.putData()
 
+        self.compressor.setClosedLoopControl(self.chassis.compressor_enabled and self.winch.compressor_enabled)
+
         try:
             if self.debounce(8, gamepad=True) or self.debounce(1):
                 self.manipulategear.engage(force=True)
@@ -253,6 +255,7 @@ class Robot(magicbot.MagicRobot):
             self.throttle = 1
             self.direction = 1
             self.sd.putString("camera", "front")
+            # self.sd.putString("camera", "back")
         elif self.gamepad.getRawButton(5):
             # reverse
             self.throttle = 1
@@ -260,11 +263,12 @@ class Robot(magicbot.MagicRobot):
             self.sd.putString("camera", "back")
         elif self.gamepad.getRawButton(6):
             # slow down
-            self.throttle = 0.3
+            self.throttle = 0.5
             self.direction = 1
-            self.sd.putString("camera", "front")
+            # self.sd.putString("camera", "front")
+            self.sd.putString("camera", "back")
         elif self.gamepad.getRawAxis(3) > 0.9:
-            self.throttle = 0.3
+            self.throttle = 0.5
             self.direction = -1
             self.sd.putString("camera", "back")
 
@@ -285,7 +289,7 @@ class Robot(magicbot.MagicRobot):
             self.direction
             * -rescale_js(self.gamepad.getRawAxis(1), deadzone=0.05, exponential=30)),
                     - rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2),
-                    -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=30, rate=0.4 if self.throttle == 1 else 1),
+                    -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=30, rate=0.3 if self.throttle == 1 else 1/self.throttle),
                     self.throttle
                     ]
         # self.chassis.inputs = [(
