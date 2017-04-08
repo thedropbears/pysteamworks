@@ -29,7 +29,7 @@ class ManipulateGear(StateMachine):
 
     deploy_jitter = 0.1
 
-    move_back_close_tol = 0.2
+    move_back_close_tol = 0.3
 
     push_gear_input_tolerance = 0.05
 
@@ -89,8 +89,8 @@ class ManipulateGear(StateMachine):
         if initial_call:
             self.profilefollower.stop()
             roll_back = generate_trapezoidal_trajectory(
-                    0, 0, -0.3, 0, 2,
-                    1.0, -2, 50)
+                    0, 0, -0.4, 0, 3,
+                    2, -3, 50)
             self.profilefollower.modify_queue(self.bno055.getHeading(),
                     linear=roll_back, overwrite=True)
             self.profilefollower.execute_queue()

@@ -25,7 +25,7 @@ class VisionFilter:
     init_x_variance = 0.01
 
     # the variance in the unknown acceleration impulse
-    acceleration_variance = 0.4
+    acceleration_variance = 0.6
 
     loop_dt = 1/50
 

@@ -120,20 +120,20 @@ class RangeFilter:
             if math.isinf(r):
                 print("reset")
                 self.reset()
-        timesteps_since_vision = int((time.time() - self.vision.time)/50)
+        # timesteps_since_vision = int((time.time() - self.vision.time)/50)
         self.predict()
         self.range_update()
-        if self.vision.time != self.last_vision_time and self.vision_predicted_range() != 0:
-            if timesteps_since_vision > 25:
-                self.reset()
-            else:
-                to_roll_back = min(timesteps_since_vision, len(self.filter.history), len(self.odometry_deque)-1)
-                self.filter.roll_back(to_roll_back)
-                self.vision_update()
-                for i in range(to_roll_back):
-                    self.predict(timesteps=to_roll_back-i)
-                    self.range_update(timesteps=to_roll_back-i)
-                self.last_vision_time = self.vision.time
+        # if self.vision.time != self.last_vision_time and self.vision_predicted_range() != 0:
+        #     if timesteps_since_vision > 25:
+        #         self.reset()
+        #     else:
+        #         to_roll_back = min(timesteps_since_vision, len(self.filter.history), len(self.odometry_deque)-1)
+        #         self.filter.roll_back(to_roll_back)
+        #         self.vision_update()
+        #         for i in range(to_roll_back):
+        #             self.predict(timesteps=to_roll_back-i)
+        #             self.range_update(timesteps=to_roll_back-i)
+        #         self.last_vision_time = self.vision.time
 
     @property
     def range(self):

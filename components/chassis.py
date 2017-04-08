@@ -167,7 +167,7 @@ class Chassis:
             for i in range(len(motor_inputs)):
                 motor_inputs[i] /= max_i
                 motor_inputs[i] *= self.inputs[3]
-            if abs(self.inputs[0]) > 0.3 or abs(self.inputs[2]) > 0.3:
+            if abs(self.inputs[0]) > 0.5 or abs(self.inputs[2]) > 0.5:
                 self.compressor_enabled = False
             else:
                 self.compressor_enabled = True
