@@ -22,7 +22,7 @@ class VisionFilter:
     # the vision sensor noise
     vision_x_variance = 0.0002
 
-    init_x_variance = 0.01
+    init_x_variance = 0.001
 
     # the variance in the unknown acceleration impulse
     acceleration_variance = 0.6
@@ -41,13 +41,14 @@ class VisionFilter:
         self.reset()
 
     def reset(self):
+        self.imu_deque = deque(maxlen=50, iterable=[self.get_heading_state()])
 
         timesteps_since_vision = int((time.time() - self.vision.time)/50)
         start_x = 0
         if timesteps_since_vision < 10:
             start_x = 0
         # starting state
-        x_hat = np.array([start_x, 0]).reshape(-1, 1)
+        x_hat = np.array([start_x, self.imu_deque[0][1]]).reshape(-1, 1)
 
         P = np.zeros(shape=(self.state_vector_size, self.state_vector_size))
         P[0][0] = VisionFilter.init_x_variance
@@ -60,16 +61,14 @@ class VisionFilter:
 
         # error vision and error rate of change of vision are correlated
         R = np.array([[VisionFilter.vision_x_variance, VisionFilter.vision_x_variance],
-            [VisionFilter.vision_x_variance, VisionFilter.vision_x_variance*6]]).reshape(self.state_vector_size, self.state_vector_size)
+            [VisionFilter.vision_x_variance, VisionFilter.vision_x_variance*2]]).reshape(self.state_vector_size, self.state_vector_size)
 
         self.filter = Kalman(x_hat, P, Q, R)
-
-        self.imu_deque = deque(maxlen=50, iterable=[self.get_heading_state()])
 
         self.last_vision_local_time = time.time()
 
     def get_heading_state(self):
-        return np.array([self.bno055.getHeading(), self.bno055.getHeadingRate()]).reshape(-1, 1)
+        return np.array([0, self.bno055.getHeadingRate()]).reshape(-1, 1)
 
     def on_enable(self):
         self.reset()
@@ -104,8 +103,8 @@ class VisionFilter:
     def execute(self):
         if self.vision.time == 0:
             return
-        vision_delay = self.vision.dt + self.control_loop_average_delay + (time.time() - self.last_vision_local_time)
-        timesteps_since_vision = int(vision_delay/50)
+        vision_delay = self.vision.dt + self.control_loop_average_delay
+        timesteps_since_vision = int(vision_delay*50)
         if timesteps_since_vision > 10:
             return
         elif abs(self.vision.x - self.filter.x_hat[0][0]) > self.reset_thresh:
