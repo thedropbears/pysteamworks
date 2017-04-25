@@ -59,9 +59,7 @@ class VisionFilter:
         self.last_vision = self.vision.x
         self.last_vision_time = self.vision.time
 
-        # error vision and error rate of change of vision are correlated
-        R = np.array([[VisionFilter.vision_x_variance, VisionFilter.vision_x_variance],
-            [VisionFilter.vision_x_variance, VisionFilter.vision_x_variance*2]]).reshape(self.state_vector_size, self.state_vector_size)
+        R = np.array([[self.vision_x_variance]])
 
         self.filter = Kalman(x_hat, P, Q, R)
 
@@ -90,10 +88,9 @@ class VisionFilter:
     def update(self):
 
         x = self.vision.x
-        dx = (self.vision.x-self.last_vision)/(self.vision.time-self.last_vision_time)
 
-        H = np.identity(self.state_vector_size)
-        z = np.array([x, dx]).reshape(-1, 1)
+        H = np.array([[1, 0]])
+        z = np.array([x])
 
         self.filter.update(z, H)
 
