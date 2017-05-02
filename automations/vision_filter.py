@@ -1,5 +1,4 @@
 from components.vision import Vision
-from components.bno055 import BNO055
 from utilities.kalman import Kalman
 
 from collections import deque
@@ -12,12 +11,11 @@ from magicbot import MagicRobot
 class VisionFilter:
 
     vision = Vision
-    bno055 = BNO055
 
     state_vector_size = 2
 
     # the initial uncertainty in the vision rate
-    init_dx_variance = 0.01
+    init_dx_variance = 0.5
 
     # the vision sensor noise
     vision_x_variance = 0.0002
@@ -25,14 +23,13 @@ class VisionFilter:
     init_x_variance = 0.001
 
     # the variance in the unknown acceleration impulse
-    acceleration_variance = 0.6
+    acceleration_variance = 2
 
     loop_dt = 1/50
 
     reset_thresh = 0.2
 
     control_loop_average_delay = MagicRobot.control_loop_wait_time/2
-
 
     def __init__(self):
         pass
@@ -41,14 +38,13 @@ class VisionFilter:
         self.reset()
 
     def reset(self):
-        self.imu_deque = deque(maxlen=50, iterable=[self.get_heading_state()])
 
         timesteps_since_vision = int((time.time() - self.vision.time)/50)
         start_x = 0
         if timesteps_since_vision < 10:
             start_x = 0
         # starting state
-        x_hat = np.array([start_x, self.imu_deque[0][1]]).reshape(-1, 1)
+        x_hat = np.array([start_x, 0]).reshape(-1, 1)
 
         P = np.zeros(shape=(self.state_vector_size, self.state_vector_size))
         P[0][0] = VisionFilter.init_x_variance
@@ -65,9 +61,6 @@ class VisionFilter:
 
         self.last_vision_local_time = time.time()
 
-    def get_heading_state(self):
-        return np.array([0, self.bno055.getHeadingRate()]).reshape(-1, 1)
-
     def on_enable(self):
         self.reset()
 
@@ -79,9 +72,7 @@ class VisionFilter:
         F[0][1] = self.loop_dt
         B = np.identity(self.state_vector_size)
 
-        self.imu_deque.append(self.get_heading_state())
-
-        u = Vision.rad_to_vision_units(self.imu_deque[-timestep] - self.imu_deque[-timestep-1])
+        u = np.zeros(shape=(self.state_vector_size, 1))
 
         self.filter.predict(F, u, B)
 
