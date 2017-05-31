@@ -10,16 +10,12 @@ import math
 
 import numpy as np
 
-from collections import deque
-
 class RangeFilter:
 
     chassis = Chassis
     range_finder = RangeFinder
     bno055 = BNO055
     vision = Vision
-
-    state_vector_size = 1
 
     # the range sensor noise
     range_variance = 0.0005
@@ -42,118 +38,87 @@ class RangeFilter:
 
     def reset(self):
 
-        r = self.range_finder.getDistance()
-        if math.isinf(r):
-            r = 0
-
         self.is_reset = True
 
         r = self.range_finder.getDistance()
-        if math.isinf(r):
-            r = 40
 
-        # starting state
+        # initial state
         x_hat = np.array([r]).reshape(-1, 1)
 
-        P = np.zeros(shape=(self.state_vector_size, self.state_vector_size))
-        P[0][0] = self.range_variance
-        Q = np.array([self.odometry_variance]).reshape(self.state_vector_size, self.state_vector_size)
+        # initial covariance is range variance as we initialise filter with a
+        # measurement
+        P = np.array([[self.range_variance]])
 
-        # error vision and error rate of change of vision are correlated
-        R = np.array([self.range_variance]).reshape(self.state_vector_size, self.state_vector_size)
+        # process noise is just error in odometry prediction
+        Q = np.array([self.odometry_variance])
+
+        # measurement noise is LIDAR error
+        R = np.array([[self.range_variance]])
+
+        # initialise the filter
         self.filter = Kalman(x_hat, P, Q, R)
-
-        self.range_deque = deque(maxlen=50)
-        self.odometry_deque = deque(maxlen=50)
-        self.update_deques()
-
-        self.last_vision_time = self.vision.time
-
-    def update_deques(self):
-        self.odometry_deque.append(np.array(self.chassis.get_raw_wheel_distances()))
-        r = self.range_finder.getDistance()
-        self.range_deque.append(40 if math.isinf(r) else r)
-
-    def predict(self, timesteps=1):
-        F = np.identity(self.state_vector_size)
-        B = np.identity(self.state_vector_size)
-
-        robot_center_movement = -np.mean(self.odometry_deque[-timesteps]-self.odometry_deque[-timesteps-1])
-
-        u = np.array([robot_center_movement]).reshape(-1, 1)
-
-        self.filter.predict(F, u, B)
 
         self.last_odometry = np.array(self.chassis.get_raw_wheel_distances())
 
-    def range_update(self, timesteps=1):
-        r = self.range_deque[-timesteps]
 
-        if not abs(r - self.range) < math.sqrt(self.filter.P[0][0])*5:
+    def predict(self):
+        F = np.identity(1)
+
+        odometry = np.array(self.chassis.get_raw_wheel_distances())
+
+        # calculate the movement of the robot since the last timestep
+        robot_center_movement = -np.mean(odometry-self.last_odometry)
+        # robot center movement is control input
+        u = np.array([[robot_center_movement]])
+        # control input model is identity
+        B = np.identity(1)
+
+        self.filter.predict(F, u, B)
+
+        self.last_odometry = odometry
+
+    def range_update(self):
+        r = self.range_finder.getDistance()
+
+        if not abs(r - self.range) < math.sqrt(self.filter.P[0,0])*5:
             return
         elif abs(r - self.range) > self.reset_thresh:
             self.reset()
             return
 
-        z = np.array([r]).reshape(-1, 1)
-        H = np.identity(self.state_vector_size)
+        # measurement is range
+        z = np.array([[r]])
+        H = np.identity(1)
 
         self.filter.update(z, H)
 
-    def vision_update(self):
-        z = np.array([self.vision_predicted_range()]).reshape(-1, 1)
-        H = np.identity(self.state_vector_size)
-        R = np.array([self.vision_based_range_variance]).reshape(-1, 1)
-
-        self.filter.update(z, H, R)
-
     def execute(self):
+        # we only want to run the range filter when we are tracking the vision
+        # targets on the tower, as that is the only situation where we need
+        # range data. Store a variable so we only reset once each time the
+        # vision is disabled.
         if not self.vision.enabled:
             if self.last_vision_mode:
                 self.reset()
             self.last_vision_mode = self.vision.enabled
             return
         self.last_vision_mode = self.vision.enabled
-        self.update_deques()
+
+        # range state should always be within this range. if it isnt, reset
         if self.range < 0.1 or self.range >= 5:
-            r = self.range_deque[-1]
-            if math.isinf(r):
-                print("reset")
+            r = self.range_finder.getDistance()
+            if r is 40:
+                self.logger.info("WARNING: range filter being reset")
                 self.reset()
-        # timesteps_since_vision = int((time.time() - self.vision.time)/50)
         self.predict()
         self.range_update()
-        # if self.vision.time != self.last_vision_time and self.vision_predicted_range() != 0:
-        #     if timesteps_since_vision > 25:
-        #         self.reset()
-        #     else:
-        #         to_roll_back = min(timesteps_since_vision, len(self.filter.history), len(self.odometry_deque)-1)
-        #         self.filter.roll_back(to_roll_back)
-        #         self.vision_update()
-        #         for i in range(to_roll_back):
-        #             self.predict(timesteps=to_roll_back-i)
-        #             self.range_update(timesteps=to_roll_back-i)
-        #         self.last_vision_time = self.vision.time
 
     @property
     def range(self):
-        return self.filter.x_hat[0][0]
+        return self.filter.x_hat[0,0]
 
     def vision_predicted_range(self):
-        """ Predict what our range finder reading should be based off of the distance between
-        the vision targets. Used in order to gate the ranges that are used to update our kalman
-        filter. """
-        # if self.vision.target_sep == 0:
-        #     return 0
-        # target_angle = 0
-        # if self.bno055.getHeading() > math.pi/6:
-        #     # we think that we are looking at the right hand target
-        #     target_angle = math.pi/3
-        # elif self.bno055.getHeading() < -math.pi/6:
-        #     # we think that we are looking at the left hand target
-        #     target_angle = -math.pi/3
-        # perpendicular_to_heading = target_angle - self.bno055.getHeading()
-        # theta_alpha = math.pi/2 - perpendicular_to_heading - self.vision.derive_vision_angle()
-        # predicted_range = self.vision.derive_target_range() * math.sin(perpendicular_to_heading * math.pi/2) / math.sin(theta_alpha)
-        # return predicted_range
+        """ Predict what our range finder reading should be based off of the
+        distance between the vision targets. Used in order to gate the ranges
+        that are used to update our filter. """
         return self.vision.derive_target_range()
