@@ -9,35 +9,17 @@ from components.bno055 import BNO055
 class ProfileFollower:
 
     # linear motion feedforward/back gains
-    #
-    # # position P controller
-    # kP = 6
-    # # velocity and acceleration feedforward
-    # kV = 1
-    # kI = 0.3
-    # kD = 1
-    # position P controller
-    kP = 6
-    # velocity and acceleration feedforward
-    kV = 1
-    kI = 0.3
-    kD = 1
-    kA = 0.0
+    kP = 6 # proportional gain
+    kV = 1 # feedforward gain
+    kI = 0.3 # integral gain
+    kD = 1 # derivative gain
+    kA = 0.0 # acceleration feedforward gain
 
     # heading motion feedforward/back gains
-    # heading feedback
-    kPh = 6
-    # angular velocity feedforward
-    kVh = 1
-    # kIh = 0.5
-    # kDh = 40
-    kIh = 0.2
-    kDh = 40
-    # # heading motion feedforward/back gains
-    # # heading feedback
-    # kPh = 4.5
-    # # angular velocity feedforward
-    # kVh = 1.2
+    kPh = 6 # proportional gain
+    kVh = 1 # feedforward gain
+    kIh = 0.2 # integral gain
+    kDh = 40 # derivative gain
 
     chassis = Chassis
 
@@ -74,6 +56,7 @@ class ProfileFollower:
             self.executing = True
             self.chassis.input_enabled = False
             self.chassis.set_enc_pos()
+            # clear integators
             self.position_error_i = 0
             self.heading_error_i = 0
             self.last_position_error = 0
@@ -90,6 +73,7 @@ class ProfileFollower:
         self.linear_queue.clear()
         self.heading_queue.clear()
         self.chassis.input_enabled = True
+        # clear integators
         self.heading_error_i = 0
         self.position_error_i = 0
 
@@ -100,34 +84,44 @@ class ProfileFollower:
             linear_seg = self.linear_queue.popleft()
             heading_seg = self.heading_queue.popleft()
 
+            # get the current left and right positions of the wheels
             [left_pos, right_pos] = self.chassis.get_wheel_distances()
 
             pos = (left_pos + right_pos) / 2 # average the two wheel distances
+            # calculate the position errror
             pos_error = linear_seg[0] - pos
-
+            # calucate the derivative of the position error
             self.d_pos_error = (pos_error - self.last_position_error)
+            # sum the position error over the timestep
             self.position_error_i += pos_error
 
+            # generate the linear output to the chassis (m/s)
             linear_output = (self.kP * pos_error + self.kV * linear_seg[1]
-                + self.kA * linear_seg[2] + self.kI*self.position_error_i + self.kD*self.d_pos_error)
+                + self.kA * linear_seg[2] + self.kI*self.position_error_i
+                + self.kD*self.d_pos_error)
 
             self.sd.putNumber("distance_error_mp", pos_error)
             self.sd.putNumber("linear_output_mp", linear_output)
 
-            # generate the linear output to the chassis (m/s)
+            # get the current heading of the robot since last reset
             heading = self.bno055.getRawHeading() - self.bno055.offset
+            # calculate the heading error
             heading_error = heading_seg[0] - heading
-            # wrap heading error, stops jumping by tau from the gyro
+            # wrap heading error, stops jumping by 2 pi from the gyro
             heading_error = math.atan2(math.sin(heading_error),
                     math.cos(heading_error))
-
+            # sum the heading error over the timestep
             self.heading_error_i += heading_error
+            # calculate the derivative of the heading error
             d_heading_error = (heading_error - self.last_heading_error)
 
             # generate the rotational output to the chassis
             heading_output = (
-                self.kPh * heading_error + self.kVh * heading_seg[1] + self.heading_error_i*self.kIh + d_heading_error*self.kDh)
+                self.kPh * heading_error + self.kVh * heading_seg[1]
+                + self.heading_error_i*self.kIh + d_heading_error*self.kDh)
 
+            # store the current errors to be used to compute the
+            # derivatives in the next timestep
             self.last_heading_error = heading_error
             self.last_position_error = pos_error
 
