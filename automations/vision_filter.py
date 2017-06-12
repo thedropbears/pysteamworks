@@ -32,7 +32,9 @@ class VisionFilter:
     control_loop_average_delay = MagicRobot.control_loop_wait_time/2
 
     def __init__(self):
-        pass
+        # create the state transition matrix
+        self.F = np.identity(self.state_vector_size)
+        self.F[0,1] = self.loop_dt
 
     def setup(self):
         self.reset()
@@ -40,23 +42,34 @@ class VisionFilter:
     def reset(self):
 
         timesteps_since_vision = int((time.time() - self.vision.time)/50)
+
+        # if there have only been several timesteps since the last vision
+        # measurement, the last measurement is likely to be a better estimate
+        # of the true state of the system than 0
         start_x = 0
         if timesteps_since_vision < 10:
-            start_x = 0
+            start_x = self.vision.x
+
         # starting state
         x_hat = np.array([start_x, 0]).reshape(-1, 1)
 
+        # set our starting variances
         P = np.zeros(shape=(self.state_vector_size, self.state_vector_size))
-        P[0][0] = VisionFilter.init_x_variance
-        P[1][1] = VisionFilter.init_dx_variance
-        Q = (np.array(
-                [[self.loop_dt**4/4, self.loop_dt**3/3],[self.loop_dt**3/2, self.loop_dt**2]]).
-                reshape(self.state_vector_size, self.state_vector_size)*self.acceleration_variance)
+        P[0,0] = VisionFilter.init_x_variance
+        P[1,1] = VisionFilter.init_dx_variance
+
+        # use newtons equations to figure out the process noise matrix.
+        # Process noise modelled as random walk in discrete time.
+        G = np.array([[(1/2)*self.loop_dt**2, self.loop_dt]])
+        Q = np.dot(G, G.T) * self.acceleration_variance
+
         self.last_vision = self.vision.x
         self.last_vision_time = self.vision.time
 
+        # create vision noise array
         R = np.array([[self.vision_x_variance]])
 
+        # initialise the filter
         self.filter = Kalman(x_hat, P, Q, R)
 
         self.last_vision_local_time = time.time()
@@ -68,20 +81,18 @@ class VisionFilter:
         """Predict what the measurement should be in the next timestep.
         :param timestep: the number of timesteps in the past that we are predicting forward *from*"""
 
-        F = np.identity(self.state_vector_size)
-        F[0][1] = self.loop_dt
+        # we have no control inputs, so just make it 0
         B = np.identity(self.state_vector_size)
-
         u = np.zeros(shape=(self.state_vector_size, 1))
 
-        self.filter.predict(F, u, B)
+        self.filter.predict(self.F, u, B)
 
     def update(self):
 
-        x = self.vision.x
-
+        # observation model - just the x part of the state. filter then
+        # updates the dx part of the state to the extent that x and dx co-vary
         H = np.array([[1, 0]])
-        z = np.array([x])
+        z = np.array([self.vision.x])
 
         self.filter.update(z, H)
 
@@ -89,16 +100,26 @@ class VisionFilter:
         self.last_vision_time = self.vision.time
 
     def execute(self):
+        # if we havent got a vision measurement, dont do any predict
+        # or updating
         if self.vision.time == 0:
             return
+        # estimate the delay since the last frame was captured
         vision_delay = self.vision.dt + self.control_loop_average_delay
-        timesteps_since_vision = int(vision_delay*50)
+        # calculate the timesteps since we got the vision measurement
+        timesteps_since_vision = int(vision_delay*1/self.loop_dt)
+        # if we have waited many timesteps since last frame, dont predict
         if timesteps_since_vision > 10:
             return
-        elif abs(self.vision.x - self.filter.x_hat[0][0]) > self.reset_thresh:
+        # if filter has diverged or we havent got a framen a while, reset
+        elif abs(self.vision.x - self.filter.x_hat[0,0]) > self.reset_thresh:
             self.reset()
+        # let the filter predict forward
         self.predict()
         if self.vision.time != self.last_vision_time:
+            # if we have a new vision measurement, calculate the time since
+            # we got it, then roll back the filter by that much time. then,
+            # update with the measurement and re-predict forwardw
             self.last_vision_local_time = time.time()
             to_roll_back = min(timesteps_since_vision, len(self.filter.history))
             self.filter.roll_back(to_roll_back)
@@ -116,4 +137,6 @@ class VisionFilter:
 
     @property
     def angle(self):
+        """Give the linearised angle to vision target based on the
+        horizontal field of view"""
         return -(self.x*self.horizontal_fov/2)

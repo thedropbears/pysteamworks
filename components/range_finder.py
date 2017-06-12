@@ -2,6 +2,7 @@ import wpilib
 from wpilib.interfaces import PIDSource
 from networktables import NetworkTable
 import hal
+import math
 
 
 class RangeFinder:
@@ -21,8 +22,10 @@ class RangeFinder:
             return 0.0
 
     def getDistance(self):
-        # TODO: adjust based on calculated heading
-        return self._getDistance()
+        r = self._getDistance()
+        if math.isinf(r):
+            r = 40
+        return r
 
     def execute(self):
         # get the distance and smooth it

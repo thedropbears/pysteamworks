@@ -59,7 +59,8 @@ def test_noisy_range_predict(control, hal_data):
             sigma = math.sqrt(rf.filter.P[0][0])
             print("%s %s %s %s %s %s" % (r, rf.range, rf.range-3*sigma, rf.range+3*sigma, rf.range_finder.getDistance(), rf.vision_predicted_range()))
         else:
-            assert abs(rf.range)<0.02
+            sigma = math.sqrt(rf.filter.P[0][0])
+            assert rf.range-4*sigma<0<rf.range+4*sigma
             return False
         return True
 

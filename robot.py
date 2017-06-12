@@ -2,7 +2,6 @@
 
 import magicbot
 import wpilib
-from wpilib import XboxController
 
 from ctre import CANTalon
 
@@ -18,6 +17,8 @@ from automations.profilefollower import ProfileFollower
 from automations.winchautomation import WinchAutomation
 from automations.vision_filter import VisionFilter
 from automations.range_filter import RangeFilter
+
+from robotpy_ext.control.button_debouncer import ButtonDebouncer
 
 from utilities.profilegenerator import generate_trapezoidal_trajectory
 
@@ -69,45 +70,53 @@ class Robot(magicbot.MagicRobot):
         # while debugging
         self.sd = NetworkTable.getTable('SmartDashboard')
 
-        # boilerplate setup for the joystick
+        # create the joystick and gamepad on the appropriate ports
         self.joystick = wpilib.Joystick(0)
-        self.gamepad = XboxController(1)
-        self.pressed_buttons_js = set()
-        self.pressed_buttons_gp = set()
+        self.gamepad = wpilib.XboxController(1)
+
+        # create the button debouncers, used to stop a single press from being
+        # counted every control loop iteration
+        self.joystick_buttons = [ButtonDebouncer(
+                self.joystick, buttonnum=i, period=0.5) for i in range(13)]
+        self.gamepad_buttons = [ButtonDebouncer(
+                self.gamepad, buttonnum=i, period=0.5) for i in range(13)]
+
         self.drive_motor_a = CANTalon(2)
         self.drive_motor_b = CANTalon(5)
         self.drive_motor_c = CANTalon(4)
         self.drive_motor_d = CANTalon(3)
         self.gear_alignment_motor = CANTalon(14)
+
+        # create the winch motor; set it so that it pulls the robot up
+        # the rope for a positive setpoint
         self.winch_motor = CANTalon(11)
         self.winch_motor.setInverted(True)
+
         self.rope_lock_solenoid = wpilib.DoubleSolenoid(forwardChannel=0,
                 reverseChannel=1)
-        # self.rope_lock_solenoid = wpilib.DoubleSolenoid(forwardChannel=3,
-        #         reverseChannel=4)
+
         self.gear_push_solenoid = wpilib.Solenoid(2)
         self.gear_drop_solenoid = wpilib.Solenoid(3)
-        # self.gear_push_solenoid = wpilib.DoubleSolenoid(forwardChannel=1, reverseChannel=2)
-        # self.gear_drop_solenoid = wpilib.Solenoid(0)
 
-        self.test_trajectory = generate_trapezoidal_trajectory(
-                0, 0, 3, 0, Chassis.max_vel, 1, -1, Chassis.motion_profile_freq)
-
+        # set the throttle to be sent to the chassis
         self.throttle = 1.0
+        # set the direction of the forward/back movement of the robot
         self.direction = 1.0
 
+        # dio for the vision LEDs to be switched on or off
         self.led_dio = wpilib.DigitalOutput(1)
 
         self.compressor = wpilib.Compressor()
 
     def putData(self):
         # update the data on the smart dashboard
+
         # put the inputs to the dashboard
         self.sd.putNumber("gyro", self.bno055.getHeading())
         self.sd.putNumber("vision_x", self.vision.x)
         # if self.manipulategear.current_state == "align_peg":
         self.sd.putNumber("range", self.range_finder.getDistance())
-        self.sd.putNumber("climbCurrent", self.winch_motor.getOutputCurrent())
+        self.sd.putNumber("climb_current", self.winch_motor.getOutputCurrent())
         self.sd.putNumber("rail_pos", self.gearalignmentdevice.get_rail_pos())
         self.sd.putNumber("raw_rail_pos", self.gear_alignment_motor.getPosition())
         self.sd.putNumber("error_differential",
@@ -138,18 +147,18 @@ class Robot(magicbot.MagicRobot):
         self.profilefollower.stop()
         self.winch.enable_compressor()
         self.vision.enabled = False
-        print("TELEOP INIT RANGE: %s" % (self.range_finder.getDistance()))
-        print("TELEOP INIT FILTER RANGE: %s" % (self.range_filter.range))
+        self.logger.info("TELEOP INIT RANGE: %s" % (self.range_finder.getDistance()))
+        self.logger.info("TELEOP INIT FILTER RANGE: %s" % (self.range_filter.range))
 
     def autonomousPeriodic(self):
         self.putData()
 
     def disabledInit(self):
+        # prevent pyntlogger from continuing to log if it is running
         self.sd.putBoolean("log", False)
 
     def disabledPeriodic(self):
         self.putData()
-        self.sd.putString("state", "stationary")
         self.vision_filter.execute()
         self.range_filter.execute()
 
@@ -157,107 +166,81 @@ class Robot(magicbot.MagicRobot):
         '''Called on each iteration of the control loop'''
         self.putData()
 
-        self.compressor.setClosedLoopControl(self.chassis.compressor_enabled and self.winch.compressor_enabled)
+        # enable the compressor only if the chassis is moving below the
+        # threshold speed, and the winch is not running, in order to prevent
+        # brownouts
+        self.compressor.setClosedLoopControl(self.chassis.compressor_enabled
+                and self.winch.compressor_enabled)
 
-        try:
-            if self.debounce(8, gamepad=True) or self.debounce(1):
+        # check for button inputs
+
+        # force restart or start of the gear state machine
+        with self.consumeExceptions():
+            if self.gamepad_buttons[8].get() or self.joystick_buttons[1].get():
                 self.manipulategear.engage(force=True)
 
-        except:
-            self.onException()
-
-        try:
-            if self.debounce(7, gamepad=True) or self.debounce(3):
+        # force restart or start of the winch state machine
+        with self.consumeExceptions():
+            if self.gamepad_buttons[7].get() or self.joystick_buttons[3].get():
                 self.winch_automation.engage(force=True)
-        except:
-            self.onException()
 
-        try:
-            if self.debounce(7):
+        # tell pyntlogger that we want to start logging
+        with self.consumeExceptions():
+            if self.joystick_buttons[7].get():
                 self.sd.putBoolean("log", True)
-        except:
-            self.onException()
 
-        # try:
-        #     if self.debounce(10):
-        #         # stop the winch
-        #         if self.winch_automation.is_executing:
-        #             self.winch_automation.done()
-        #         self.winch.piston_open()
-        #         self.winch.rotate_winch(0)
-
-        #         if self.manipulategear.is_executing:
-        #             self.manipulategear.done()
-        #         self.gearalignmentdevice.reset_position()
-        #         self.sd.putString("state", "stationary")
-        # except:
-        #     self.onException()
-
-        try:
-            if self.debounce(2):
+        # reset the gear & winch state machines
+        with self.consumeExceptions():
+            if self.joystick_buttons[2].get():
                 if self.manipulategear.is_executing:
                     self.manipulategear.done()
                 self.gearalignmentdevice.reset_position()
                 self.geardepositiondevice.retract_gear()
                 self.geardepositiondevice.lock_gear()
-        except:
-            self.onException()
 
-        try:
-            if self.debounce(4):
+        # force stop the winch state machine and winch motor
+        with self.consumeExceptions():
+            if self.joystick_buttons[4].get():
                 if self.winch_automation.is_executing:
                     self.winch_automation.done()
                 self.winch.rotate_winch(0)
-        except:
-            self.onException()
 
-        try:
-            if self.debounce(5):
+        # force the winch motor to spin at max speed, and close the piston
+        # that holds the rope in place
+        with self.consumeExceptions():
+            if self.joystick_buttons[5].get():
                 if self.winch_automation.is_executing:
                     self.winch_automation.done()
                 self.winch.rotate_winch(1.0)
                 self.winch.piston_close()
-        except:
-            self.onException()
 
-        try:
-            if self.debounce(6):
+        # toggle the position of the winch piston
+        with self.consumeExceptions():
+            if self.joystick_buttons[6].get():
                 self.winch.locked = not self.winch.locked
-        except:
-            self.onException()
 
-        try:
-            if self.debounce(12):
+        # retract and lock the gear bucket
+        with self.consumeExceptions():
+            if self.joystick_buttons[12].get():
                 self.geardepositiondevice.retract_gear()
                 self.geardepositiondevice.lock_gear()
-        except:
-            self.onException()
 
-        try:
-            if self.debounce(10):
-                # self.geardepositiondevice.push_gear()
-                # self.geardepositiondevice.drop_gear()
+        # push the gear bucket forward while shutting it
+        with self.consumeExceptions():
+            if self.joystick_buttons[10].get():
                 self.manipulategear.engage(initial_state="forward_closed", force=True)
-        except:
-            self.onException()
 
-        try:
-            if self.debounce(12):
-                self.geardepositiondevice.retract_gear()
-                self.geardepositiondevice.lock_gear()
-        except:
-            self.onException()
-
-
+        # Set direction and speed of control inputs from driver when specific
+        # buttons are pressed
         if (not self.gamepad.getRawButton(5) and
                 not self.gamepad.getRawButton(6) and
                 not self.gamepad.getRawAxis(3) > 0.9):
+            # normal operating mode
             self.throttle = 1
             self.direction = 1
             self.sd.putString("camera", "front")
-            # self.sd.putString("camera", "back")
         elif self.gamepad.getRawButton(5):
-            # reverse
+            # reverse direction of translation
             self.throttle = 1
             self.direction = -1
             self.sd.putString("camera", "back")
@@ -265,62 +248,44 @@ class Robot(magicbot.MagicRobot):
             # slow down
             self.throttle = 0.5
             self.direction = 1
-            # self.sd.putString("camera", "front")
             self.sd.putString("camera", "back")
         elif self.gamepad.getRawAxis(3) > 0.9:
+            # slow down and reverse direction of translation
             self.throttle = 0.5
             self.direction = -1
             self.sd.putString("camera", "back")
 
+        # POV buttons on joystick move gear rail left and right for alignment
+        # with chute
         if self.joystick.getPOV() == 90:
             if not self.manipulategear.is_executing:
                 self.gearalignmentdevice.move_right()
         elif self.joystick.getPOV() == 270:
             if not self.manipulategear.is_executing:
                 self.gearalignmentdevice.move_left()
-        # elif self.joystick.getPOV() == 0 or self.joystick.getPOV() == 180:
-        #     if not self.manipulategear.is_executing:
-        #         self.gearalignmentdevice.set_position(0)
 
         if 1.5 < abs(self.chassis.get_velocity()) and not self.manipulategear.is_executing:
             self.gearalignmentdevice.set_position(0)
 
-        self.chassis.inputs = [(
-            self.direction
-            * -rescale_js(self.gamepad.getRawAxis(1), deadzone=0.05, exponential=30)),
-                    - rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2),
-                    -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=30, rate=0.3 if self.throttle == 1 else 1/self.throttle),
-                    self.throttle
-                    ]
-        # self.chassis.inputs = [(
-        #     self.direction
-        #     * -rescale_js(self.gamepad.getRawAxis(1), rate=0.3, deadzone=0.05, exponential=15)),
-        #             - rescale_js(self.joystick.getX(), deadzone=0.05, exponential=1.2),
-        #             -rescale_js(self.gamepad.getRawAxis(4), deadzone=0.05, exponential=15.0, rate=0.2),
-        #             self.throttle
-        #             ]
+        # set control inputs to chassis after rescaling
+        linear_input = (
+            self.direction * -rescale_js(
+                    self.gamepad.getRawAxis(1), deadzone=0.05, exponential=30))
+        # rotational speed. compensate for reduced throttle by increasing
+        # rate, so that when linear speed is reduced, rotational input stays
+        # the same for the drivers
+        angular_input = -rescale_js(
+                self.gamepad.getRawAxis(4), deadzone=0.05, exponential=30,
+                rate=0.3 if self.throttle == 1 else 1/self.throttle)
+        # y axis (left right) input is 0, as a tank drive can not translate
+        # sideways
+        self.chassis.inputs = [linear_input, 0, angular_input, self.throttle]
+
+        # allow co-driver to manually turn on the vision LEDs
         self.vision.led_on = self.joystick.getRawButton(11)
 
-    # the 'debounce' function keeps tracks of which buttons have been pressed
-    def debounce(self, button, gamepad=False):
-        device = None
-        if gamepad:
-            pressed_buttons = self.pressed_buttons_gp
-            device = self.gamepad
-        else:
-            pressed_buttons = self.pressed_buttons_js
-            device = self.joystick
-        if device.getRawButton(button):
-            if button in pressed_buttons:
-                return False
-            else:
-                pressed_buttons.add(button)
-                return True
-        else:
-            pressed_buttons.discard(button)
-            return False
-
-# see comment in teleopPeriodic for information
+# utility function to rescale joystick inputs and make them exponential rather
+# than linear
 def rescale_js(value, deadzone=0.0, exponential=0.0, rate=1.0):
     value_negative = 1.0
     if value < 0:

@@ -1,9 +1,3 @@
-# this is the chassis class, a good example of a component. it is a
-# bit special in that it has to take direct numerical input from the
-# joystick (which is achieved by changing the 'input' variable, which
-# is a list composed of [vx, vy, vz, throttle]) but is a good example
-# of what a component should look like.
-
 import wpilib
 from ctre import CANTalon
 
@@ -59,9 +53,7 @@ class Chassis:
         self.compressor_enabled = True
 
     def setup(self):
-        """Run just after createObjects.
-        Useful if you want to run something after just once after the
-        robot code is started, that depends on injected variables"""
+        """Setup the motors"""
 
         self.motors = [
                 self.drive_motor_a,
@@ -115,40 +107,52 @@ class Chassis:
         self.input_enabled = True
 
     def enable_input(self):
+        """Enable operator control of chassis"""
         self.input_enabled = True
 
     def disable_input(self):
+        """Disable operator control of chassis"""
         self.input_enabled = False
 
     def set_enc_pos(self, left=0, right=0):
+        """Reset the encoder positions to a certain value"""
         self.offset_positions = [self.motors[0].getPosition()/self.counts_per_meter+left,
                 self.motors[2].getPosition()/self.counts_per_meter-right]
 
     def get_wheel_distances(self):
+        """Return the distances that the wheels have travelled, minus the offset"""
         return [self.motors[0].getPosition()/self.counts_per_meter-self.offset_positions[0],
                 -(self.motors[2].getPosition()/self.counts_per_meter-self.offset_positions[1])]
 
     def get_raw_wheel_distances(self):
+        """Return the raw distances that the wheels have travelled"""
         return [self.motors[0].getPosition()/self.counts_per_meter,
                 -self.motors[2].getPosition()/self.counts_per_meter]
 
     def get_velocities(self):
+        """Return the velocity of the left and right sides of the robot in
+        SI units."""
         return [self.motors[0].getEncVelocity()/self.velocity_to_native_units,
                 -self.motors[2].getEncVelocity()/self.velocity_to_native_units]
 
     def get_velocity(self):
+        """Return the average velocity of the left and right sides of robot"""
         return (self.get_velocities()[0]+self.get_velocities()[1])/2
 
     def set_velocity(self, linear, angular):
+        """ Function to allow the motion profiling code to set the speed
+        setpoints of the chassis.
+        :param linear: linear speed setpoint for the robot. m/s
+        :param angular: angular velocity setpoint for the robot. rad/s
+        """
         self.mp_enabled = True
         angular *= Chassis.wheelbase_width/2
         left_out = linear - angular
         right_out = linear + angular
 
-        self.mp_setpoints = [1023/self.counts_per_revolution*left_out*Chassis.velocity_to_native_units,
+        self.mp_setpoints = [
+        1023/self.counts_per_revolution*left_out*Chassis.velocity_to_native_units,
         1023/self.counts_per_revolution*right_out*Chassis.velocity_to_native_units]
-        # self.mp_setpoints = [self.max_vel_native*left_out/self.max_vel,
-        # self.max_vel_native*right_out/self.max_vel]
 
     def execute(self):
         """Run at the end of every control loop iteration"""
@@ -167,6 +171,8 @@ class Chassis:
             for i in range(len(motor_inputs)):
                 motor_inputs[i] /= max_i
                 motor_inputs[i] *= self.inputs[3]
+            # disable compressor if inputs above certain level -
+            # prevent brownouts
             if abs(self.inputs[0]) > 0.5 or abs(self.inputs[2]) > 0.5:
                 self.compressor_enabled = False
             else:
