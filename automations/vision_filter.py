@@ -18,7 +18,7 @@ class VisionFilter:
     init_dx_variance = 0.5
 
     # the vision sensor noise
-    vision_x_variance = 0.0002
+    vision_x_variance = 0.0005
 
     init_x_variance = 0.001
 
