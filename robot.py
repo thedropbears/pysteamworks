@@ -97,6 +97,7 @@ class Robot(magicbot.MagicRobot):
 
         self.gear_push_solenoid = wpilib.Solenoid(2)
         self.gear_drop_solenoid = wpilib.Solenoid(3)
+        self.gear_drop_solenoid.set(True)
 
         # set the throttle to be sent to the chassis
         self.throttle = 1.0
@@ -227,7 +228,7 @@ class Robot(magicbot.MagicRobot):
 
         # push the gear bucket forward while shutting it
         with self.consumeExceptions():
-            if self.joystick_buttons[10].get():
+            if self.joystick_buttons[10].get() or self.gamepad_buttons[1].get():
                 self.manipulategear.engage(initial_state="forward_closed", force=True)
 
         # Set direction and speed of control inputs from driver when specific

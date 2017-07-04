@@ -24,7 +24,7 @@ class ManipulateGear(StateMachine):
     vision_filter = VisionFilter
     range_filter = RangeFilter
 
-    place_gear_range = 0.48
+    place_gear_range = 0.32
     align_tolerance = 0.02
 
     deploy_jitter = 0.1
@@ -64,12 +64,13 @@ class ManipulateGear(StateMachine):
             if r<0.1:
                 r = 40
             if r < self.place_gear_range:
-                self.chassis.input_enabled = False
-                if self.gearalignmentdevice.get_rail_pos() >= 0:
-                    self.gearalignmentdevice.set_position(self.gearalignmentdevice.get_rail_pos()-self.deploy_jitter)
-                elif self.gearalignmentdevice.get_rail_pos() < 0:
-                    self.gearalignmentdevice.set_position(self.gearalignmentdevice.get_rail_pos()+self.deploy_jitter)
-                self.next_state_now("forward_closed")
+                pass
+                # self.chassis.input_enabled = False
+                # if self.gearalignmentdevice.get_rail_pos() >= 0:
+                #     self.gearalignmentdevice.set_position(self.gearalignmentdevice.get_rail_pos()-self.deploy_jitter)
+                # elif self.gearalignmentdevice.get_rail_pos() < 0:
+                #     self.gearalignmentdevice.set_position(self.gearalignmentdevice.get_rail_pos()+self.deploy_jitter)
+                # self.next_state_now("forward_closed")
         else:
             self.gearalignmentdevice.align()
             aligned = False
