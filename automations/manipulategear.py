@@ -71,7 +71,7 @@ class ManipulateGear(StateMachine):
                 # elif self.gearalignmentdevice.get_rail_pos() < 0:
                 #     self.gearalignmentdevice.set_position(self.gearalignmentdevice.get_rail_pos()+self.deploy_jitter)
                 # self.next_state_now("forward_closed")
-        else:
+        elif self.vision.num_targets > 1:
             self.gearalignmentdevice.align()
             aligned = False
 

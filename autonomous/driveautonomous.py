@@ -12,6 +12,7 @@ from components.vision import Vision
 
 class DriveForwardAutonomous(AutonomousStateMachine):
     MODE_NAME = "Drive Forward Auto"
+    DEFAULT=True
 
     bno055 = BNO055
     vision = Vision

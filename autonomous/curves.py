@@ -132,21 +132,21 @@ class PegAutonomous(AutonomousStateMachine):
 
 
 class LeftPegCurves(PegAutonomous):
-    MODE_NAME = "Left Peg Curves"
+    # MODE_NAME = "Left Peg Curves"
 
     def __init__(self):
         super().__init__(Targets.Left)
 
 
 class RightPegCurves(PegAutonomous):
-    MODE_NAME = "Right Peg Curves"
+    # MODE_NAME = "Right Peg Curves"
 
     def __init__(self):
         super().__init__(Targets.Right)
 
 
 class CentrePegCurves(PegAutonomous):
-    MODE_NAME = "Centre Peg Curves"
+    # MODE_NAME = "Centre Peg Curves"
 
     def __init__(self):
         super().__init__(Targets.Centre)
