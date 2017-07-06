@@ -11,7 +11,7 @@ class GearDepositionDevice:
 
     def __init__(self):
         self.push_piston = False
-        self.drop_piston = False
+        self.drop_piston = True
 
     def setup(self):
         """Run just after createObjects.
@@ -40,4 +40,4 @@ class GearDepositionDevice:
     def execute(self):
         """Run at the end of every control loop iteration"""
         self.gear_push_solenoid.set(self.push_piston)
-        self.gear_drop_solenoid.set(self.drop_piston)
+        self.gear_drop_solenoid.set(not self.drop_piston)

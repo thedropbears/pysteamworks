@@ -63,7 +63,7 @@ class PegAutonomous(AutonomousStateMachine):
         else:
             t1 = 1.5  # s, time for segment 1
             rotate_time = self.rotate_arc_length/self.rotate_linear_velocity
-            t3 = 1.5 # s, time for segment 3
+            t3 = 2.5 # s, time for segment 3
             distance_keypoints = [
                 (0, 0, 0),
                 (t1, self.side_drive_forward_distance-self.delta_s, self.rotate_linear_velocity),
@@ -132,21 +132,21 @@ class PegAutonomous(AutonomousStateMachine):
 
 
 class LeftPegCurves(PegAutonomous):
-    MODE_NAME = "Left Peg Curves"
+    # MODE_NAME = "Left Peg Curves"
 
     def __init__(self):
         super().__init__(Targets.Left)
 
 
 class RightPegCurves(PegAutonomous):
-    MODE_NAME = "Right Peg Curves"
+    # MODE_NAME = "Right Peg Curves"
 
     def __init__(self):
         super().__init__(Targets.Right)
 
 
 class CentrePegCurves(PegAutonomous):
-    MODE_NAME = "Centre Peg Curves"
+    # MODE_NAME = "Centre Peg Curves"
 
     def __init__(self):
         super().__init__(Targets.Centre)

@@ -46,9 +46,9 @@ class PegAutonomous(AutonomousStateMachine):
     rotate_accel_speed = 4 # rad*s^-2
     rotate_velocity = 4
     peg_align_tolerance = 0.15
-    displace_velocity = Chassis.max_vel
+    displace_velocity = Chassis.max_vel/3
     displace_accel = Chassis.max_acc
-    displace_decel = Chassis.max_acc/2
+    displace_decel = Chassis.max_acc/4
     # rotate_accel_speed = 2 # rad*s^-2
     # rotate_velocity = 2
 
@@ -188,6 +188,7 @@ class PegAutonomous(AutonomousStateMachine):
             else:
                 peg_range = 1.5
             peg_range -= self.centre_to_front_bumper
+            peg_range += 0.3
             r = self.range_filter.range
             print("AUTO DRIVE WALL RANGE: %s" % (self.range_finder.getDistance()))
             print("AUTO DRIVE WALL FILTER RANGE: %s" % (self.range_filter.range))
@@ -246,7 +247,7 @@ class PegAutonomous(AutonomousStateMachine):
 
 
 class LeftPeg(PegAutonomous):
-    # MODE_NAME = "Left Peg"
+    MODE_NAME = "Left Peg"
 
     def __init__(self):
         super().__init__(Targets.Left)
@@ -257,7 +258,7 @@ class LeftPeg(PegAutonomous):
 
 
 class CentrePeg(PegAutonomous):
-    # MODE_NAME = "Centre Peg"
+    MODE_NAME = "Centre Peg"
 
     def __init__(self):
         super().__init__(Targets.Centre)
@@ -268,8 +269,7 @@ class CentrePeg(PegAutonomous):
 
 
 class RightPeg(PegAutonomous):
-    # MODE_NAME = "Right Peg"
-    # DEFAULT = True
+    MODE_NAME = "Right Peg"
 
     def __init__(self):
         super().__init__(Targets.Right)
