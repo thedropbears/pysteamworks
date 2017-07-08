@@ -6,10 +6,10 @@ from networktables import NetworkTable
 from automations.filters import VisionFilter
 
 
-class GearAlignmentDevice:
+class GearAligner:
     # this is an injected variable only access after initialization of the
     # robot (so not in __init__)
-    gear_alignment_motor = CANTalon
+    motor = CANTalon
     sd = NetworkTable
     #vision = Vision
     vision_filter = VisionFilter
@@ -27,34 +27,34 @@ class GearAlignmentDevice:
 
     def on_enable(self):
         """Run every time the robot transitions to being enabled"""
-        self.gear_alignment_motor.clearStickyFaults()
+        self.motor.clearStickyFaults()
 
-        self.gear_alignment_motor.setControlMode(CANTalon.ControlMode.Position)
-        self.gear_alignment_motor.setFeedbackDevice(CANTalon.FeedbackDevice.AnalogPot)
+        self.motor.setControlMode(CANTalon.ControlMode.Position)
+        self.motor.setFeedbackDevice(CANTalon.FeedbackDevice.AnalogPot)
 
-        self.gear_alignment_motor.setPID(20, 0, 0)
+        self.motor.setPID(20, 0, 0)
 
-        # self.gear_alignment_motor.enableLimitSwitch(True, True)
-        self.gear_alignment_motor.enableLimitSwitch(False, False)
+        # self.motor.enableLimitSwitch(True, True)
+        self.motor.enableLimitSwitch(False, False)
 
-        self.setpoint = self.gear_alignment_motor.getPosition()
+        self.setpoint = self.motor.getPosition()
 
-        self.gear_alignment_motor.reverseSensor(True)
+        self.motor.reverseSensor(True)
 
     def align(self):
         # self.set_position(self.get_rail_pos()+self.vision.x)
         self.set_position(self.get_rail_pos()+self.vision_filter.x+self.vision_filter.dx*self.setpoint_leading_timesteps/50)
 
     def move_left(self):
-        if not self.gear_alignment_motor.getSetpoint()-self.sp_increment < self.l_pos:
-            self.setpoint = self.gear_alignment_motor.getSetpoint()-self.sp_increment
+        if not self.motor.getSetpoint()-self.sp_increment < self.l_pos:
+            self.setpoint = self.motor.getSetpoint()-self.sp_increment
 
     def move_right(self):
-        if not self.gear_alignment_motor.getSetpoint()+self.sp_increment > self.r_pos:
-            self.setpoint = self.gear_alignment_motor.getSetpoint()+self.sp_increment
+        if not self.motor.getSetpoint()+self.sp_increment > self.r_pos:
+            self.setpoint = self.motor.getSetpoint()+self.sp_increment
 
     def get_rail_pos(self):
-        return ((self.gear_alignment_motor.getPosition()-self.zero_pos)
+        return ((self.motor.getPosition()-self.zero_pos)
                 / (self.r_pos-self.zero_pos))
 
     def set_position(self, setpoint):
@@ -67,10 +67,10 @@ class GearAlignmentDevice:
 
     def execute(self):
         """Run at the end of every control loop iteration"""
-        self.gear_alignment_motor.set(self.setpoint)
+        self.motor.set(self.setpoint)
 
 
-class GearDepositionDevice:
+class GearDepositor:
     # create solenoids or double solenoids here as we need them, then
     # initialize them in createObjects in robot.py
     gear_drop_solenoid = wpilib.Solenoid

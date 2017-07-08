@@ -1,12 +1,11 @@
 import math
 
-import wpilib
 from ctre import CANTalon
 from networktables import NetworkTable
 
+
 class Chassis:
     # injectables
-    compressor = wpilib.Compressor
     drive_motor_a = CANTalon
     drive_motor_b = CANTalon
     drive_motor_c = CANTalon

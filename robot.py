@@ -12,7 +12,7 @@ from networktables import NetworkTable
 
 from components.bno055 import BNO055
 from components.chassis import Chassis
-from components.gears import GearAlignmentDevice, GearDepositionDevice
+from components.gears import GearAligner, GearDepositor
 from components.range_finder import RangeFinder
 from components.vision import Vision
 from components.winch import Winch
@@ -39,8 +39,8 @@ class Robot(magicbot.MagicRobot):
     winch_automation = WinchAutomation
 
     # Other actuators
-    gearalignmentdevice = GearAlignmentDevice
-    geardepositiondevice = GearDepositionDevice
+    gear_aligner = GearAligner
+    gear_depositor = GearDepositor
     winch = Winch
 
     def createObjects(self):
@@ -81,7 +81,7 @@ class Robot(magicbot.MagicRobot):
         self.drive_motor_b = CANTalon(5)
         self.drive_motor_c = CANTalon(4)
         self.drive_motor_d = CANTalon(3)
-        self.gear_alignment_motor = CANTalon(14)
+        self.gear_aligner_motor = CANTalon(14)
 
         # create the winch motor; set it so that it pulls the robot up
         # the rope for a positive setpoint
@@ -114,8 +114,8 @@ class Robot(magicbot.MagicRobot):
         # if self.manipulategear.current_state == "align_peg":
         self.sd.putNumber("range", self.range_finder.getDistance())
         self.sd.putNumber("climb_current", self.winch_motor.getOutputCurrent())
-        self.sd.putNumber("rail_pos", self.gearalignmentdevice.get_rail_pos())
-        self.sd.putNumber("raw_rail_pos", self.gear_alignment_motor.getPosition())
+        self.sd.putNumber("rail_pos", self.gear_aligner.get_rail_pos())
+        self.sd.putNumber("raw_rail_pos", self.gear_aligner_motor.getPosition())
         self.sd.putNumber("error_differential",
             self.drive_motor_a.getClosedLoopError()
             - self.drive_motor_c.getClosedLoopError())
@@ -138,9 +138,9 @@ class Robot(magicbot.MagicRobot):
     def teleopInit(self):
         '''Called when teleop starts; optional'''
         self.sd.putString("state", "stationary")
-        self.gearalignmentdevice.reset_position()
-        self.geardepositiondevice.retract_gear()
-        self.geardepositiondevice.lock_gear()
+        self.gear_aligner.reset_position()
+        self.gear_depositor.retract_gear()
+        self.gear_depositor.lock_gear()
         self.profilefollower.stop()
         self.winch.enable_compressor()
         self.vision.enabled = False
@@ -188,9 +188,9 @@ class Robot(magicbot.MagicRobot):
             if self.joystick_buttons[2].get():
                 if self.manipulategear.is_executing:
                     self.manipulategear.done()
-                self.gearalignmentdevice.reset_position()
-                self.geardepositiondevice.retract_gear()
-                self.geardepositiondevice.lock_gear()
+                self.gear_aligner.reset_position()
+                self.gear_depositor.retract_gear()
+                self.gear_depositor.lock_gear()
 
         # force stop the winch state machine and winch motor
         with self.consumeExceptions():
@@ -216,8 +216,8 @@ class Robot(magicbot.MagicRobot):
         # retract and lock the gear bucket
         with self.consumeExceptions():
             if self.joystick_buttons[12].get():
-                self.geardepositiondevice.retract_gear()
-                self.geardepositiondevice.lock_gear()
+                self.gear_depositor.retract_gear()
+                self.gear_depositor.lock_gear()
 
         # push the gear bucket forward while shutting it
         with self.consumeExceptions():
@@ -253,13 +253,13 @@ class Robot(magicbot.MagicRobot):
         # with chute
         if self.joystick.getPOV() == 90:
             if not self.manipulategear.is_executing:
-                self.gearalignmentdevice.move_right()
+                self.gear_aligner.move_right()
         elif self.joystick.getPOV() == 270:
             if not self.manipulategear.is_executing:
-                self.gearalignmentdevice.move_left()
+                self.gear_aligner.move_left()
 
         if 1.5 < abs(self.chassis.get_velocity()) and not self.manipulategear.is_executing:
-            self.gearalignmentdevice.set_position(0)
+            self.gear_aligner.set_position(0)
 
         # set control inputs to chassis after rescaling
         linear_input = (

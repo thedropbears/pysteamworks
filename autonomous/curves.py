@@ -9,7 +9,7 @@ from automations.manipulategear import ManipulateGear
 from automations.profilefollower import ProfileFollower
 from components.bno055 import BNO055
 from components.chassis import Chassis
-from components.gears import GearAlignmentDevice, GearDepositionDevice
+from components.gears import GearAligner, GearDepositor
 from components.range_finder import RangeFinder
 from components.vision import Vision
 from utilities.profilegenerator import cubic_generator
@@ -25,8 +25,8 @@ class PegAutonomous(AutonomousStateMachine):
     # Injectables
     bno055 = BNO055
     chassis = Chassis
-    gearalignmentdevice = GearAlignmentDevice
-    geardepositiondevice = GearDepositionDevice
+    gear_aligner = GearAligner
+    gear_depositor = GearDepositor
     manipulategear = ManipulateGear
     profilefollower = ProfileFollower
     range_finder = RangeFinder
@@ -95,9 +95,9 @@ class PegAutonomous(AutonomousStateMachine):
         super().on_enable()
         self.bno055.resetHeading()
         self.profilefollower.stop()
-        self.gearalignmentdevice.reset_position()
-        self.geardepositiondevice.retract_gear()
-        self.geardepositiondevice.lock_gear()
+        self.gear_aligner.reset_position()
+        self.gear_depositor.retract_gear()
+        self.gear_depositor.lock_gear()
         self.generate_trajectories()
         self.sd.putBoolean("log", True)
 

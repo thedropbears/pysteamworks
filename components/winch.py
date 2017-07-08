@@ -1,10 +1,9 @@
 from ctre import CANTalon
-from wpilib import DoubleSolenoid, Compressor
+from wpilib import DoubleSolenoid
 
 
 class Winch:
     # Injectables
-    compressor = Compressor
     motor = CANTalon
     rope_lock_solenoid = DoubleSolenoid
 

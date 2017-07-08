@@ -3,7 +3,7 @@ from magicbot.state_machine import AutonomousStateMachine, state
 
 from automations.profilefollower import ProfileFollower
 from components.bno055 import BNO055
-from components.gears import GearDepositionDevice
+from components.gears import GearDepositor
 from utilities.profilegenerator import cubic_generator
 
 
@@ -13,7 +13,7 @@ class DriveForwardAutonomous(AutonomousStateMachine):
 
     # injectables
     bno055 = BNO055
-    geardepositiondevice = GearDepositionDevice
+    gear_depositor = GearDepositor
     profilefollower = ProfileFollower
 
     centre_to_front_bumper = 0.49
@@ -33,8 +33,8 @@ class DriveForwardAutonomous(AutonomousStateMachine):
         super().on_enable()
         self.bno055.resetHeading()
         self.profilefollower.stop()
-        self.geardepositiondevice.retract_gear()
-        self.geardepositiondevice.lock_gear()
+        self.gear_depositor.retract_gear()
+        self.gear_depositor.lock_gear()
         self.generate_trajectories()
 
     @state(first=True)
