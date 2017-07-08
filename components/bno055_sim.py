@@ -20,11 +20,11 @@ class BNO055Sim(I2CSimBase):
             :returns: number of bytes returned
         '''
 
-        if data_to_send[0] == BNO055.BNO055_EULER_H_LSB_ADDR:
+        if data_to_send[0] == BNO055.Address.EULER_H_LSB:
             struct.pack_into('<h', data_received, 0, int(self.heading * 900.0))
-        if data_to_send[0] == BNO055.BNO055_EULER_P_LSB_ADDR:
+        if data_to_send[0] == BNO055.Address.EULER_P_LSB:
             struct.pack_into('<h', data_received, 0, int(self.pitch * 900.0))
-        if data_to_send[0] == BNO055.BNO055_EULER_R_LSB_ADDR:
+        if data_to_send[0] == BNO055.Address.EULER_R_LSB:
             struct.pack_into('<h', data_received, 0, int(self.roll * 900.0))
 
         return receive_size
