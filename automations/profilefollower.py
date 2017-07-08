@@ -2,11 +2,15 @@ import math
 from collections import deque
 from networktables import NetworkTable
 
-from components.chassis import Chassis
 from components.bno055 import BNO055
+from components.chassis import Chassis
 
 
 class ProfileFollower:
+    # injectables
+    bno055 = BNO055
+    chassis = Chassis
+    sd = NetworkTable
 
     # linear motion feedforward/back gains
     kP = 6 # proportional gain
@@ -20,11 +24,6 @@ class ProfileFollower:
     kVh = 1 # feedforward gain
     kIh = 0.2 # integral gain
     kDh = 40 # derivative gain
-
-    chassis = Chassis
-
-    bno055 = BNO055
-    sd = NetworkTable
 
     def __init__(self):
         # queues of segments to be executed
@@ -85,7 +84,7 @@ class ProfileFollower:
             heading_seg = self.heading_queue.popleft()
 
             # get the current left and right positions of the wheels
-            [left_pos, right_pos] = self.chassis.get_wheel_distances()
+            left_pos, right_pos = self.chassis.get_wheel_distances()
 
             pos = (left_pos + right_pos) / 2 # average the two wheel distances
             # calculate the position errror
@@ -96,8 +95,8 @@ class ProfileFollower:
             self.position_error_i += pos_error
 
             # generate the linear output to the chassis (m/s)
-            linear_output = (self.kP * pos_error + self.kV * linear_seg[1]
-                + self.kA * linear_seg[2] + self.kI*self.position_error_i
+            linear_output = (self.kP*pos_error + self.kV*linear_seg[1]
+                + self.kA*linear_seg[2] + self.kI*self.position_error_i
                 + self.kD*self.d_pos_error)
 
             self.sd.putNumber("distance_error_mp", pos_error)
@@ -108,8 +107,10 @@ class ProfileFollower:
             # calculate the heading error
             heading_error = heading_seg[0] - heading
             # wrap heading error, stops jumping by 2 pi from the gyro
-            heading_error = math.atan2(math.sin(heading_error),
-                    math.cos(heading_error))
+            heading_error = math.atan2(
+                math.sin(heading_error),
+                math.cos(heading_error)
+            )
             # sum the heading error over the timestep
             self.heading_error_i += heading_error
             # calculate the derivative of the heading error
@@ -117,7 +118,7 @@ class ProfileFollower:
 
             # generate the rotational output to the chassis
             heading_output = (
-                self.kPh * heading_error + self.kVh * heading_seg[1]
+                self.kPh*heading_error + self.kVh*heading_seg[1]
                 + self.heading_error_i*self.kIh + d_heading_error*self.kDh)
 
             # store the current errors to be used to compute the

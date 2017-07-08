@@ -1,48 +1,47 @@
 #!/usr/bin/env python3
 
+import math
+import time
+
 import magicbot
 import wpilib
 
 from ctre import CANTalon
-
-from components.range_finder import RangeFinder
-from components.chassis import Chassis
-from components.bno055 import BNO055
-from components.gearalignmentdevice import GearAlignmentDevice
-from components.geardepositiondevice import GearDepositionDevice
-from components.vision import Vision
-from components.winch import Winch
-from automations.manipulategear import ManipulateGear
-from automations.profilefollower import ProfileFollower
-from automations.winchautomation import WinchAutomation
-from automations.vision_filter import VisionFilter
-from automations.range_filter import RangeFilter
-
 from robotpy_ext.control.button_debouncer import ButtonDebouncer
-
-from utilities.profilegenerator import generate_trapezoidal_trajectory
-
 from networktables import NetworkTable
 
-import logging
-
-import math
-import time
+from components.bno055 import BNO055
+from components.chassis import Chassis
+from components.gears import GearAlignmentDevice, GearDepositionDevice
+from components.range_finder import RangeFinder
+from components.vision import Vision
+from components.winch import Winch
+from automations.filters import RangeFilter, VisionFilter
+from automations.manipulategear import ManipulateGear
+from automations.profilefollower import ProfileFollower
+from automations.winch import WinchAutomation
 
 
 class Robot(magicbot.MagicRobot):
+    # Sensors
+    range_finder = RangeFinder
+    vision = Vision
+    vision_filter = VisionFilter
 
+    # Chassis must come before RangeFilter
+    # ProfileFollower should come before Chassis
+    profilefollower = ProfileFollower
     chassis = Chassis
+    range_filter = RangeFilter
+
+    # Other automations
+    manipulategear = ManipulateGear
+    winch_automation = WinchAutomation
+
+    # Other actuators
     gearalignmentdevice = GearAlignmentDevice
     geardepositiondevice = GearDepositionDevice
-    winch_automation = WinchAutomation
-    manipulategear = ManipulateGear
-    vision = Vision
     winch = Winch
-    profilefollower = ProfileFollower
-    range_finder = RangeFinder
-    vision_filter = VisionFilter
-    range_filter = RangeFilter
 
     def createObjects(self):
         '''Create motors and stuff here'''
@@ -61,9 +60,6 @@ class Robot(magicbot.MagicRobot):
         # create the imu object
         self.bno055 = BNO055()
 
-        # the "logger" - allows you to print to the logging screen
-        # of the control computer
-        self.logger = logging.getLogger("robot")
         # the SmartDashboard network table allows you to send
         # information to a html dashboard. useful for data display
         # for drivers, and also for plotting variables over time
@@ -104,6 +100,7 @@ class Robot(magicbot.MagicRobot):
         # set the direction of the forward/back movement of the robot
         self.direction = 1.0
 
+        self.range_finder_counter = wpilib.Counter(0, mode=wpilib.Counter.Mode.kPulseLength)
         # dio for the vision LEDs to be switched on or off
         self.led_dio = wpilib.DigitalOutput(1)
 
@@ -114,15 +111,14 @@ class Robot(magicbot.MagicRobot):
 
         # put the inputs to the dashboard
         self.sd.putNumber("gyro", self.bno055.getHeading())
-        self.sd.putNumber("vision_x", self.vision.x)
         # if self.manipulategear.current_state == "align_peg":
         self.sd.putNumber("range", self.range_finder.getDistance())
         self.sd.putNumber("climb_current", self.winch_motor.getOutputCurrent())
         self.sd.putNumber("rail_pos", self.gearalignmentdevice.get_rail_pos())
         self.sd.putNumber("raw_rail_pos", self.gear_alignment_motor.getPosition())
         self.sd.putNumber("error_differential",
-                self.drive_motor_a.getClosedLoopError()-
-                self.drive_motor_c.getClosedLoopError())
+            self.drive_motor_a.getClosedLoopError()
+            - self.drive_motor_c.getClosedLoopError())
         self.sd.putNumber("velocity", self.chassis.get_velocity())
         self.sd.putNumber("left_speed_error", self.drive_motor_a.getClosedLoopError())
         self.sd.putNumber("right_speed_error", self.drive_motor_c.getClosedLoopError())
@@ -130,11 +126,11 @@ class Robot(magicbot.MagicRobot):
         self.sd.putNumber("z_throttle", self.chassis.inputs[2])
         self.sd.putNumber("filtered_x", self.vision_filter.x)
         self.sd.putNumber("filtered_dx", self.vision_filter.dx)
-        self.sd.putNumber("vision_filter_x_variance", self.vision_filter.filter.P[0][0])
-        self.sd.putNumber("vision_filter_dx_variance", self.vision_filter.filter.P[1][1])
-        self.sd.putNumber("vision_filter_covariance", self.vision_filter.filter.P[0][1])
-        self.sd.putNumber("filtered_range", self.range_filter.filter.x_hat[0][0])
-        self.sd.putNumber("range_filter_variance", self.range_filter.filter.P[0][0])
+        self.sd.putNumber("vision_filter_x_variance", self.vision_filter.filter.P[0, 0])
+        self.sd.putNumber("vision_filter_dx_variance", self.vision_filter.filter.P[1, 1])
+        self.sd.putNumber("vision_filter_covariance", self.vision_filter.filter.P[0, 1])
+        self.sd.putNumber("filtered_range", self.range_filter.filter.x_hat[0, 0])
+        self.sd.putNumber("range_filter_variance", self.range_filter.filter.P[0, 0])
         self.sd.putNumber("time", time.time())
         self.sd.putNumber("vision_predicted_range", self.range_filter.vision_predicted_range())
         self.sd.putNumber("vision_predicted_target_dist", self.vision.derive_target_range())
@@ -150,9 +146,6 @@ class Robot(magicbot.MagicRobot):
         self.vision.enabled = False
         self.logger.info("TELEOP INIT RANGE: %s" % (self.range_finder.getDistance()))
         self.logger.info("TELEOP INIT FILTER RANGE: %s" % (self.range_filter.range))
-
-    def autonomousPeriodic(self):
-        self.putData()
 
     def disabledInit(self):
         # prevent pyntlogger from continuing to log if it is running
@@ -285,6 +278,7 @@ class Robot(magicbot.MagicRobot):
         # allow co-driver to manually turn on the vision LEDs
         self.vision.led_on = self.joystick.getRawButton(11)
 
+
 # utility function to rescale joystick inputs and make them exponential rather
 # than linear
 def rescale_js(value, deadzone=0.0, exponential=0.0, rate=1.0):
@@ -304,6 +298,7 @@ def rescale_js(value, deadzone=0.0, exponential=0.0, rate=1.0):
         a = math.log(exponential + 1) / (1 - deadzone)
         value = (math.exp(a * (value - deadzone)) - 1) / exponential
     return value * value_negative * rate
+
 
 if __name__ == '__main__':
     wpilib.run(Robot)

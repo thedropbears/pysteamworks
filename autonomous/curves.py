@@ -1,17 +1,17 @@
 import math
+
 import numpy as np
 from magicbot.state_machine import AutonomousStateMachine, state
 from networktables import NetworkTable
 
+from automations.filters import VisionFilter
 from automations.manipulategear import ManipulateGear
 from automations.profilefollower import ProfileFollower
-from automations.vision_filter import VisionFilter
-from components.chassis import Chassis
 from components.bno055 import BNO055
-from components.vision import Vision
-from components.gearalignmentdevice import GearAlignmentDevice
-from components.geardepositiondevice import GearDepositionDevice
+from components.chassis import Chassis
+from components.gears import GearAlignmentDevice, GearDepositionDevice
 from components.range_finder import RangeFinder
+from components.vision import Vision
 from utilities.profilegenerator import cubic_generator
 
 
@@ -22,24 +22,24 @@ class Targets:
 
 
 class PegAutonomous(AutonomousStateMachine):
-
-    manipulategear = ManipulateGear
-    profilefollower = ProfileFollower
-    chassis = Chassis
+    # Injectables
     bno055 = BNO055
-    vision = Vision
-    vision_filter = VisionFilter
-    range_finder = RangeFinder
+    chassis = Chassis
     gearalignmentdevice = GearAlignmentDevice
     geardepositiondevice = GearDepositionDevice
+    manipulategear = ManipulateGear
+    profilefollower = ProfileFollower
+    range_finder = RangeFinder
     sd = NetworkTable
+    vision = Vision
+    vision_filter = VisionFilter
 
     centre_to_front_bumper = 0.49
     lidar_to_front_bumper = 0.36
 
     centre_airship_distance = 2.93
     side_drive_forward_distance = 2.54 - centre_to_front_bumper
-    side_to_wall_distance = 1.62-centre_to_front_bumper+0.4 #.4 added in order to drive hard into wall
+    side_to_wall_distance = 1.62-centre_to_front_bumper+0.4  # .4 added in order to drive hard into wall
     side_rotate_angle = math.pi/3.0
     rotate_radius = 0.7
     rotate_linear_velocity = 1
@@ -71,7 +71,7 @@ class PegAutonomous(AutonomousStateMachine):
                 (t1 + rotate_time + t3, self.side_drive_forward_distance + self.rotate_arc_length + self.side_to_wall_distance - 2*self.delta_s, 0)
             ]
             print("Delta S %s, drive_forward_distance sub ds %s, rotate_arc_length %s, rotate_tm %s" % (self.delta_s, self.side_drive_forward_distance-self.delta_s, self.rotate_arc_length, rotate_time))
-            self.gear_mech_on = int((t3)/self.dt) # Segments left when gear mech enabled
+            self.gear_mech_on = int(t3/self.dt) # Segments left when gear mech enabled
             if self.target is Targets.Left:
                 perpendicular_heading = -self.side_rotate_angle
             else:
@@ -121,9 +121,9 @@ class PegAutonomous(AutonomousStateMachine):
     @state
     def deploying_gear(self, initial_call):
         gear_state = self.manipulategear.current_state
-        if initial_call and self.manipulategear.current_state == "align_peg":
+        if initial_call and gear_state == "align_peg":
             self.manipulategear.engage(initial_state="forward_closed", force=True)
-        elif self.manipulategear.current_state == "forward_open":
+        elif gear_state == "forward_open":
             self.done()
 
     def done(self):
@@ -132,21 +132,24 @@ class PegAutonomous(AutonomousStateMachine):
 
 
 class LeftPegCurves(PegAutonomous):
-    # MODE_NAME = "Left Peg Curves"
+    MODE_NAME = "Left Peg Curves"
+    DISABLED = True
 
     def __init__(self):
         super().__init__(Targets.Left)
 
 
 class RightPegCurves(PegAutonomous):
-    # MODE_NAME = "Right Peg Curves"
+    MODE_NAME = "Right Peg Curves"
+    DISABLED = True
 
     def __init__(self):
         super().__init__(Targets.Right)
 
 
 class CentrePegCurves(PegAutonomous):
-    # MODE_NAME = "Centre Peg Curves"
+    MODE_NAME = "Centre Peg Curves"
+    DISABLED = True
 
     def __init__(self):
         super().__init__(Targets.Centre)

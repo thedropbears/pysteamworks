@@ -1,21 +1,22 @@
-import struct
-
 """Contains code that lets us test the BNO code"""
+
+import math
+import struct
 
 from hal_impl.i2c_helpers import I2CSimBase
 from .bno055 import BNO055
 
 class BNO055Sim(I2CSimBase):
-    heading = 3.14159 / 2.0
-    pitch = -3.14159 / 8.0
+    heading = math.pi / 2.0
+    pitch = -math.pi / 8.0
     roll = 0.01
 
     def transactionI2C(self, port, device_address, data_to_send, send_size, data_received, receive_size):
         '''
             To give data back use ``data_received``::
-            
+
                 data_received[:] = [1,2,3...]
-            
+
             :returns: number of bytes returned
         '''
 

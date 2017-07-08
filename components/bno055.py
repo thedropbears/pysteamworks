@@ -1,10 +1,6 @@
-from wpilib import I2C
-from wpilib.interfaces import PIDSource
-from wpilib import GyroBase
+from wpilib import GyroBase, I2C
 import hal
 import math
-
-import logging
 
 """This is the code to read and write from the BNO055 IMU that we use.
 An IMU, or Inertial Measurement Unit, is a device that takes data from
@@ -18,21 +14,17 @@ class BNO055(GyroBase):
 
     def __init__(self, port=None, address=None):
         super().__init__()
-        self.address = address
-        self.port = port
-        if self.address is None:
-            self.address = self.BNO055_ADDRESS_A
+        if address is None:
+            address = self.BNO055_ADDRESS_A
         if port is None:
             port = I2C.Port.kMXP
-
-        self.logger = logging.getLogger("gyro")
 
         sim_port = None
         if hal.HALIsSimulation():
             from .bno055_sim import BNO055Sim
             sim_port = BNO055Sim()
 
-        self.i2c = I2C(port, self.address, sim_port)
+        self.i2c = I2C(port, address, sim_port)
 
         # set the units that we want
         self.offset = 0.0

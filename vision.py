@@ -103,7 +103,7 @@ def find_target(img, lower=np.array([110//2, 10*255//100, 15*255//100]), upper=n
         areas_x.append(moments['m10']/moments['m00'])
         cv2.drawContours(res, (contour, ), -1, (255, 0, 0), 1)
     if len(areas) > 0:
-        cv2.line(res, (int(x_coord), 60), (int(x_coord), 180), (255,255,0), thickness=2, lineType=8, shift=0)
+        cv2.line(res, (int(x_coord), 60), (int(x_coord), 180), (255, 255, 0), thickness=2, lineType=8, shift=0)
     target_sep = 0
     if len(areas_x) > 1:
         # target sep returned as a % of image width, not in vision coordinates

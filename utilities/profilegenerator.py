@@ -18,22 +18,24 @@ def cubic_generator(keypoints):
     for idx in range(len(keypoints)-1):
         start = keypoints[idx]
         finish = keypoints[idx+1]
-        tf = finish[0]-start[0]
+        tf = finish[0] - start[0]
         d0, v0 = start[1:3]
         df, vf = finish[1:3]
         coefficients.append((start[0], finish[0],
             (d0, v0,
-                3/tf**2*(df-d0)-2*v0/tf-vf/tf,
-                -2/tf**3*(df-d0)+(vf+v0)/tf**2)))
+                3/tf**2*(df-d0) - 2*v0/tf-vf/tf,
+                -2/tf**3*(df-d0) + (vf+v0)/tf**2)))
+
     def trajectory(t):
         for coeff in coefficients:
             if coeff[0] <= t <= coeff[1]:
-                t_rel = t-coeff[0]
+                t_rel = t - coeff[0]
                 c = coeff[2]
-                d = c[0]+c[1]*t_rel+c[2]*t_rel**2+c[3]*t_rel**3
-                v = c[1]+2*c[2]*t_rel+3*c[3]*t_rel**2
-                a = 2*c[2]+6*c[3]*t_rel
-                return (d,v,a)
+                d = c[0] + c[1]*t_rel + c[2]*t_rel**2 + c[3]*t_rel**3
+                v = c[1] + 2*c[2]*t_rel + 3*c[3]*t_rel**2
+                a = 2*c[2] + 6*c[3]*t_rel
+                return d, v, a
+
     return trajectory
 
 def generate_interpolation_trajectory(x_start, x_final, traj_to_match):
@@ -44,14 +46,11 @@ def generate_interpolation_trajectory(x_start, x_final, traj_to_match):
     """
     x = x_final - x_start
 
-    direction = sign(x)
-
     vel = 50*x/len(traj_to_match)
 
     num_segments = len(traj_to_match)
-    segments = [(x_start+x*i/num_segments, vel, 0) for i in range(0, num_segments)]
+    segments = [(x_start+x*i/num_segments, vel, 0) for i in range(num_segments)]
     return segments
-
 
 def generate_trapezoidal_trajectory(
         x_start, v_start, x_final, v_final, v_max, a_pos, a_neg, frequency):
@@ -59,14 +58,13 @@ def generate_trapezoidal_trajectory(
 
     :returns: a list of (pos, vel acc) tuples
     """
-    direction = sign(x_final-x_start)
-
     # area under the velocity-time trapezoid
     x = x_final - x_start
+    direction = sign(x)
 
-    v_max = abs(v_max)*direction
-    a_pos = abs(a_pos)*direction
-    a_neg = -abs(a_neg)*direction
+    v_max = abs(v_max) * direction
+    a_pos = abs(a_pos) * direction
+    a_neg = -abs(a_neg) * direction
 
     if x == 0:
         return [(x_start, v_start, 0.0)]
@@ -99,19 +97,19 @@ def generate_trapezoidal_trajectory(
     num_segments = int(t_cruise * frequency)
     segments = []
     if num_segments > 0:
-        for i in range(0, num_segments+1):
+        for i in range(num_segments+1):
             # velocity in the current timestep
-            v = (v_max-v_start)*i/num_segments+v_start
+            v = (v_max-v_start)*i/num_segments + v_start
             segments.append((
-                    x_start+((v+v_start)/2)*t_cruise*i/num_segments,
-                    v, a_pos))
+                x_start + (v+v_start)/2*t_cruise*i/num_segments,
+                v, a_pos))
 
     # interpolate along the cruise section of the path
     # do it as a list comprehension so that it runs faster
     num_segments = int(t_decel*frequency - num_segments)
     segments += [(
-        (x_start+x_cruise + v_max * (t_decel-t_cruise) * i / num_segments),
-                  v_max, 0) for i in range(1, num_segments+1)]
+        (x_start + x_cruise + v_max * (t_decel-t_cruise) * i / num_segments),
+        v_max, 0) for i in range(1, num_segments+1)]
 
     # interpolate along the deceleration portion of the path
     num_segments = int((t_f-t_decel)*frequency)
