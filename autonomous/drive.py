@@ -1,4 +1,5 @@
 import numpy as np
+from magicbot import MagicRobot
 from magicbot.state_machine import AutonomousStateMachine, state
 
 from automations.profilefollower import ProfileFollower
@@ -18,7 +19,7 @@ class DriveForwardAutonomous(AutonomousStateMachine):
 
     centre_to_front_bumper = 0.49
     centre_airship_distance = 2.93
-    dt = 0.02
+    dt = MagicRobot.control_loop_wait_time
 
     def generate_trajectories(self):
         t1 = 1.5

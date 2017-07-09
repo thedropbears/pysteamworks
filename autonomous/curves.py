@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+from magicbot import MagicRobot
 from magicbot.state_machine import AutonomousStateMachine, state
 from networktables import NetworkTable
 
@@ -46,7 +47,7 @@ class PegAutonomous(AutonomousStateMachine):
     delta_s = abs(rotate_radius*math.tan(side_rotate_angle/2))
     rotate_arc_length = rotate_radius * side_rotate_angle
 
-    dt = 0.02
+    dt = MagicRobot.control_loop_wait_time
 
     def __init__(self, target):
         super().__init__()

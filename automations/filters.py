@@ -24,7 +24,7 @@ class RangeFilter:
     # the encoder noise
     odometry_variance = 1e-3
 
-    loop_dt = 1/50
+    loop_dt = MagicRobot.control_loop_wait_time
 
     reset_thresh = 0.5
 
@@ -137,7 +137,7 @@ class VisionFilter:
     # the variance in the unknown acceleration impulse
     acceleration_variance = 9
 
-    loop_dt = 1/50
+    loop_dt = MagicRobot.control_loop_wait_time
 
     reset_thresh = 0.2
 
