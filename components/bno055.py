@@ -268,11 +268,11 @@ class BNO055(GyroBase):
         return self.getHeading()
 
     def getAngles(self):
-        """ Return the [heading, pitch, roll] of the gyro """
-        return [self.getHeading(), self.getPitch(), self.getRoll()]
+        """ Return the (heading, pitch, roll) of the gyro """
+        return self.getHeading(), self.getPitch(), self.getRoll()
 
     def getHeading(self):
-        angle = (self.getRawHeading() - self.offset)
+        angle = self.getRawHeading() - self.offset
         return math.atan2(math.sin(angle), math.cos(angle))
 
     def getRawHeading(self):
