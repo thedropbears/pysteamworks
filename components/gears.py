@@ -2,7 +2,6 @@ import wpilib
 from ctre import CANTalon
 from networktables import NetworkTable
 
-#from components.vision import Vision
 from automations.filters import VisionFilter
 
 
@@ -11,7 +10,6 @@ class GearAligner:
     # robot (so not in __init__)
     motor = CANTalon
     sd = NetworkTable
-    #vision = Vision
     vision_filter = VisionFilter
 
     r_pos = -230 - 50
@@ -42,7 +40,6 @@ class GearAligner:
         self.motor.reverseSensor(True)
 
     def align(self):
-        # self.set_position(self.get_rail_pos()+self.vision.x)
         self.set_position(self.get_rail_pos()+self.vision_filter.x+self.vision_filter.dx*self.setpoint_leading_timesteps/50)
 
     def move_left(self):
