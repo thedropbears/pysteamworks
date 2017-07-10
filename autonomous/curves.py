@@ -13,7 +13,7 @@ from components.chassis import Chassis
 from components.gears import GearAligner, GearDepositor
 from components.range_finder import RangeFinder
 from components.vision import Vision
-from utilities.profilegenerator import cubic_generator
+from utilities.profilegenerator import generate_cubic_trajectory
 
 
 class Targets:
@@ -82,10 +82,7 @@ class PegAutonomous(AutonomousStateMachine):
             self.heading_trajectory += [(x, heading_rate, 0) for x in np.arange(0, rotate_time, self.dt) * heading_rate]
             self.heading_trajectory += [(perpendicular_heading, 0, 0)] * int(t3/self.dt)
 
-        self.distance_trajectory = []
-        cubic = cubic_generator(distance_keypoints)
-        for t in np.arange(0, distance_keypoints[-1][0], self.dt):
-            self.distance_trajectory.append(cubic(t))
+        self.distance_trajectory = generate_cubic_trajectory(distance_keypoints, self.dt)
         # print("Distance Traj Len %s, Heading Traj Len %s" % (len(self.distance_trajectory), len(self.heading_trajectory)))
         # print("Distance trajectory", self.distance_trajectory[int(t1/self.dt)])
         # print("Heading trajectory", self.heading_trajectory[int(t1/self.dt)])

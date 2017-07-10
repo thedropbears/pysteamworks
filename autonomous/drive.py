@@ -1,11 +1,10 @@
-import numpy as np
 from magicbot import MagicRobot
 from magicbot.state_machine import AutonomousStateMachine, state
 
 from automations.profilefollower import ProfileFollower
 from components.bno055 import BNO055
 from components.gears import GearDepositor
-from utilities.profilegenerator import cubic_generator
+from utilities.profilegenerator import generate_cubic_trajectory
 
 
 class DriveForwardAutonomous(AutonomousStateMachine):
@@ -27,8 +26,7 @@ class DriveForwardAutonomous(AutonomousStateMachine):
             (0, 0, 0),
             (t1, self.centre_airship_distance - 2*self.centre_to_front_bumper, 0)
         ]
-        cubic = cubic_generator(distance_keypoints)
-        self.distance_trajectory = [cubic(t) for t in np.arange(0, distance_keypoints[-1][0], self.dt)]
+        self.distance_trajectory = generate_cubic_trajectory(distance_keypoints, self.dt)
 
     def on_enable(self):
         super().on_enable()
