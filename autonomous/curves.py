@@ -16,12 +16,6 @@ from components.vision import Vision
 from utilities.profilegenerator import generate_cubic_trajectory
 
 
-class Targets:
-    Left = 0
-    Centre = 1
-    Right = 2
-
-
 class PegAutonomous(AutonomousStateMachine):
     # Injectables
     bno055 = BNO055
@@ -49,39 +43,23 @@ class PegAutonomous(AutonomousStateMachine):
 
     dt = MagicRobot.control_loop_wait_time
 
-    def __init__(self, target):
-        super().__init__()
-        self.target = target
-
     def generate_trajectories(self):
-        if self.target is Targets.Centre:
-            t1 = 1.5
-            perpendicular_heading = 0
-            distance_keypoints = [(0, 0, 0),
-                (t1, self.centre_airship_distance - 2*self.centre_to_front_bumper, 0)]
-            self.gear_mech_on = t1/self.dt # Segments left when gear mech enabled
-            self.heading_trajectory = [(0, 0, 0)] * int(t1/self.dt)
-        else:
-            t1 = 1.5  # s, time for segment 1
-            rotate_time = self.rotate_arc_length/self.rotate_linear_velocity
-            t3 = 2.5 # s, time for segment 3
-            distance_keypoints = [
-                (0, 0, 0),
-                (t1, self.side_drive_forward_distance-self.delta_s, self.rotate_linear_velocity),
-                (t1 + rotate_time, self.side_drive_forward_distance - self.delta_s + self.rotate_arc_length, self.rotate_linear_velocity),
-                (t1 + rotate_time + t3, self.side_drive_forward_distance + self.rotate_arc_length + self.side_to_wall_distance - 2*self.delta_s, 0)
-            ]
-            print("Delta S %s, drive_forward_distance sub ds %s, rotate_arc_length %s, rotate_tm %s" % (self.delta_s, self.side_drive_forward_distance-self.delta_s, self.rotate_arc_length, rotate_time))
-            self.gear_mech_on = int(t3/self.dt) # Segments left when gear mech enabled
-            if self.target is Targets.Left:
-                perpendicular_heading = -self.side_rotate_angle
-            else:
-                perpendicular_heading = self.side_rotate_angle
-            heading_rate = perpendicular_heading / rotate_time
-            self.heading_trajectory = [(0, 0, 0)] * int(t1/self.dt)
-            self.heading_trajectory += [(x, heading_rate, 0) for x in np.arange(0, rotate_time, self.dt) * heading_rate]
-            self.heading_trajectory += [(perpendicular_heading, 0, 0)] * int(t3/self.dt)
-
+        t1 = 1.5  # s, time for segment 1
+        rotate_time = self.rotate_arc_length/self.rotate_linear_velocity
+        t3 = 2.5  # s, time for segment 3
+        distance_keypoints = [
+            (0, 0, 0),
+            (t1, self.side_drive_forward_distance-self.delta_s, self.rotate_linear_velocity),
+            (t1 + rotate_time, self.side_drive_forward_distance - self.delta_s + self.rotate_arc_length, self.rotate_linear_velocity),
+            (t1 + rotate_time + t3, self.side_drive_forward_distance + self.rotate_arc_length + self.side_to_wall_distance - 2*self.delta_s, 0)
+        ]
+        self.logger.info("ds %s, drive_forward_dist-ds %s, rotate_arc_length %s, rotate_tm %s",
+            self.delta_s, self.side_drive_forward_distance-self.delta_s, self.rotate_arc_length, rotate_time)
+        self.gear_mech_on = int(t3/self.dt) # Segments left when gear mech enabled
+        heading_rate = self.perpendicular_heading / rotate_time
+        self.heading_trajectory = [(0, 0, 0)] * int(t1/self.dt)
+        self.heading_trajectory += [(x, heading_rate, 0) for x in np.arange(0, rotate_time, self.dt) * heading_rate]
+        self.heading_trajectory += [(self.perpendicular_heading, 0, 0)] * int(t3/self.dt)
         self.distance_trajectory = generate_cubic_trajectory(distance_keypoints, self.dt)
         # print("Distance Traj Len %s, Heading Traj Len %s" % (len(self.distance_trajectory), len(self.heading_trajectory)))
         # print("Distance trajectory", self.distance_trajectory[int(t1/self.dt)])
@@ -134,7 +112,8 @@ class LeftPegCurves(PegAutonomous):
     DISABLED = True
 
     def __init__(self):
-        super().__init__(Targets.Left)
+        super().__init__()
+        self.perpendicular_heading = -self.side_rotate_angle
 
 
 class RightPegCurves(PegAutonomous):
@@ -142,12 +121,18 @@ class RightPegCurves(PegAutonomous):
     DISABLED = True
 
     def __init__(self):
-        super().__init__(Targets.Right)
+        super().__init__()
+        self.perpendicular_heading = self.side_rotate_angle
 
 
 class CentrePegCurves(PegAutonomous):
     MODE_NAME = "Centre Peg Curves"
     DISABLED = True
 
-    def __init__(self):
-        super().__init__(Targets.Centre)
+    def generate_trajectories(self):
+        t1 = 1.5
+        distance_keypoints = [(0, 0, 0),
+            (t1, self.centre_airship_distance - 2*self.centre_to_front_bumper, 0)]
+        self.gear_mech_on = t1/self.dt # Segments left when gear mech enabled
+        self.heading_trajectory = [(0, 0, 0)] * int(t1/self.dt)
+        self.distance_trajectory = generate_cubic_trajectory(distance_keypoints, self.dt)
