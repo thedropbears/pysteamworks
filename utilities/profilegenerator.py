@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 def sign(x):
     if x >= 0:
@@ -37,6 +38,16 @@ def cubic_generator(keypoints):
                 return d, v, a
 
     return trajectory
+
+def generate_cubic_trajectory(keypoints, dt):
+    """Generate a 1d cubic profile.
+
+    :param keypoints: a list of (time, distance, speed) tuples
+    :param dt: the rate of time per profile keypoint required
+    :returns: a list of (distance, speed, accel) tuples
+    """
+    cubic = cubic_generator(keypoints)
+    return [cubic(t) for t in np.arange(0, keypoints[-1][0], dt)]
 
 def generate_interpolation_trajectory(x_start, x_final, traj_to_match):
     """Generate a 1d interpolation profile, where the velocity is constant
