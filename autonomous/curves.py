@@ -109,7 +109,7 @@ class PegAutonomous(AutonomousStateMachine):
 
 class LeftPegCurves(PegAutonomous):
     MODE_NAME = "Left Peg Curves"
-    DISABLED = True
+    #DISABLED = True
 
     def __init__(self):
         super().__init__()
@@ -118,7 +118,7 @@ class LeftPegCurves(PegAutonomous):
 
 class RightPegCurves(PegAutonomous):
     MODE_NAME = "Right Peg Curves"
-    DISABLED = True
+    #DISABLED = True
 
     def __init__(self):
         super().__init__()
@@ -127,7 +127,7 @@ class RightPegCurves(PegAutonomous):
 
 class CentrePegCurves(PegAutonomous):
     MODE_NAME = "Centre Peg Curves"
-    DISABLED = True
+    #DISABLED = True
 
     def generate_trajectories(self):
         t1 = 1.5
