@@ -197,7 +197,7 @@ class Robot(magicbot.MagicRobot):
             if self.joystick_buttons[4].get():
                 if self.winch_automation.is_executing:
                     self.winch_automation.done()
-                self.winch.rotate_winch(0)
+                self.winch.rotate(0)
 
         # force the winch motor to spin at max speed, and close the piston
         # that holds the rope in place
@@ -205,8 +205,8 @@ class Robot(magicbot.MagicRobot):
             if self.joystick_buttons[5].get():
                 if self.winch_automation.is_executing:
                     self.winch_automation.done()
-                self.winch.rotate_winch(1.0)
-                self.winch.piston_close()
+                self.winch.rotate(1.0)
+                self.winch.close_piston()
 
         # toggle the position of the winch piston
         with self.consumeExceptions():
