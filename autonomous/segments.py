@@ -80,70 +80,10 @@ class PegAutonomous(AutonomousStateMachine):
                 self.rotate_accel_speed, -self.rotate_accel_speed,
                 self.chassis.motion_profile_freq)
             self.profilefollower.modify_queue(heading=rotate, overwrite=True)
-            print("Rotate Start %s, Rotate End %s" % (rotate[0], rotate[-1]))
+            self.logger.info("Rotate Start %s, End %s", rotate[0], rotate[-1])
             self.profilefollower.execute_queue()
         if not self.profilefollower.executing:
             self.next_state("rotate_towards_peg")
-
-    @state
-    def measure_position(self, initial_call):
-        if initial_call:
-            # use unfiltered vision here
-            if self.vision.x != 0.0:
-                measure_trajectory = generate_trapezoidal_trajectory(
-                    self.bno055.getHeading(), 0,
-                    self.bno055.getHeading() + self.vision_filter.angle, 0,
-                    self.rotate_velocity, self.rotate_accel_speed, -self.rotate_accel_speed/2,
-                    self.chassis.motion_profile_freq)
-                print(self.vision.derive_vision_angle())
-                print("vision_x %s, vision_angle %s, heading %s, heading_start %s, heading_end %s" % (
-                    self.vision.x, self.vision.derive_vision_angle(), self.bno055.getHeading(), measure_trajectory[0][0], measure_trajectory[-1][0]))
-                self.profilefollower.modify_queue(heading=measure_trajectory, overwrite=True)
-                self.profilefollower.execute_queue()
-        if not self.profilefollower.executing:
-            # now measure our position relative to the targets
-            r = (self.range_filter.range + self.centre_to_front_bumper
-                 - self.lidar_to_front_bumper)
-            current_heading = self.bno055.getHeading() + self.vision.derive_vision_angle()
-
-            self.displacement_error = -(
-                r * math.sin(current_heading - self.perpendicular_heading)
-                / math.sin(math.pi - current_heading))
-            print("vision_x: %s, range: %s, heading %s, displacement_error %s, raw_range %s" %
-                  (self.vision.x, r, current_heading, self.displacement_error, self.range_finder.getDistance()))
-
-            if abs(self.displacement_error) < self.peg_align_tolerance:
-                print("WITHIN TOLERANCE, SKIPPING...")
-                self.next_state("rotate_towards_peg")
-            else:
-                self.next_state("rotate_straight")
-
-    @state
-    def rotate_straight(self, initial_call):
-        # Drive from the range that vision and the lidar can detect the wall
-        # to the wall itself
-        if initial_call:
-            current_heading = self.bno055.getHeading()
-            self.rotate_to_correct = generate_trapezoidal_trajectory(
-                current_heading, 0, 0, 0, self.rotate_velocity,
-                self.rotate_accel_speed, -self.rotate_accel_speed/2,
-                self.chassis.motion_profile_freq)
-            self.profilefollower.modify_queue(heading=self.rotate_to_correct)
-            self.profilefollower.execute_queue()
-        if not self.profilefollower.executing:
-            self.next_state("drive_align_segment")
-
-    @state
-    def drive_align_segment(self, initial_call):
-        if initial_call:
-            displacement_correction = generate_trapezoidal_trajectory(
-                0, 0, self.displacement_error, 0, self.displace_velocity,
-                self.displace_accel, -self.displace_decel,
-                self.chassis.motion_profile_freq)
-            self.profilefollower.modify_queue(0, linear=displacement_correction)
-            self.profilefollower.execute_queue()
-        if not self.profilefollower.executing:
-            self.next_state("rotate_towards_airship")
 
     @state
     def rotate_towards_peg(self, initial_call):
@@ -154,8 +94,8 @@ class PegAutonomous(AutonomousStateMachine):
                     self.bno055.getHeading() + self.vision.derive_vision_angle(), 0,
                     self.rotate_velocity, self.rotate_accel_speed, -self.rotate_accel_speed/2,
                     Chassis.motion_profile_freq)
-                print("vision_x %s, vision_angle %s, heading %s, heading_start %s, heading_end %s" % (
-                    self.vision.x, self.vision.derive_vision_angle(), self.bno055.getHeading(), measure_trajectory[0][0], measure_trajectory[-1][0]))
+                self.logger.info("vision_x %s, vision_angle %s, heading %s, heading_start %s, heading_end %s",
+                    self.vision.x, self.vision.derive_vision_angle(), self.bno055.getHeading(), measure_trajectory[0][0], measure_trajectory[-1][0])
                 self.profilefollower.modify_queue(heading=measure_trajectory, overwrite=True)
                 self.profilefollower.execute_queue()
                 # self.done()
@@ -168,8 +108,8 @@ class PegAutonomous(AutonomousStateMachine):
             self.profilefollower.stop()
             peg_range = self.peg_range - self.centre_to_front_bumper + 0.3
             r = self.range_filter.range
-            print("AUTO DRIVE WALL RANGE: %s" % (self.range_finder.getDistance()))
-            print("AUTO DRIVE WALL FILTER RANGE: %s" % (self.range_filter.range))
+            self.logger.info("DRIVE WALL RANGE: %s", self.range_finder.getDistance())
+            self.logger.info("DRIVE WALL FILTER RANGE: %s", self.range_filter.range)
             # 40 is range finder max distance, better failure mode than inf or really small
             if not math.isfinite(r):
                 r = 40
@@ -177,13 +117,13 @@ class PegAutonomous(AutonomousStateMachine):
                 r = 40
             to_peg = None
             if r > self.dead_reckon_range:
-                print("DEAD RECKON AUTO")
+                self.logger.info("DEAD RECKON AUTO")
                 to_peg = generate_trapezoidal_trajectory(
                     0, 0, peg_range + 0.1, 0, self.displace_velocity,
                     self.displace_accel, -self.displace_decel,
                     Chassis.motion_profile_freq)
             else:
-                print("RANGE AUTO")
+                self.logger.info("RANGE AUTO")
                 to_peg = generate_trapezoidal_trajectory(0, 0,
                     self.range_finder.getDistance() - self.lidar_to_front_bumper + 0.1,
                     0, self.displace_velocity, self.displace_accel, -self.displace_decel,
@@ -246,7 +186,8 @@ class CentrePeg(PegAutonomous):
     @state(first=True)
     def drive_to_airship(self):
         # Override the initial state here to immediately go to the state we want
-        self.next_state('drive_to_wall')
+        # Use next_state_now to avoid wasting a control loop iteration
+        self.next_state_now("drive_to_wall")
 
 
 class RightPeg(PegAutonomous):
