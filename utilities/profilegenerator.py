@@ -67,41 +67,40 @@ def generate_trapezoidal_trajectory(
         x_start, v_start, x_final, v_final, v_max, a_pos, a_neg, frequency):
     """Generate a 1d trapezoidal profile.
 
-    :returns: a list of (pos, vel acc) tuples
+    :returns: a list of (pos, vel, acc) tuples
     """
     # area under the velocity-time trapezoid
     x = x_final - x_start
-    direction = sign(x)
-
-    v_max = abs(v_max) * direction
-    a_pos = abs(a_pos) * direction
-    a_neg = -abs(a_neg) * direction
-
     if x == 0:
         return [(x_start, v_start, 0.0)]
+
+    direction = sign(x)
+    a_pos = abs(a_pos) * direction
+    a_neg = -abs(a_neg) * direction
 
     # find the max reachable velocity if we spend all our time accelerating
     # and decelerating. Used as max velocity in cases where we don't hit the
     # robot's top speed
-    triangular_max = direction * math.sqrt(
-            (2*x*a_pos*a_neg+a_neg*v_start**2-a_pos*v_final**2)/(a_neg-a_pos))
-    v_max = direction * min(abs(v_max), abs(triangular_max))
+    triangular_max = math.sqrt(
+        (2*x*a_pos*a_neg + a_neg*v_start**2 - a_pos*v_final**2) / (a_neg-a_pos))
+    v_max = direction * min(abs(v_max), triangular_max)
 
+    # total acceleration when we hit v_max
+    dv_cruise = v_max - v_start
     # time (since the start of the trajectory) that we hit v_max
-    t_cruise = (v_max - v_start)/a_pos
+    t_cruise = dv_cruise / a_pos
     # distance we have travelled once we hit v_max
-    x_cruise = t_cruise*(v_start + v_max)/2
+    x_cruise = t_cruise * (v_start+v_max) / 2
+    # total acceleration after cruising at v_max
+    dv_slow = v_final - v_max
     # time it takes to slow down to v_final
-    t_slow = (v_final - v_max)/a_neg
+    t_slow = dv_slow / a_neg
     # time at which we start decelerating
-    t_decel = (x-t_cruise*(v_start + v_max)/2
-            - t_slow*(v_final + v_max)/2)/v_max + t_cruise
+    t_decel = (x - x_cruise - t_slow*(v_final+v_max)/2) / v_max + t_cruise
     # how long we are cruising at v_max for (flat part of the trapezoid)
     t_constant = t_decel - t_cruise
     # how far we have travelled since the start when we start decelerating
     x_decel = x_cruise + v_max*t_constant
-    # time at which we finish the trajetory
-    t_f = t_decel + t_slow
 
     # interpolate the first (acceleration) portion of the path
     # number of discrete segments we pass through
@@ -110,7 +109,7 @@ def generate_trapezoidal_trajectory(
     if num_segments > 0:
         for i in range(num_segments+1):
             # velocity in the current timestep
-            v = (v_max-v_start)*i/num_segments + v_start
+            v = dv_cruise*i/num_segments + v_start
             segments.append((
                 x_start + (v+v_start)/2*t_cruise*i/num_segments,
                 v, a_pos))
@@ -119,15 +118,15 @@ def generate_trapezoidal_trajectory(
     # do it as a list comprehension so that it runs faster
     num_segments = int(t_decel*frequency - num_segments)
     segments += [(
-        (x_start + x_cruise + v_max * (t_decel-t_cruise) * i / num_segments),
+        (x_start + x_cruise + v_max * t_constant*i/num_segments),
         v_max, 0) for i in range(1, num_segments+1)]
 
     # interpolate along the deceleration portion of the path
-    num_segments = int((t_f-t_decel)*frequency)
+    num_segments = int(t_slow * frequency)
     for i in range(1, num_segments+1):
-        v = v_max - (v_max-v_final) * i/num_segments
+        v = v_max + dv_slow * i/num_segments
         segments.append((
-            x_start + x_decel + (v+v_max)/2 * (t_f-t_decel) * i/num_segments,
+            x_start + x_decel + (v+v_max)/2 * t_slow*i/num_segments,
             v, a_neg))
 
     return segments
