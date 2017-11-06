@@ -1,5 +1,5 @@
-from components.bno055 import BNO055
-from components.bno055_sim import BNO055Sim
+from utilities.bno055 import BNO055
+from utilities.bno055_sim import BNO055Sim
 
 epsilon = 0.01
 

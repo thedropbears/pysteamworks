@@ -4,10 +4,10 @@ import time
 import numpy as np
 from magicbot import MagicRobot
 
-from components.bno055 import BNO055
 from components.chassis import Chassis
 from components.range_finder import RangeFinder
 from components.vision import Vision
+from utilities.bno055 import BNO055
 from utilities.kalman import Kalman
 
 

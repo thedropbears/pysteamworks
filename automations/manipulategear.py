@@ -3,11 +3,11 @@ from networktables import NetworkTable
 
 from automations.filters import RangeFilter, VisionFilter
 from automations.profilefollower import ProfileFollower
-from components.bno055 import BNO055
 from components.chassis import Chassis
 from components.gears import GearAligner, GearDepositor
 from components.range_finder import RangeFinder
 from components.vision import Vision
+from utilities.bno055 import BNO055
 from utilities.profilegenerator import generate_trapezoidal_trajectory
 
 

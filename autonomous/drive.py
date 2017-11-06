@@ -2,8 +2,8 @@ from magicbot import MagicRobot
 from magicbot.state_machine import AutonomousStateMachine, state
 
 from automations.profilefollower import ProfileFollower
-from components.bno055 import BNO055
 from components.gears import GearDepositor
+from utilities.bno055 import BNO055
 from utilities.profilegenerator import generate_cubic_trajectory
 
 

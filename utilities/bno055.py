@@ -1,9 +1,11 @@
 """This is the code to read and write from the BNO055 IMU that we use.
+
 An IMU, or Inertial Measurement Unit, is a device that takes data from
 3 accelerometers and 3 gyros (for the 3 different axis) and converts it
 into your orientation in 3 dimensions. We use this in order to get our
 heading on the field, which is useful for *field orienting* the robot
-as well as holding our heading."""
+as well as holding our heading.
+"""
 
 import enum
 import math
@@ -240,21 +242,21 @@ class BNO055(GyroBase):
         self.setOperationMode(self.OperationMode.IMUPLUS)  # accelerometer and gyro
         self.reverse_axis(False, False, False)
 
-    def reverse_axis(self, x, y, z):
-        """Reverse the axis directions, xyz are booleans"""
+    def reverse_axis(self, x: bool, y: bool, z: bool):
+        """Reverse the specified axis directions."""
         current_directions = self.i2c.read(self.Address.AXIS_MAP_SIGN, 1)[0]
         if x:
-            current_directions = current_directions | (1 << 2)
+            current_directions |= (1 << 2)
         else:
-            current_directions = current_directions & ~(1 << 2)
+            current_directions &= ~(1 << 2)
         if y:
-            current_directions = current_directions | (1 << 1)
+            current_directions |= (1 << 1)
         else:
-            current_directions = current_directions & ~(1 << 1)
+            current_directions &= ~(1 << 1)
         if z:
-            current_directions = current_directions | (1 << 0)
+            current_directions |= (1 << 0)
         else:
-            current_directions = current_directions & ~(1 << 0)
+            current_directions &= ~(1 << 0)
         self.i2c.write(self.Address.AXIS_MAP_SIGN, current_directions)
 
     def setOperationMode(self, mode):
@@ -268,7 +270,7 @@ class BNO055(GyroBase):
         return self.getHeading()
 
     def getAngles(self):
-        """ Return the (heading, pitch, roll) of the gyro """
+        """Return the (heading, pitch, roll) of the gyro"""
         return self.getHeading(), self.getPitch(), self.getRoll()
 
     def getHeading(self):
@@ -294,6 +296,3 @@ class BNO055(GyroBase):
 
     def resetHeading(self, heading=0):
         self.offset = self.getRawHeading() - heading
-
-    def execute(self):
-        pass  # Keep MagicBot happy!

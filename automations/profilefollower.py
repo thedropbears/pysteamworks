@@ -1,9 +1,10 @@
 import math
 from collections import deque
+
 from networktables import NetworkTable
 
-from components.bno055 import BNO055
 from components.chassis import Chassis
+from utilities.bno055 import BNO055
 
 
 class ProfileFollower:

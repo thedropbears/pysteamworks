@@ -10,7 +10,6 @@ from ctre import CANTalon
 from robotpy_ext.control.button_debouncer import ButtonDebouncer
 from networktables import NetworkTable
 
-from components.bno055 import BNO055
 from components.chassis import Chassis
 from components.gears import GearAligner, GearDepositor
 from components.range_finder import RangeFinder
@@ -20,6 +19,7 @@ from automations.filters import RangeFilter, VisionFilter
 from automations.manipulategear import ManipulateGear
 from automations.profilefollower import ProfileFollower
 from automations.winch import WinchAutomation
+from utilities.bno055 import BNO055
 
 
 class Robot(magicbot.MagicRobot):
