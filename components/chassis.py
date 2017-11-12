@@ -48,7 +48,7 @@ class Chassis:
         self.compressor_enabled = True
 
     def setup(self):
-        """Setup the motors"""
+        """Set up the motors."""
 
         self.motors = [
             self.drive_motor_a,
@@ -101,29 +101,29 @@ class Chassis:
         self.input_enabled = True
 
     def enable_input(self):
-        """Enable operator control of chassis"""
+        """Enable operator control of chassis."""
         self.input_enabled = True
 
     def disable_input(self):
-        """Disable operator control of chassis"""
+        """Disable operator control of chassis."""
         self.input_enabled = False
 
     def set_enc_pos(self, left=0, right=0):
-        """Reset the encoder positions to a certain value"""
+        """Reset the encoder offsets to specified values."""
         self.offset_positions = [
             self.motors[0].getPosition()/self.counts_per_meter + left,
             self.motors[2].getPosition()/self.counts_per_meter - right
         ]
 
     def get_wheel_distances(self):
-        """Return the distances that the wheels have travelled, minus the offset"""
+        """Get the distances the wheels have travelled, minus the offset."""
         return [
             self.motors[0].getPosition()/self.counts_per_meter-self.offset_positions[0],
             -self.motors[2].getPosition()/self.counts_per_meter-self.offset_positions[1]
         ]
 
     def get_raw_wheel_distances(self):
-        """Return the raw distances that the wheels have travelled"""
+        """Get the raw distances the wheels have travelled."""
         return [self.motors[0].getPosition() / self.counts_per_meter,
                 -self.motors[2].getPosition() / self.counts_per_meter]
 
@@ -135,12 +135,14 @@ class Chassis:
         ]
 
     def get_velocity(self):
-        """Return the average velocity of the left and right sides of robot"""
+        """Get the average velocity of the wheels of the robot."""
         return sum(self.get_velocities()) / 2
 
     def set_velocity(self, linear, angular):
-        """ Function to allow the motion profiling code to set the speed
-        setpoints of the chassis.
+        """Set the speed setpoints of the chassis.
+
+        Primarily for the motion profiling code.
+
         :param linear: linear speed setpoint for the robot. m/s
         :param angular: angular velocity setpoint for the robot. rad/s
         """

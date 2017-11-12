@@ -10,31 +10,26 @@ def sign(x):
 def cubic_generator(keypoints):
     """Return a function that returns the distance and speed at a given time.
 
-    :args: a list of (time, distance, speed) tuples.
+    :param keypoints: a list of (time, distance, speed) tuples.
     """
-
     # Approach taken from Introduction to Robotics: Mechanics, Planning and
     # Control. Craig, 2005.
     coefficients = []
-    for idx in range(len(keypoints)-1):
-        start = keypoints[idx]
-        finish = keypoints[idx+1]
-        tf = finish[0] - start[0]
-        d0, v0 = start[1:3]
-        df, vf = finish[1:3]
-        coefficients.append((start[0], finish[0],
-            (d0, v0,
-                3/tf**2*(df-d0) - 2*v0/tf-vf/tf,
-                -2/tf**3*(df-d0) + (vf+v0)/tf**2)))
+    for (t0, d0, v0), (tf, df, vf) in zip(keypoints, keypoints[1:]):
+        dt = tf - t0
+        dx = df - d0
+        coefficients.append((t0, tf, (d0, v0,
+                3*dx/dt**2 - (2*v0+vf)/dt,
+                -2*dx/dt**3 + (vf+v0)/dt**2)))
 
     def trajectory(t):
         for coeff in coefficients:
             if coeff[0] <= t <= coeff[1]:
                 t_rel = t - coeff[0]
-                c = coeff[2]
-                d = c[0] + c[1]*t_rel + c[2]*t_rel**2 + c[3]*t_rel**3
-                v = c[1] + 2*c[2]*t_rel + 3*c[3]*t_rel**2
-                a = 2*c[2] + 6*c[3]*t_rel
+                c0, c1, c2, c3 = coeff[2]
+                d = c0 + c1*t_rel + c2*t_rel**2 + c3*t_rel**3
+                v = c1 + 2*c2*t_rel + 3*c3*t_rel**2
+                a = 2*c2 + 6*c3*t_rel
                 return d, v, a
 
     return trajectory
@@ -50,18 +45,17 @@ def generate_cubic_trajectory(keypoints, dt):
     return [cubic(t) for t in np.arange(0, keypoints[-1][0], dt)]
 
 def generate_interpolation_trajectory(x_start, x_final, traj_to_match):
-    """Generate a 1d interpolation profile, where the velocity is constant
+    """Generate a 1d interpolation profile.
+
+    Generates a profile where the velocity is constant
     over the duration of the trajectory.
 
-    :returns: a list of (pos, vel acc) tuples.
+    :returns: a list of (pos, vel, acc) tuples.
     """
     x = x_final - x_start
-
-    vel = 50*x/len(traj_to_match)
-
     num_segments = len(traj_to_match)
-    segments = [(x_start+x*i/num_segments, vel, 0) for i in range(num_segments)]
-    return segments
+    vel = 50*x/num_segments
+    return [(x_start + x*i/num_segments, vel, 0) for i in range(num_segments)]
 
 def generate_trapezoidal_trajectory(
         x_start, v_start, x_final, v_final, v_max, a_pos, a_neg, frequency):

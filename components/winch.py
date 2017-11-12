@@ -20,15 +20,15 @@ class Winch:
         return self.motor.getOutputCurrent() > 35
 
     def rotate(self, value):
-        """Rotate winch at specified speed"""
+        """Rotate winch at specified speed."""
         self.motor.set(value)
 
     def open_piston(self):
-        """Open piston"""
+        """Open the rope locking piston."""
         self.locked = False
 
     def close_piston(self):
-        """Close piston"""
+        """Close the rope locking piston."""
         self.locked = True
 
     def disable_compressor(self):

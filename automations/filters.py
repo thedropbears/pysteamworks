@@ -189,10 +189,8 @@ class VisionFilter:
     def on_enable(self):
         self.reset()
 
-    def predict(self, timestep=1):
-        """Predict what the measurement should be in the next timestep.
-        :param timestep: the number of timesteps in the past that we are predicting forward *from*"""
-
+    def predict(self):
+        """Predict what the measurement should be in the next timestep."""
         # we have no control inputs, so just make it 0
         B = np.identity(self.state_vector_size)
         u = np.zeros(shape=(self.state_vector_size, 1))
@@ -236,8 +234,8 @@ class VisionFilter:
             to_roll_back = min(timesteps_since_vision, len(self.filter.history))
             self.filter.roll_back(to_roll_back)
             self.update()
-            for i in range(timesteps_since_vision):
-                self.predict(timestep=timesteps_since_vision-i)
+            for _ in range(timesteps_since_vision):
+                self.predict()
 
     @property
     def x(self):
