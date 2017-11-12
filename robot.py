@@ -8,7 +8,7 @@ import wpilib
 
 from ctre import CANTalon
 from robotpy_ext.control.button_debouncer import ButtonDebouncer
-from networktables import NetworkTable
+from networktables import NetworkTables
 
 from components.chassis import Chassis
 from components.gears import GearAligner, GearDepositor
@@ -64,7 +64,7 @@ class Robot(magicbot.MagicRobot):
         # information to a html dashboard. useful for data display
         # for drivers, and also for plotting variables over time
         # while debugging
-        self.sd = NetworkTable.getTable('SmartDashboard')
+        self.sd = NetworkTables.getTable('SmartDashboard')
 
         # create the joystick and gamepad on the appropriate ports
         self.joystick = wpilib.Joystick(0)
