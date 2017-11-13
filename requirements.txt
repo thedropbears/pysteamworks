@@ -5,6 +5,8 @@ robotpy-hal-sim>=2017.0.0
 pynetconsole>=1.1.0
 robotpy-ctre>=2017.0.0
 robotpy-wpilib-utilities>=2017.0.4
+numpy>=1.12.0
+opencv-python>=3.2.0
 
 coverage
 python-coveralls
