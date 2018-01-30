@@ -1,28 +1,28 @@
-from magicbot import StateMachine, state, timed_state
-from components.geardepositiondevice import GearDepositionDevice
-from components.gearalignmentdevice import GearAlignmentDevice
+from magicbot import StateMachine, state
 from networktables import NetworkTable
-from components.vision import Vision
-from components.range_finder import RangeFinder
-from components.chassis import Chassis
-from utilities.profilegenerator import generate_trapezoidal_trajectory
+
+from automations.filters import RangeFilter, VisionFilter
 from automations.profilefollower import ProfileFollower
-from automations.vision_filter import VisionFilter
-from automations.range_filter import RangeFilter
-from components.bno055 import BNO055
+from components.chassis import Chassis
+from components.gears import GearAligner, GearDepositor
+from components.range_finder import RangeFinder
+from components.vision import Vision
+from utilities.bno055 import BNO055
+from utilities.profilegenerator import generate_trapezoidal_trajectory
+
 
 class ManipulateGear(StateMachine):
-    gearalignmentdevice = GearAlignmentDevice
-    geardepositiondevice = GearDepositionDevice
-    range_finder = RangeFinder
-    chassis = Chassis
-    profilefollower = ProfileFollower
+    # Injectables
     bno055 = BNO055
+    chassis = Chassis
+    gear_aligner = GearAligner
+    gear_depositor = GearDepositor
+    profilefollower = ProfileFollower
+    range_filter = RangeFilter
+    range_finder = RangeFinder
     sd = NetworkTable
-    aligned = False
     vision = Vision
     vision_filter = VisionFilter
-    range_filter = RangeFilter
 
     place_gear_range = 0.32
     align_tolerance = 0.02
@@ -38,10 +38,9 @@ class ManipulateGear(StateMachine):
     @state(first=True)
     def init(self):
         self.vision.enabled = True
-        self.geardepositiondevice.retract_gear()
-        self.geardepositiondevice.lock_gear()
-        self.gearalignmentdevice.reset_position()
-        self.gearalignmentdevice.position_mode()
+        self.gear_depositor.retract_gear()
+        self.gear_depositor.lock_gear()
+        self.gear_aligner.reset_position()
         self.vision_filter.reset()
         self.range_filter.reset()
         self.next_state("align_peg")
@@ -52,40 +51,37 @@ class ManipulateGear(StateMachine):
         # now move to the next state
         #move forward
         self.put_dashboard()
-        self.vision.enabled = True
 
         if (-self.align_tolerance <= self.vision_filter.x <= self.align_tolerance
                 and not self.profilefollower.executing
                 and abs(self.chassis.inputs[0]) < self.push_gear_input_tolerance
                 and abs(self.chassis.inputs[2]) < self.push_gear_input_tolerance):
-            aligned = True
             # r = self.range_finder.getDistance()
             r = self.range_filter.range
-            if r<0.1:
+            if r < 0.1:
                 r = 40
             if r < self.place_gear_range:
                 pass
                 # self.chassis.input_enabled = False
-                # if self.gearalignmentdevice.get_rail_pos() >= 0:
-                #     self.gearalignmentdevice.set_position(self.gearalignmentdevice.get_rail_pos()-self.deploy_jitter)
-                # elif self.gearalignmentdevice.get_rail_pos() < 0:
-                #     self.gearalignmentdevice.set_position(self.gearalignmentdevice.get_rail_pos()+self.deploy_jitter)
+                # if self.gear_aligner.get_rail_pos() >= 0:
+                #     self.gear_aligner.set_position(self.gear_aligner.get_rail_pos()-self.deploy_jitter)
+                # elif self.gear_aligner.get_rail_pos() < 0:
+                #     self.gear_aligner.set_position(self.gear_aligner.get_rail_pos()+self.deploy_jitter)
                 # self.next_state_now("forward_closed")
         elif self.vision.num_targets > 1:
-            self.gearalignmentdevice.align()
-            aligned = False
+            self.gear_aligner.align()
 
     @state(must_finish=True)
     def forward_closed(self, state_tm):
         self.put_dashboard()
-        self.geardepositiondevice.push_gear()
+        self.gear_depositor.push_gear()
         if state_tm > 0.5:
             self.next_state("forward_open")
 
     @state(must_finish=True)
     def forward_open(self, initial_call, state_tm):
         self.put_dashboard()
-        self.geardepositiondevice.drop_gear()
+        self.gear_depositor.drop_gear()
         self.chassis.input_enabled = True
         if initial_call:
             self.profilefollower.stop()
@@ -98,21 +94,21 @@ class ManipulateGear(StateMachine):
         if initial_call:
             self.initial_distances = self.chassis.get_raw_wheel_distances()
         if ((abs(abs(self.initial_distances[0]) - abs(self.chassis.get_raw_wheel_distances()[0]))
-            +abs(abs(self.initial_distances[1]) - abs(self.chassis.get_raw_wheel_distances()[1])))
-            / 2 > self.move_back_close_tol):
+            + abs(abs(self.initial_distances[1]) - abs(self.chassis.get_raw_wheel_distances()[1])))
+                / 2) > self.move_back_close_tol:
             self.next_state_now("backward_open")
 
     @state(must_finish=True)
     def backward_open(self, initial_call, state_tm):
         self.put_dashboard()
-        self.geardepositiondevice.retract_gear()
+        self.gear_depositor.retract_gear()
         if not self.profilefollower.executing:
             self.next_state("backward_close")
 
     @state(must_finish=True)
     def backward_close(self):
         self.put_dashboard()
-        self.geardepositiondevice.lock_gear()
+        self.gear_depositor.lock_gear()
         self.done()
 
     def done(self):

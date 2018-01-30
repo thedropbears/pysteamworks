@@ -1,13 +1,15 @@
 import math
 
 from magicbot import tunable
-from wpilib import CameraServer, DigitalOutput
+#from wpilib import CameraServer
+from wpilib import DigitalOutput
 
 
 class Vision:
-    k = tunable(0.5, doc='Weighting of the previous smoothed_x.')
+    # Injectables
+    led_dio = DigitalOutput
 
-    horizontal_fov = 61 * math.pi/180
+    k = tunable(0.5, doc='Weighting of the previous smoothed_x.')
 
     x = tunable(0.0, doc='The centre of the vision target, in the interval [-1.0, 1.0].')
     time = tunable(0, doc='Timestamp of when x was last updated by the vision loop.')
@@ -18,8 +20,7 @@ class Vision:
     enabled = tunable(True, doc='True to enable vision processing.')
     smoothed_x = tunable(0.0, doc='Weighted average of x.')
 
-    led_dio = DigitalOutput
-
+    horizontal_fov = math.radians(61)
     vision_target_separation = 0.20955 # m
 
     def __init__(self):
@@ -33,10 +34,6 @@ class Vision:
         robot code is started, that depends on injected variables"""
         self.led_dio.set(False)
 
-    def on_enable(self):
-        """Run every time the robot transitions to being enabled"""
-        pass
-
     def on_disable(self):
         """Run every time the robot transitions to being disabled"""
         self.enabled = True
@@ -48,7 +45,7 @@ class Vision:
         self.led_dio.set(not (self.enabled or self.led_on))
 
     def derive_vision_angle(self, vision_x=None):
-        "Calculate the camera's angle relative to the vision targets"
+        """Calculate the camera's angle relative to the vision targets."""
         if not vision_x:
             vision_x = self.smoothed_x
         return -(self.horizontal_fov/2 * (vision_x))

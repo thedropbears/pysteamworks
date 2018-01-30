@@ -1,48 +1,47 @@
 #!/usr/bin/env python3
 
+import math
+import time
+
 import magicbot
 import wpilib
 
 from ctre import CANTalon
+from robotpy_ext.control.button_debouncer import ButtonDebouncer
+from networktables import NetworkTables
 
-from components.range_finder import RangeFinder
 from components.chassis import Chassis
-from components.bno055 import BNO055
-from components.gearalignmentdevice import GearAlignmentDevice
-from components.geardepositiondevice import GearDepositionDevice
+from components.gears import GearAligner, GearDepositor
+from components.range_finder import RangeFinder
 from components.vision import Vision
 from components.winch import Winch
+from automations.filters import RangeFilter, VisionFilter
 from automations.manipulategear import ManipulateGear
 from automations.profilefollower import ProfileFollower
-from automations.winchautomation import WinchAutomation
-from automations.vision_filter import VisionFilter
-from automations.range_filter import RangeFilter
-
-from robotpy_ext.control.button_debouncer import ButtonDebouncer
-
-from utilities.profilegenerator import generate_trapezoidal_trajectory
-
-from networktables import NetworkTable
-
-import logging
-
-import math
-import time
+from automations.winch import WinchAutomation
+from utilities.bno055 import BNO055
 
 
 class Robot(magicbot.MagicRobot):
-
-    chassis = Chassis
-    gearalignmentdevice = GearAlignmentDevice
-    geardepositiondevice = GearDepositionDevice
-    winch_automation = WinchAutomation
-    manipulategear = ManipulateGear
-    vision = Vision
-    winch = Winch
-    profilefollower = ProfileFollower
+    # Sensors
     range_finder = RangeFinder
+    vision = Vision
     vision_filter = VisionFilter
+
+    # Chassis must come before RangeFilter
+    # ProfileFollower should come before Chassis
+    profilefollower = ProfileFollower
+    chassis = Chassis
     range_filter = RangeFilter
+
+    # Other automations
+    manipulategear = ManipulateGear
+    winch_automation = WinchAutomation
+
+    # Other actuators
+    gear_aligner = GearAligner
+    gear_depositor = GearDepositor
+    winch = Winch
 
     def createObjects(self):
         '''Create motors and stuff here'''
@@ -61,14 +60,11 @@ class Robot(magicbot.MagicRobot):
         # create the imu object
         self.bno055 = BNO055()
 
-        # the "logger" - allows you to print to the logging screen
-        # of the control computer
-        self.logger = logging.getLogger("robot")
         # the SmartDashboard network table allows you to send
         # information to a html dashboard. useful for data display
         # for drivers, and also for plotting variables over time
         # while debugging
-        self.sd = NetworkTable.getTable('SmartDashboard')
+        self.sd = NetworkTables.getTable('SmartDashboard')
 
         # create the joystick and gamepad on the appropriate ports
         self.joystick = wpilib.Joystick(0)
@@ -85,7 +81,7 @@ class Robot(magicbot.MagicRobot):
         self.drive_motor_b = CANTalon(5)
         self.drive_motor_c = CANTalon(4)
         self.drive_motor_d = CANTalon(3)
-        self.gear_alignment_motor = CANTalon(14)
+        self.gear_aligner_motor = CANTalon(14)
 
         # create the winch motor; set it so that it pulls the robot up
         # the rope for a positive setpoint
@@ -104,6 +100,7 @@ class Robot(magicbot.MagicRobot):
         # set the direction of the forward/back movement of the robot
         self.direction = 1.0
 
+        self.range_finder_counter = wpilib.Counter(0, mode=wpilib.Counter.Mode.kPulseLength)
         # dio for the vision LEDs to be switched on or off
         self.led_dio = wpilib.DigitalOutput(1)
 
@@ -114,15 +111,14 @@ class Robot(magicbot.MagicRobot):
 
         # put the inputs to the dashboard
         self.sd.putNumber("gyro", self.bno055.getHeading())
-        self.sd.putNumber("vision_x", self.vision.x)
         # if self.manipulategear.current_state == "align_peg":
         self.sd.putNumber("range", self.range_finder.getDistance())
         self.sd.putNumber("climb_current", self.winch_motor.getOutputCurrent())
-        self.sd.putNumber("rail_pos", self.gearalignmentdevice.get_rail_pos())
-        self.sd.putNumber("raw_rail_pos", self.gear_alignment_motor.getPosition())
+        self.sd.putNumber("rail_pos", self.gear_aligner.get_rail_pos())
+        self.sd.putNumber("raw_rail_pos", self.gear_aligner_motor.getPosition())
         self.sd.putNumber("error_differential",
-                self.drive_motor_a.getClosedLoopError()-
-                self.drive_motor_c.getClosedLoopError())
+            self.drive_motor_a.getClosedLoopError()
+            - self.drive_motor_c.getClosedLoopError())
         self.sd.putNumber("velocity", self.chassis.get_velocity())
         self.sd.putNumber("left_speed_error", self.drive_motor_a.getClosedLoopError())
         self.sd.putNumber("right_speed_error", self.drive_motor_c.getClosedLoopError())
@@ -130,11 +126,11 @@ class Robot(magicbot.MagicRobot):
         self.sd.putNumber("z_throttle", self.chassis.inputs[2])
         self.sd.putNumber("filtered_x", self.vision_filter.x)
         self.sd.putNumber("filtered_dx", self.vision_filter.dx)
-        self.sd.putNumber("vision_filter_x_variance", self.vision_filter.filter.P[0][0])
-        self.sd.putNumber("vision_filter_dx_variance", self.vision_filter.filter.P[1][1])
-        self.sd.putNumber("vision_filter_covariance", self.vision_filter.filter.P[0][1])
-        self.sd.putNumber("filtered_range", self.range_filter.filter.x_hat[0][0])
-        self.sd.putNumber("range_filter_variance", self.range_filter.filter.P[0][0])
+        self.sd.putNumber("vision_filter_x_variance", self.vision_filter.filter.P[0, 0])
+        self.sd.putNumber("vision_filter_dx_variance", self.vision_filter.filter.P[1, 1])
+        self.sd.putNumber("vision_filter_covariance", self.vision_filter.filter.P[0, 1])
+        self.sd.putNumber("filtered_range", self.range_filter.filter.x_hat[0, 0])
+        self.sd.putNumber("range_filter_variance", self.range_filter.filter.P[0, 0])
         self.sd.putNumber("time", time.time())
         self.sd.putNumber("vision_predicted_range", self.range_filter.vision_predicted_range())
         self.sd.putNumber("vision_predicted_target_dist", self.vision.derive_target_range())
@@ -142,17 +138,14 @@ class Robot(magicbot.MagicRobot):
     def teleopInit(self):
         '''Called when teleop starts; optional'''
         self.sd.putString("state", "stationary")
-        self.gearalignmentdevice.reset_position()
-        self.geardepositiondevice.retract_gear()
-        self.geardepositiondevice.lock_gear()
+        self.gear_aligner.reset_position()
+        self.gear_depositor.retract_gear()
+        self.gear_depositor.lock_gear()
         self.profilefollower.stop()
         self.winch.enable_compressor()
         self.vision.enabled = False
         self.logger.info("TELEOP INIT RANGE: %s" % (self.range_finder.getDistance()))
         self.logger.info("TELEOP INIT FILTER RANGE: %s" % (self.range_filter.range))
-
-    def autonomousPeriodic(self):
-        self.putData()
 
     def disabledInit(self):
         # prevent pyntlogger from continuing to log if it is running
@@ -195,16 +188,16 @@ class Robot(magicbot.MagicRobot):
             if self.joystick_buttons[2].get():
                 if self.manipulategear.is_executing:
                     self.manipulategear.done()
-                self.gearalignmentdevice.reset_position()
-                self.geardepositiondevice.retract_gear()
-                self.geardepositiondevice.lock_gear()
+                self.gear_aligner.reset_position()
+                self.gear_depositor.retract_gear()
+                self.gear_depositor.lock_gear()
 
         # force stop the winch state machine and winch motor
         with self.consumeExceptions():
             if self.joystick_buttons[4].get():
                 if self.winch_automation.is_executing:
                     self.winch_automation.done()
-                self.winch.rotate_winch(0)
+                self.winch.rotate(0)
 
         # force the winch motor to spin at max speed, and close the piston
         # that holds the rope in place
@@ -212,8 +205,8 @@ class Robot(magicbot.MagicRobot):
             if self.joystick_buttons[5].get():
                 if self.winch_automation.is_executing:
                     self.winch_automation.done()
-                self.winch.rotate_winch(1.0)
-                self.winch.piston_close()
+                self.winch.rotate(1.0)
+                self.winch.close_piston()
 
         # toggle the position of the winch piston
         with self.consumeExceptions():
@@ -223,8 +216,8 @@ class Robot(magicbot.MagicRobot):
         # retract and lock the gear bucket
         with self.consumeExceptions():
             if self.joystick_buttons[12].get():
-                self.geardepositiondevice.retract_gear()
-                self.geardepositiondevice.lock_gear()
+                self.gear_depositor.retract_gear()
+                self.gear_depositor.lock_gear()
 
         # push the gear bucket forward while shutting it
         with self.consumeExceptions():
@@ -260,13 +253,13 @@ class Robot(magicbot.MagicRobot):
         # with chute
         if self.joystick.getPOV() == 90:
             if not self.manipulategear.is_executing:
-                self.gearalignmentdevice.move_right()
+                self.gear_aligner.move_right()
         elif self.joystick.getPOV() == 270:
             if not self.manipulategear.is_executing:
-                self.gearalignmentdevice.move_left()
+                self.gear_aligner.move_left()
 
         if 1.5 < abs(self.chassis.get_velocity()) and not self.manipulategear.is_executing:
-            self.gearalignmentdevice.set_position(0)
+            self.gear_aligner.set_position(0)
 
         # set control inputs to chassis after rescaling
         linear_input = (
@@ -284,6 +277,7 @@ class Robot(magicbot.MagicRobot):
 
         # allow co-driver to manually turn on the vision LEDs
         self.vision.led_on = self.joystick.getRawButton(11)
+
 
 # utility function to rescale joystick inputs and make them exponential rather
 # than linear
@@ -304,6 +298,7 @@ def rescale_js(value, deadzone=0.0, exponential=0.0, rate=1.0):
         a = math.log(exponential + 1) / (1 - deadzone)
         value = (math.exp(a * (value - deadzone)) - 1) / exponential
     return value * value_negative * rate
+
 
 if __name__ == '__main__':
     wpilib.run(Robot)

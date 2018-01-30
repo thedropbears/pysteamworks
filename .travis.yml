@@ -4,18 +4,8 @@ language: python
 python:
 - '3.6'
 cache:
-  directories:
-    - $OPENCV_INSTALL_DIR
   pip: true
-env:
-  global:
-    - OPENCV_VERSION=3.2.0
-    - OPENCV_INSTALL_DIR="$HOME/opencv-$OPENCV_VERSION-install"
-    - LD_LIBRARY_PATH="$OPENCV_INSTALL_DIR/lib"
-    - PKG_CONFIG_PATH="$OPENCV_INSTALL_DIR/lib/pkgconfig"
-    - PYTHONPATH="$OPENCV_INSTALL_DIR/lib/python3.6/site-packages"
 install:
-- ./.install-opencv.sh
 - pip install -r requirements.txt
 script:
 - python robot.py coverage test

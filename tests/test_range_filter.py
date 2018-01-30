@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 import math
 from magicbot.magic_tunable import setup_tunables
-from automations.range_filter import RangeFilter
+from automations.filters import RangeFilter
 import numpy as np
 import time
 

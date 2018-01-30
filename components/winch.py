@@ -1,39 +1,34 @@
 from ctre import CANTalon
-from wpilib import DoubleSolenoid, Compressor
+from wpilib import DoubleSolenoid
 
-from collections import deque
-import numpy as np
 
 class Winch:
-
-    winch_motor = CANTalon
+    # Injectables
+    motor = CANTalon
     rope_lock_solenoid = DoubleSolenoid
-    compressor = Compressor
 
     def __init__(self):
-        super().__init__()
-
         self.locked = False
         self.compressor_enabled = True
 
-    def on_rope_engaged(self):
-        """Return wether the current is over 5 as a boolean"""
-        return self.winch_motor.getOutputCurrent() > 3
+    def is_rope_engaged(self):
+        """Get whether the rope has been caught by checking the current."""
+        return self.motor.getOutputCurrent() > 3
 
-    def on_touchpad_engaged(self):
-        """Return wether the current is over 2 as a boolean"""
-        return self.winch_motor.getOutputCurrent() > 35
+    def is_touchpad_engaged(self):
+        """Get whether the touchpad has been engaged by checking the current."""
+        return self.motor.getOutputCurrent() > 35
 
-    def rotate_winch(self, value):
-        """Rotate winch motor with half speed"""
-        self.winch_motor.set(value)
+    def rotate(self, value):
+        """Rotate winch at specified speed."""
+        self.motor.set(value)
 
-    def piston_open(self):
-        """Open piston"""
+    def open_piston(self):
+        """Open the rope locking piston."""
         self.locked = False
 
-    def piston_close(self):
-        """Close piston"""
+    def close_piston(self):
+        """Close the rope locking piston."""
         self.locked = True
 
     def disable_compressor(self):
@@ -42,19 +37,10 @@ class Winch:
     def enable_compressor(self):
         self.compressor_enabled = True
 
-    def setup(self):
-        """Run just after createObjects.
-        Useful if you want to run something after just once after the
-        robot code is started, that depends on injected variables"""
-
     def on_enable(self):
         """Run every time the robot transitions to being enabled"""
         self.locked = False
         self.enable_compressor()
-
-    def on_disable(self):
-        """Run every time the robot transitions to being disabled"""
-        pass
 
     def execute(self):
         """Run at the end of every control loop iteration"""

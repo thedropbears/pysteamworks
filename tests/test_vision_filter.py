@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 import math
 from magicbot.magic_tunable import setup_tunables
-from automations.vision_filter import VisionFilter
+from automations.filters import VisionFilter
 from components.vision import Vision
 import numpy as np
 import time

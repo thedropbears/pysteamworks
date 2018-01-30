@@ -1,90 +1,66 @@
 import math
+
 import numpy as np
+from magicbot import MagicRobot
 from magicbot.state_machine import AutonomousStateMachine, state
 from networktables import NetworkTable
 
+from automations.filters import VisionFilter
 from automations.manipulategear import ManipulateGear
 from automations.profilefollower import ProfileFollower
-from automations.vision_filter import VisionFilter
 from components.chassis import Chassis
-from components.bno055 import BNO055
-from components.vision import Vision
-from components.gearalignmentdevice import GearAlignmentDevice
-from components.geardepositiondevice import GearDepositionDevice
+from components.gears import GearAligner, GearDepositor
 from components.range_finder import RangeFinder
-from utilities.profilegenerator import cubic_generator
-
-
-class Targets:
-    Left = 0
-    Centre = 1
-    Right = 2
+from components.vision import Vision
+from utilities.bno055 import BNO055
+from utilities.profilegenerator import generate_cubic_trajectory
 
 
 class PegAutonomous(AutonomousStateMachine):
-
+    # Injectables
+    bno055 = BNO055
+    chassis = Chassis
+    gear_aligner = GearAligner
+    gear_depositor = GearDepositor
     manipulategear = ManipulateGear
     profilefollower = ProfileFollower
-    chassis = Chassis
-    bno055 = BNO055
+    range_finder = RangeFinder
+    sd = NetworkTable
     vision = Vision
     vision_filter = VisionFilter
-    range_finder = RangeFinder
-    gearalignmentdevice = GearAlignmentDevice
-    geardepositiondevice = GearDepositionDevice
-    sd = NetworkTable
 
     centre_to_front_bumper = 0.49
     lidar_to_front_bumper = 0.36
 
     centre_airship_distance = 2.93
     side_drive_forward_distance = 2.54 - centre_to_front_bumper
-    side_to_wall_distance = 1.62-centre_to_front_bumper+0.4 #.4 added in order to drive hard into wall
+    side_to_wall_distance = 1.62-centre_to_front_bumper+0.4  # .4 added in order to drive hard into wall
     side_rotate_angle = math.pi/3.0
     rotate_radius = 0.7
     rotate_linear_velocity = 1
     delta_s = abs(rotate_radius*math.tan(side_rotate_angle/2))
     rotate_arc_length = rotate_radius * side_rotate_angle
 
-    dt = 0.02
-
-    def __init__(self, target):
-        super().__init__()
-        self.target = target
+    dt = MagicRobot.control_loop_wait_time
 
     def generate_trajectories(self):
-        if self.target is Targets.Centre:
-            t1 = 1.5
-            perpendicular_heading = 0
-            distance_keypoints = [(0, 0, 0),
-                (t1, self.centre_airship_distance - 2*self.centre_to_front_bumper, 0)]
-            self.gear_mech_on = t1/self.dt # Segments left when gear mech enabled
-            self.heading_trajectory = [(0, 0, 0)] * int(t1/self.dt)
-        else:
-            t1 = 1.5  # s, time for segment 1
-            rotate_time = self.rotate_arc_length/self.rotate_linear_velocity
-            t3 = 2.5 # s, time for segment 3
-            distance_keypoints = [
-                (0, 0, 0),
-                (t1, self.side_drive_forward_distance-self.delta_s, self.rotate_linear_velocity),
-                (t1 + rotate_time, self.side_drive_forward_distance - self.delta_s + self.rotate_arc_length, self.rotate_linear_velocity),
-                (t1 + rotate_time + t3, self.side_drive_forward_distance + self.rotate_arc_length + self.side_to_wall_distance - 2*self.delta_s, 0)
-            ]
-            print("Delta S %s, drive_forward_distance sub ds %s, rotate_arc_length %s, rotate_tm %s" % (self.delta_s, self.side_drive_forward_distance-self.delta_s, self.rotate_arc_length, rotate_time))
-            self.gear_mech_on = int((t3)/self.dt) # Segments left when gear mech enabled
-            if self.target is Targets.Left:
-                perpendicular_heading = -self.side_rotate_angle
-            else:
-                perpendicular_heading = self.side_rotate_angle
-            heading_rate = perpendicular_heading / rotate_time
-            self.heading_trajectory = [(0, 0, 0)] * int(t1/self.dt)
-            self.heading_trajectory += [(x, heading_rate, 0) for x in np.arange(0, rotate_time, self.dt) * heading_rate]
-            self.heading_trajectory += [(perpendicular_heading, 0, 0)] * int(t3/self.dt)
-
-        self.distance_trajectory = []
-        cubic = cubic_generator(distance_keypoints)
-        for t in np.arange(0, distance_keypoints[-1][0], self.dt):
-            self.distance_trajectory.append(cubic(t))
+        t1 = 1.5  # s, time for segment 1
+        rotate_time = self.rotate_arc_length/self.rotate_linear_velocity
+        t3 = 2.5  # s, time for segment 3
+        distance_keypoints = [
+            (0, 0, 0),
+            (t1, self.side_drive_forward_distance-self.delta_s, self.rotate_linear_velocity),
+            (t1 + rotate_time, self.side_drive_forward_distance - self.delta_s + self.rotate_arc_length, self.rotate_linear_velocity),
+            (t1 + rotate_time + t3, self.side_drive_forward_distance + self.rotate_arc_length + self.side_to_wall_distance - 2*self.delta_s, 0)
+        ]
+        self.logger.info("ds %s, drive_forward_dist-ds %s, rotate_arc_length %s, rotate_tm %s",
+            self.delta_s, self.side_drive_forward_distance-self.delta_s, self.rotate_arc_length, rotate_time)
+        self.gear_mech_on = int(t3/self.dt) # Segments left when gear mech enabled
+        heading_rate = self.perpendicular_heading / rotate_time
+        self.heading_trajectory = [(0, 0, 0)] * int(t1/self.dt)
+        self.heading_trajectory += [(x, heading_rate, 0) for x in np.arange(0, rotate_time, self.dt) * heading_rate]
+        self.heading_trajectory += [(self.perpendicular_heading, 0, 0)] * int(t3/self.dt)
+        self.distance_trajectory = generate_cubic_trajectory(distance_keypoints, self.dt)
         # print("Distance Traj Len %s, Heading Traj Len %s" % (len(self.distance_trajectory), len(self.heading_trajectory)))
         # print("Distance trajectory", self.distance_trajectory[int(t1/self.dt)])
         # print("Heading trajectory", self.heading_trajectory[int(t1/self.dt)])
@@ -95,9 +71,9 @@ class PegAutonomous(AutonomousStateMachine):
         super().on_enable()
         self.bno055.resetHeading()
         self.profilefollower.stop()
-        self.gearalignmentdevice.reset_position()
-        self.geardepositiondevice.retract_gear()
-        self.geardepositiondevice.lock_gear()
+        self.gear_aligner.reset_position()
+        self.gear_depositor.retract_gear()
+        self.gear_depositor.lock_gear()
         self.generate_trajectories()
         self.sd.putBoolean("log", True)
 
@@ -121,9 +97,9 @@ class PegAutonomous(AutonomousStateMachine):
     @state
     def deploying_gear(self, initial_call):
         gear_state = self.manipulategear.current_state
-        if initial_call and self.manipulategear.current_state == "align_peg":
+        if initial_call and gear_state == "align_peg":
             self.manipulategear.engage(initial_state="forward_closed", force=True)
-        elif self.manipulategear.current_state == "forward_open":
+        elif gear_state == "forward_open":
             self.done()
 
     def done(self):
@@ -132,21 +108,31 @@ class PegAutonomous(AutonomousStateMachine):
 
 
 class LeftPegCurves(PegAutonomous):
-    # MODE_NAME = "Left Peg Curves"
+    MODE_NAME = "Left Peg Curves"
+    #DISABLED = True
 
     def __init__(self):
-        super().__init__(Targets.Left)
+        super().__init__()
+        self.perpendicular_heading = -self.side_rotate_angle
 
 
 class RightPegCurves(PegAutonomous):
-    # MODE_NAME = "Right Peg Curves"
+    MODE_NAME = "Right Peg Curves"
+    #DISABLED = True
 
     def __init__(self):
-        super().__init__(Targets.Right)
+        super().__init__()
+        self.perpendicular_heading = self.side_rotate_angle
 
 
 class CentrePegCurves(PegAutonomous):
-    # MODE_NAME = "Centre Peg Curves"
+    MODE_NAME = "Centre Peg Curves"
+    #DISABLED = True
 
-    def __init__(self):
-        super().__init__(Targets.Centre)
+    def generate_trajectories(self):
+        t1 = 1.5
+        distance_keypoints = [(0, 0, 0),
+            (t1, self.centre_airship_distance - 2*self.centre_to_front_bumper, 0)]
+        self.gear_mech_on = t1/self.dt # Segments left when gear mech enabled
+        self.heading_trajectory = [(0, 0, 0)] * int(t1/self.dt)
+        self.distance_trajectory = generate_cubic_trajectory(distance_keypoints, self.dt)
