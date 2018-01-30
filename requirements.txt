@@ -1,8 +1,10 @@
-pyfrc~=2017.0
-wpilib~=2017.0
+pynetworktables~=2017.0
 robotpy-hal-sim~=2017.0
+wpilib~=2017.0
 robotpy-ctre~=2017.0
 robotpy-wpilib-utilities>=2017.0.4,<2018.0
+pyfrc~=2017.0
+
 numpy>=1.12.0
 opencv-python>=3.2.0
 
