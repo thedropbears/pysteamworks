@@ -1,10 +1,8 @@
-pytest>=2.8.0
-pyfrc>=2017.0.0
-wpilib>=2017.0.0
-robotpy-hal-sim>=2017.0.0
-pynetconsole>=1.1.0
-robotpy-ctre>=2017.0.0
-robotpy-wpilib-utilities>=2017.0.4
+pyfrc~=2017.0
+wpilib~=2017.0
+robotpy-hal-sim~=2017.0
+robotpy-ctre~=2017.0
+robotpy-wpilib-utilities>=2017.0.4,<2018.0
 numpy>=1.12.0
 opencv-python>=3.2.0
 
